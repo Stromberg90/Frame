@@ -1,0 +1,27 @@
+﻿<Window x:Class="ImageViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ImageViewer"
+        mc:Ignorable="d"
+        Title="Frame" Height="350" Width="525">
+    <Grid Name="ImageGrid" Background="Gray" Width="Auto" Height="Auto">
+        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="Gray">
+            <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="imagearea_onloaded" Stretch="Uniform"/>
+        </local:ZoomBorder>
+        <Grid.ContextMenu>
+            <ContextMenu>
+                <MenuItem  Header="View in explorer" Click="view_in_explorer"/>
+                <MenuItem  Header="Compare" Click="compare_onclick"/>
+                <MenuItem  Header="Sort by">
+                    <MenuItem Name="SortAscending" Header="Ascending" Click="ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem Name="SortDecending" Header="Decending" Click="decending_sort_mode" IsCheckable="True"/>
+                    <MenuItem Name="SortName" Header="Name" Click="sort_by_name"/>
+                    <MenuItem Name="SortDate" Header="Date Modified" Click="sort_by_date_modified"/>
+                    <MenuItem Name="SortSize" Header="Size" Click="sort_by_size"/>
+                </MenuItem>
+            </ContextMenu>
+        </Grid.ContextMenu>
+    </Grid>
+</Window>
