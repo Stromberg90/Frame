@@ -1,11 +1,17 @@
-﻿#region
+﻿// TODOS
+// Channel Toggler
+// GIF Support
+// Loading images without lag
+// Split into more files
+// Reset zoom/pan
+// Custom hotkeys
+// Custom Colors
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,27 +19,32 @@ using System.Windows.Media.Imaging;
 using Microsoft.VisualBasic.FileIO;
 using Microsoft.Win32;
 using SearchOption = System.IO.SearchOption;
+using ImageMagick;
 
-#endregion
 
-namespace ImageViewer {
-    [Guid("43D72BD8-1F76-4334-84EB-9E4912E24463")]
-    public partial class MainWindow {
+namespace ImageViewer
+{
+    public partial class MainWindow
+    {
         private int before_compare_mode_index;
         private int current_index;
 
         private Image image_area;
 
         private ImageSet images;
-        private bool in_compared_mode;
+        private bool in_toggle_mode;
         private ImageSet last_images;
         private bool scroll_key_down;
+        static string[] supported_extensions = { "bmp",  "gif", "ico", "jpg", "png", "wdp", "tiff", "tga", "dds", "hdr", "exr" };
+        static string filter_string = ConstructFilterString();
 
-        public MainWindow() {
-            if (Environment.GetCommandLineArgs().Length > 1) {
+        public MainWindow()
+        {
+            if (Environment.GetCommandLineArgs().Length > 1)
+            {
                 var file_path = Environment.GetCommandLineArgs()[1];
                 var folder_path = Path.GetDirectoryName(file_path);
-                supported_image_files_in_directory(folder_path);
+                Supported_image_files_in_directory(folder_path);
                 if (images.paths.ToList().IndexOf(file_path) == -1)
                 {
                     current_index = 0;
@@ -43,66 +54,106 @@ namespace ImageViewer {
                     current_index = images.paths.ToList().IndexOf(file_path);
                 }
             }
-            else {
-                file_browser();
+            else
+            {
+                File_browser();
             }
 
-            if (images.is_valid()) {
-                sort_acending(SortMethod.Name);                
+            if (images.Is_valid())
+            {
+                Sort_acending(SortMethod.Name);
             }
 
             InitializeComponent();
             SortName.IsChecked = true;
         }
 
-        public SortMode current_sort_mode { get; set; }
+        private static string ConstructFilterString()
+        {
+            var new_filter_string = new System.Text.StringBuilder();
+            new_filter_string.Append("Image files (");
+            for (int i = 0; i < supported_extensions.Length; i++)
+            {
+                if (i < supported_extensions.Length)
+                {
+                    new_filter_string.Append("*." + supported_extensions[i] + ", ");
+                }
+                else
+                {
+                    new_filter_string.Append("*." + supported_extensions[i] + ")");
+                }
+            }
+            new_filter_string.Append(" | ");
+            for (int i = 0; i < supported_extensions.Length; i++)
+            {
+                if (i < supported_extensions.Length)
+                {
+                    new_filter_string.Append("*." + supported_extensions[i] + "; ");
+                }
+                else
+                {
+                    new_filter_string.Append("*." + supported_extensions[i]);
+                }
+            }
+            return new_filter_string.ToString();
+        }
+
+        public SortMode Current_sort_mode { get; set; }
 
 
-        private void setup_file_watcher(string folder_path) {
-            var watcher = new FileSystemWatcher {
+        private void Setup_file_watcher(string folder_path)
+        {
+            var watcher = new FileSystemWatcher
+            {
                 Path = folder_path,
                 NotifyFilter =
                     NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName |
                     NotifyFilters.DirectoryName
             };
 
-            watcher.Changed += (sender, args) => supported_image_files_in_directory(folder_path);
-            watcher.Created += (sender, args) => supported_image_files_in_directory(folder_path);
-            watcher.Deleted += (sender, args) => supported_image_files_in_directory(folder_path);
-            watcher.Renamed += (sender, args) => supported_image_files_in_directory(folder_path);
+            watcher.Changed += (sender, args) => Supported_image_files_in_directory(folder_path);
+            watcher.Created += (sender, args) => Supported_image_files_in_directory(folder_path);
+            watcher.Deleted += (sender, args) => Supported_image_files_in_directory(folder_path);
+            watcher.Renamed += (sender, args) => Supported_image_files_in_directory(folder_path);
 
             watcher.EnableRaisingEvents = true;
         }
 
-        private bool file_browser() {
-            var file_dialog = show_open_file_dialog();
+        private bool File_browser()
+        {
+            var file_dialog = Show_open_file_dialog();
             if (string.IsNullOrEmpty(file_dialog.FileName))
                 return false;
 
             var folder_path = Path.GetDirectoryName(file_dialog.FileName);
 
-            supported_image_files_in_directory(folder_path);
-            if (images.paths.ToList().IndexOf(file_dialog.FileName) == -1) {
+            Supported_image_files_in_directory(folder_path);
+            if (images.paths.ToList().IndexOf(file_dialog.FileName) == -1)
+            {
                 current_index = 0;
             }
-            else {
+            else
+            {
                 current_index = images.paths.ToList().IndexOf(file_dialog.FileName);
             }
             return true;
         }
 
-        private static OpenFileDialog show_open_file_dialog() {
-            var file_dialog = new OpenFileDialog {
+        private static OpenFileDialog Show_open_file_dialog()
+        {
+            var file_dialog = new OpenFileDialog
+            {
                 Multiselect = false,
                 AddExtension = true,
-                Filter =
-                    "Image files (*.bmp, *.gif, *.ico, *.jpg, *.png, *.wdp, *.tiff) | *.bmp; *.gif; *.ico; *.jpg; *.png; *.wdp; *.tiff"
+                Filter = filter_string
+                    
             };
             file_dialog.ShowDialog();
             return file_dialog;
         }
 
-        private void supported_image_files_in_directory(string path) {
+        private void Supported_image_files_in_directory(string path)
+        {
             if (string.IsNullOrEmpty(path)) return;
             var ls =
                 Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly)
@@ -115,225 +166,286 @@ namespace ImageViewer {
                                  s.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
                                  s.EndsWith(".ico", StringComparison.OrdinalIgnoreCase) ||
                                  s.EndsWith(".wdp", StringComparison.OrdinalIgnoreCase) ||
-                                 s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase))
+                                 s.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase) ||
+                                 s.EndsWith(".tga", StringComparison.OrdinalIgnoreCase) ||
+                                 s.EndsWith(".dds", StringComparison.OrdinalIgnoreCase) ||
+                                 s.EndsWith(".hdr", StringComparison.OrdinalIgnoreCase) ||
+                                 s.EndsWith(".exr", StringComparison.OrdinalIgnoreCase))
                          .ToArray();
 
             images.paths = ls;
-            if (images.paths.Any()) {
-                setup_file_watcher(path);
+            if (images.paths.Any())
+            {
+                Setup_file_watcher(path);
             }
         }
 
-        protected override void OnMouseWheel(MouseWheelEventArgs e) {
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
             base.OnMouseWheel(e);
 
-            if (scroll_key_down) {
-                if (e.Delta > 0) {
-                    next_image();
+            if (scroll_key_down)
+            {
+                if (e.Delta > 0)
+                {
+                    Switch_Image(SwitchDirection.Next);
                 }
-                else {
-                    previous_image();
+                else
+                {
+                    Switch_Image(SwitchDirection.Previous);
                 }
             }
         }
 
-        protected override void OnMouseDoubleClick(MouseButtonEventArgs e) {
-            if (in_compared_mode) {
-                exit_compare_mode();
+        protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
+        {
+            if (in_toggle_mode)
+            {
+                Exit_compare_mode();
             }
-            if (file_browser()) {
-                display_image();
+            if (File_browser())
+            {
+                Display_image();
             }
         }
 
-        protected override void OnKeyUp(KeyEventArgs e) {
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
             base.OnKeyUp(e);
-            switch (e.Key) {
-                case Key.LeftCtrl: {
-                    scroll_key_down = false;
-                    break;
-                }
+            switch (e.Key)
+            {
+                case Key.LeftCtrl:
+                    {
+                        scroll_key_down = false;
+                        break;
+                    }
             }
         }
 
-        protected override void OnKeyDown(KeyEventArgs e) {
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
             base.OnKeyDown(e);
 
-            switch (e.Key) {
-                case Key.Delete: {
-                    var res = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
-                        $"Delete {FileSystem.GetName(images.paths[current_index])}", MessageBoxButton.YesNo);
-                    if (res == MessageBoxResult.Yes) {
-                        FileSystem.DeleteFile(images.paths[current_index], UIOption.OnlyErrorDialogs,
-                            RecycleOption.SendToRecycleBin);
-                        if (images.paths.Length > 0) {
-                            next_image();
+            switch (e.Key)
+            {
+                case Key.Delete:
+                    {
+                        var res = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
+                            $"Delete {FileSystem.GetName(images.paths[current_index])}", MessageBoxButton.YesNo);
+                        if (res == MessageBoxResult.Yes)
+                        {
+                            FileSystem.DeleteFile(images.paths[current_index], UIOption.OnlyErrorDialogs,
+                                RecycleOption.SendToRecycleBin);
+                            if (images.paths.Length > 0)
+                            {
+                                Switch_Image(SwitchDirection.Next);
+                            }
+                            else
+                            {
+                                if (File_browser())
+                                {
+                                    Display_image();
+                                }
+                            }
                         }
-                        else {
+                        break;
+                    }
+                case Key.LeftCtrl:
+                    {
+                        scroll_key_down = true;
+                        break;
+                    }
+                case Key.Right:
+                    {
+                        Switch_Image(SwitchDirection.Next);
+                        break;
+                    }
+                case Key.Left:
+                    {
+                        Switch_Image(SwitchDirection.Previous);
+                        break;
+                    }
+                case Key.Escape:
+                    {
+                        if (in_toggle_mode)
+                        {
+                            Exit_compare_mode();
+                        }
+                        else
+                        {
                             Close();
                         }
+                        break;
                     }
-                    break;
-                }
-                case Key.LeftCtrl: {
-                    scroll_key_down = true;
-                    break;
-                }
-                case Key.Right: {
-                    next_image();
-                    break;
-                }
-                case Key.Left: {
-                    previous_image();
-                    break;
-                }
-                case Key.Escape: {
-                    if (in_compared_mode) {
-                        exit_compare_mode();
-                    }
-                    else {
-                        Close();
-                    }
-                    break;
-                }
             }
         }
 
-        private void exit_compare_mode() {
+        private void Exit_compare_mode()
+        {
             images = last_images;
-            in_compared_mode = false;
-            set_current_image(before_compare_mode_index);
+            in_toggle_mode = false;
+            Set_current_image(before_compare_mode_index);
         }
 
-        private void set_current_image(int new_index) {
+        private void Set_current_image(int new_index)
+        {
             current_index = new_index;
-            display_image();
+            Display_image();
         }
 
-        private void previous_image() {
-            image_area.Source = null;
-            UpdateLayout();
-            if (current_index > 0) {
-                set_current_image(current_index -= 1);
-            }
-            //Wraps around.
-            else {
-                set_current_image(current_index = images.paths.Length - 1);
+        enum SwitchDirection
+        {
+            Next,
+            Previous
+        }
+
+        private void Switch_Image(SwitchDirection switchDirection)
+        {
+            switch (switchDirection)
+            {
+                case SwitchDirection.Next:
+                    image_area.Source = null;
+                    UpdateLayout();
+                    if (current_index < images.paths.Length - 1)
+                    {
+                        Set_current_image(current_index += 1);
+                    }
+                    //Wraps around.
+                    else
+                    {
+                        Set_current_image(0);
+                    }
+                    break;
+                case SwitchDirection.Previous:
+                    image_area.Source = null;
+                    UpdateLayout();
+                    if (current_index > 0)
+                    {
+                        Set_current_image(current_index -= 1);
+                    }
+                    //Wraps around.
+                    else
+                    {
+                        Set_current_image(current_index = images.paths.Length - 1);
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
-        private void next_image() {
-            image_area.Source = null;
-            UpdateLayout();
-            if (current_index < images.paths.Length - 1) {
-                set_current_image(current_index += 1);
-            }
-            //Wraps around.
-            else {
-                set_current_image(0);
-            }
-        }
-
-        private void imagearea_onloaded(object sender, RoutedEventArgs e) {
+        private void Imagearea_onloaded(object sender, RoutedEventArgs e)
+        {
             image_area = sender as Image;
-            if (image_area != null) {
-                display_image();
+            if (image_area != null)
+            {
+                Display_image();
             }
         }
 
-        private void display_image() {
-            if (images.is_valid()) {
-                var image = load_image(images.paths[current_index]);
+        private void Display_image()
+        {
+            if (images.Is_valid())
+            {
+                var image = Load_image(images.paths[current_index]);
 
                 image_area.Source = image;
-                if (image.Height > border.ActualHeight) {
+                if (image.Height > border.ActualHeight)
+                {
                     image_area.Height = border.ActualHeight;
                 }
-                else if (image.Width > border.ActualWidth) {
+                else if (image.Width > border.ActualWidth)
+                {
                     image_area.Width = border.ActualWidth;
                 }
-                else {
-                    if (image.Width < border.ActualWidth) {
+                else
+                {
+                    if (image.Width < border.ActualWidth)
+                    {
                         image_area.Height = image.Height;
                     }
-                    else {
+                    else
+                    {
                         image_area.Width = image.Width;
                     }
                 }
 
-                if (in_compared_mode) {
-                    Title = $"[Compare] {new FileInfo(images.paths[current_index]).Name}";
+                if (in_toggle_mode)
+                {
+                    Title = $"[Toggle] {new FileInfo(images.paths[current_index]).Name}";
                 }
-                else {
+                else
+                {
                     Title = $"{new FileInfo(images.paths[current_index]).Name}";
                 }
                 border.Reset();
             }
         }
 
-        private static BitmapImage load_image(string filepath) {
-            var bm = new BitmapImage();
-            using (var fs = new FileStream(filepath, FileMode.Open, FileAccess.Read)) {
-                bm.BeginInit();
-                bm.CacheOption = BitmapCacheOption.OnLoad;
-                bm.StreamSource = fs;
-                bm.EndInit();
-            }
-            bm.Freeze();
-            return bm;
+        private static BitmapSource Load_image(string filepath)
+        {
+            var img = new MagickImage(filepath);
+            return img?.ToBitmapSource();
         }
 
-        private void sort_acending(SortMethod method) {
+        private void Sort_acending(SortMethod method)
+        {
             var id = 0;
             var initial_image = images.paths[current_index];
-            switch (method) {
-                case SortMethod.Name: {
-                    var file_paths_list_sorted = images.paths.ToList();
-                    file_paths_list_sorted.Sort();
+            switch (method)
+            {
+                case SortMethod.Name:
+                    {
+                        var file_paths_list_sorted = images.paths.ToList();
+                        file_paths_list_sorted.Sort();
 
-                    find_image_after_sort(file_paths_list_sorted, initial_image);
-                    break;
-                }
+                        Find_image_after_sort(file_paths_list_sorted, initial_image);
+                        break;
+                    }
 
-                case SortMethod.Date: {
-                    var keys = images.paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
+                case SortMethod.Date:
+                    {
+                        var keys = images.paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
 
-                    var date_time_lookup = keys.Zip(images.paths.ToList(), (k, v) => new {k, v})
-                                               .ToLookup(x => x.k, x => x.v);
+                        var date_time_lookup = keys.Zip(images.paths.ToList(), (k, v) => new { k, v })
+                                                   .ToLookup(x => x.k, x => x.v);
 
-                    var id_list = date_time_lookup.SelectMany(pair => pair,
-                                                      (pair, value) => new FileId<DateTime>(value, pair.Key, id += 1))
-                                                  .ToList();
+                        var id_list = date_time_lookup.SelectMany(pair => pair,
+                                                          (pair, value) => new FileId<DateTime>(value, pair.Key, id += 1))
+                                                      .ToList();
 
-                    var date_id_dictionary = id_list.ToDictionary(x => x.item.AddMilliseconds(x.id), x => x.id);
-                    var sorted_paths = type_sort(id_list, date_id_dictionary);
+                        var date_id_dictionary = id_list.ToDictionary(x => x.Item.AddMilliseconds(x.Id), x => x.Id);
+                        var sorted_paths = Type_sort(id_list, date_id_dictionary);
 
-                    find_image_after_sort(sorted_paths, initial_image);
-                    break;
-                }
-                case SortMethod.Size: {
-                    var keys = images.paths.ToList().Select(s => new FileInfo(s).Length).ToList();
-                    var size_lookup = keys.Zip(images.paths.ToList(), (k, v) => new {k, v})
-                                          .ToLookup(x => x.k, x => x.v);
+                        Find_image_after_sort(sorted_paths, initial_image);
+                        break;
+                    }
+                case SortMethod.Size:
+                    {
+                        var keys = images.paths.ToList().Select(s => new FileInfo(s).Length).ToList();
+                        var size_lookup = keys.Zip(images.paths.ToList(), (k, v) => new { k, v })
+                                              .ToLookup(x => x.k, x => x.v);
 
-                    var id_list = size_lookup.SelectMany(pair => pair,
-                                                 (pair, value) => new FileId<long>(value, pair.Key, id += 1)).ToList();
+                        var id_list = size_lookup.SelectMany(pair => pair,
+                                                     (pair, value) => new FileId<long>(value, pair.Key, id += 1)).ToList();
 
 
-                    var date_id_dictionary = id_list.ToDictionary(x => x.item + x.id, x => x.id);
-                    var sorted_paths = type_sort(id_list, date_id_dictionary);
+                        var date_id_dictionary = id_list.ToDictionary(x => x.Item + x.Id, x => x.Id);
+                        var sorted_paths = Type_sort(id_list, date_id_dictionary);
 
-                    find_image_after_sort(sorted_paths, initial_image);
-                    break;
-                }
-                default: {
-                    throw new ArgumentOutOfRangeException(nameof(SortMethod), method, null);
-                }
+                        Find_image_after_sort(sorted_paths, initial_image);
+                        break;
+                    }
+                default:
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(SortMethod), method, null);
+                    }
             }
         }
 
-        private static List<string> type_sort<T>(IEnumerable<FileId<T>> id_list, Dictionary<T, int> dictionary) {
-            var id_file_dictionary = id_list.ToDictionary(x => x.id, x => x.path);
+        private static List<string> Type_sort<T>(IEnumerable<FileId<T>> id_list, Dictionary<T, int> dictionary)
+        {
+            var id_file_dictionary = id_list.ToDictionary(x => x.Id, x => x.Path);
 
             var keys = dictionary.Keys.ToList();
             keys.Sort();
@@ -342,104 +454,122 @@ namespace ImageViewer {
             return sorted_paths;
         }
 
-        private void find_image_after_sort(List<string> sorted_paths, string initial_image) {
+        private void Find_image_after_sort(List<string> sorted_paths, string initial_image)
+        {
             images.paths = sorted_paths.ToArray();
             current_index = sorted_paths.IndexOf(initial_image);
         }
 
-        private void sort_decending(SortMethod method) {
-            sort_acending(method);
+        private void Sort_decending(SortMethod method)
+        {
+            Sort_acending(method);
             var initial_image = images.paths[current_index];
             images.paths = images.paths.Reverse().ToArray();
             current_index = images.paths.ToList().IndexOf(initial_image);
         }
 
-        private void view_in_explorer(object sender, RoutedEventArgs e) {
+        private void View_in_explorer(object sender, RoutedEventArgs e)
+        {
             Process.Start("explorer.exe", "/select, " + images.paths[current_index]);
         }
 
-        private void sort_by_name(object sender, RoutedEventArgs e) {
-            sort(SortMethod.Name);
+        private void Sort_by_name(object sender, RoutedEventArgs e)
+        {
+            Sort(SortMethod.Name);
             SortName.IsChecked = true;
             SortSize.IsChecked = false;
             SortDate.IsChecked = false;
         }
 
-        private void sort_by_size(object sender, RoutedEventArgs e) {
-            sort(SortMethod.Size);
+        private void Sort_by_size(object sender, RoutedEventArgs e)
+        {
+            Sort(SortMethod.Size);
             SortSize.IsChecked = true;
             SortName.IsChecked = false;
             SortDate.IsChecked = false;
         }
 
-        private void sort_by_date_modified(object sender, RoutedEventArgs e) {
-            sort(SortMethod.Date);
+        private void Sort_by_date_modified(object sender, RoutedEventArgs e)
+        {
+            Sort(SortMethod.Date);
             SortDate.IsChecked = true;
             SortName.IsChecked = false;
             SortSize.IsChecked = false;
         }
 
-        private void sort(SortMethod sort_method) {
-            switch (current_sort_mode) {
-                case SortMode.Ascending: {
-                    sort_acending(sort_method);
-                    break;
-                }
-                case SortMode.Decending: {
-                    sort_decending(sort_method);
-                    break;
-                }
+        private void Sort(SortMethod sort_method)
+        {
+            switch (Current_sort_mode)
+            {
+                case SortMode.Ascending:
+                    {
+                        Sort_acending(sort_method);
+                        break;
+                    }
+                case SortMode.Decending:
+                    {
+                        Sort_decending(sort_method);
+                        break;
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
 
-        private void decending_sort_mode(object sender, RoutedEventArgs e) {
-            if (current_sort_mode == SortMode.Ascending) {
+        private void Decending_sort_mode(object sender, RoutedEventArgs e)
+        {
+            if (Current_sort_mode == SortMode.Ascending)
+            {
                 var inital_image = images.paths[current_index];
                 var file_paths_list = images.paths.Reverse().ToList();
-                find_image_after_sort(file_paths_list, inital_image);
+                Find_image_after_sort(file_paths_list, inital_image);
             }
-            current_sort_mode = SortMode.Decending;
+            Current_sort_mode = SortMode.Decending;
             SortDecending.IsChecked = true;
             SortAscending.IsChecked = false;
         }
 
-        private void ascending_sort_mode(object sender, RoutedEventArgs e) {
-            if (current_sort_mode == SortMode.Decending) {
+        private void Ascending_sort_mode(object sender, RoutedEventArgs e)
+        {
+            if (Current_sort_mode == SortMode.Decending)
+            {
                 var inital_image = images.paths[current_index];
                 var file_paths_list = images.paths.Reverse().ToList();
-                find_image_after_sort(file_paths_list, inital_image);
+                Find_image_after_sort(file_paths_list, inital_image);
             }
-            current_sort_mode = SortMode.Ascending;
+            Current_sort_mode = SortMode.Ascending;
             SortDecending.IsChecked = false;
             SortAscending.IsChecked = true;
         }
 
-        private void compare_onclick(object sender, RoutedEventArgs e) {
-            var compare_file = show_open_file_dialog().FileName;
+        private void Compare_onclick(object sender, RoutedEventArgs e)
+        {
+            var compare_file = Show_open_file_dialog().FileName;
             if (string.IsNullOrEmpty(compare_file))
                 return;
 
-            if (in_compared_mode == false) {
+            if (in_toggle_mode == false)
+            {
                 last_images = images;
-                in_compared_mode = true;
+                in_toggle_mode = true;
                 before_compare_mode_index = current_index;
             }
-            images.paths = new[] {images.paths[current_index], compare_file};
-            set_current_image(0);
+            images.paths = new[] { images.paths[current_index], compare_file };
+            Set_current_image(0);
         }
 
-        private class FileId<T> {
-            public FileId(string path, T item, int id) {
-                this.path = path;
-                this.item = item;
-                this.id = id;
+        private class FileId<T>
+        {
+            public FileId(string path, T item, int id)
+            {
+                Path = path;
+                Item = item;
+                Id = id;
             }
 
-            public string path { get; }
-            public T item { get; }
-            public int id { get; }
+            public string Path { get; }
+            public T Item { get; }
+            public int Id { get; }
         }
     }
 }

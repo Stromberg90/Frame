@@ -8,18 +8,18 @@
         Title="Frame" Height="350" Width="525">
     <Grid Name="ImageGrid" Background="Gray" Width="Auto" Height="Auto">
         <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="Gray">
-            <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="imagearea_onloaded" Stretch="Uniform"/>
+            <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="Imagearea_onloaded" Stretch="Uniform"/>
         </local:ZoomBorder>
         <Grid.ContextMenu>
             <ContextMenu>
-                <MenuItem  Header="View in explorer" Click="view_in_explorer"/>
-                <MenuItem  Header="Compare" Click="compare_onclick"/>
+                <MenuItem  Header="View in explorer" Click="View_in_explorer"/>
+                <MenuItem  Header="Toggle A|B" Click="Compare_onclick"/>
                 <MenuItem  Header="Sort by">
-                    <MenuItem Name="SortAscending" Header="Ascending" Click="ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem Name="SortDecending" Header="Decending" Click="decending_sort_mode" IsCheckable="True"/>
-                    <MenuItem Name="SortName" Header="Name" Click="sort_by_name"/>
-                    <MenuItem Name="SortDate" Header="Date Modified" Click="sort_by_date_modified"/>
-                    <MenuItem Name="SortSize" Header="Size" Click="sort_by_size"/>
+                    <MenuItem Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
+                    <MenuItem Name="SortDecending" Header="Decending" Click="Decending_sort_mode" IsCheckable="True"/>
+                    <MenuItem Name="SortName" Header="Name" Click="Sort_by_name"/>
+                    <MenuItem Name="SortDate" Header="Date Modified" Click="Sort_by_date_modified"/>
+                    <MenuItem Name="SortSize" Header="Size" Click="Sort_by_size"/>
                 </MenuItem>
             </ContextMenu>
         </Grid.ContextMenu>
