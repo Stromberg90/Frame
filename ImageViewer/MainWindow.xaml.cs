@@ -1,11 +1,8 @@
 ﻿// TODOS
-// Channel Toggler
 // GIF Support
 // Loading images without lag
 // Split into more files
-// Reset zoom/pan
-// Custom hotkeys
-// Custom Colors
+// Slide Show Mode
 
 using System;
 using System.Collections.Generic;
@@ -35,11 +32,18 @@ namespace ImageViewer
         private bool in_toggle_mode;
         private ImageSet last_images;
         private bool scroll_key_down;
-        static string[] supported_extensions = { "bmp",  "gif", "ico", "jpg", "png", "wdp", "tiff", "tga", "dds", "hdr", "exr" };
+        static string[] supported_extensions = { "bmp", "gif", "ico", "jpg", "png", "wdp", "tiff", "tga", "dds", "hdr", "exr" };
         static string filter_string = ConstructFilterString();
+        private Settings settings;
+        // TODO
+        // Move channel into the settings file?
+        private Channels displayChannel = Channels.RGB;
 
         public MainWindow()
         {
+            settings = new Settings();
+            settings.Load();
+
             if (Environment.GetCommandLineArgs().Length > 1)
             {
                 var file_path = Environment.GetCommandLineArgs()[1];
@@ -65,7 +69,11 @@ namespace ImageViewer
             }
 
             InitializeComponent();
+
+            border.Background = settings.Background;
+
             SortName.IsChecked = true;
+
         }
 
         private static string ConstructFilterString()
@@ -146,7 +154,7 @@ namespace ImageViewer
                 Multiselect = false,
                 AddExtension = true,
                 Filter = filter_string
-                    
+
             };
             file_dialog.ShowDialog();
             return file_dialog;
@@ -201,7 +209,7 @@ namespace ImageViewer
         {
             if (in_toggle_mode)
             {
-                Exit_compare_mode();
+                Exit_toggle_mode();
             }
             if (File_browser())
             {
@@ -226,50 +234,74 @@ namespace ImageViewer
         {
             base.OnKeyDown(e);
 
+            if (e.Key == settings.Hotkeys[Commands.NextImage])
+            {
+                Switch_Image(SwitchDirection.Next);
+            }
+            else if (e.Key == settings.Hotkeys[Commands.PreviousImage])
+            {
+                Switch_Image(SwitchDirection.Previous);
+            }
+            else if (e.Key == settings.Hotkeys[Commands.DeleteImage])
+            {
+                var res = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
+                $"Delete {FileSystem.GetName(images.paths[current_index])}", MessageBoxButton.YesNo);
+                if (res == MessageBoxResult.Yes)
+                {
+                    FileSystem.DeleteFile(images.paths[current_index], UIOption.OnlyErrorDialogs,
+                        RecycleOption.SendToRecycleBin);
+                    if (images.paths.Length > 0)
+                    {
+                        Switch_Image(SwitchDirection.Next);
+                    }
+                    else
+                    {
+                        if (File_browser())
+                        {
+                            Display_image();
+                        }
+                    }
+                }
+            }
             switch (e.Key)
             {
-                case Key.Delete:
+                // TODO
+                // Add these to the settings file
+                // UI Controls
+                case Key.R:
                     {
-                        var res = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
-                            $"Delete {FileSystem.GetName(images.paths[current_index])}", MessageBoxButton.YesNo);
-                        if (res == MessageBoxResult.Yes)
-                        {
-                            FileSystem.DeleteFile(images.paths[current_index], UIOption.OnlyErrorDialogs,
-                                RecycleOption.SendToRecycleBin);
-                            if (images.paths.Length > 0)
-                            {
-                                Switch_Image(SwitchDirection.Next);
-                            }
-                            else
-                            {
-                                if (File_browser())
-                                {
-                                    Display_image();
-                                }
-                            }
-                        }
+                        displayChannel = displayChannel == Channels.Red ? Channels.RGB : Channels.Red;
+                        Refresh_Image();
                         break;
                     }
+                case Key.G:
+                    {
+                        displayChannel = displayChannel == Channels.Green ? Channels.RGB : Channels.Green;
+                        Refresh_Image();
+                        break;
+                    }
+                case Key.B:
+                    {
+                        displayChannel = displayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
+                        Refresh_Image();
+                        break;
+                    }
+                case Key.F:
+                    {
+                        border.Reset();
+                        break;
+                    }
+
                 case Key.LeftCtrl:
                     {
                         scroll_key_down = true;
-                        break;
-                    }
-                case Key.Right:
-                    {
-                        Switch_Image(SwitchDirection.Next);
-                        break;
-                    }
-                case Key.Left:
-                    {
-                        Switch_Image(SwitchDirection.Previous);
                         break;
                     }
                 case Key.Escape:
                     {
                         if (in_toggle_mode)
                         {
-                            Exit_compare_mode();
+                            Exit_toggle_mode();
                         }
                         else
                         {
@@ -280,7 +312,7 @@ namespace ImageViewer
             }
         }
 
-        private void Exit_compare_mode()
+        private void Exit_toggle_mode()
         {
             images = last_images;
             in_toggle_mode = false;
@@ -376,16 +408,72 @@ namespace ImageViewer
                 }
                 else
                 {
-                    Title = $"{new FileInfo(images.paths[current_index]).Name}";
+                    Title = new FileInfo(images.paths[current_index]).Name;
                 }
                 border.Reset();
             }
         }
 
-        private static BitmapSource Load_image(string filepath)
+        private void Refresh_Image()
         {
-            var img = new MagickImage(filepath);
-            return img?.ToBitmapSource();
+            if (images.Is_valid())
+            {
+                var image = Load_image(images.paths[current_index]);
+
+                image_area.Source = image;
+
+                if (in_toggle_mode)
+                {
+                    Title = $"[Toggle] {new FileInfo(images.paths[current_index]).Name}";
+                }
+                else
+                {
+                    Title = new FileInfo(images.paths[current_index]).Name;
+                }
+            }
+        }
+
+        private BitmapSource Load_image(string filepath)
+        {
+                MagickImage img;
+                try
+                {
+                    img = new MagickImage(filepath);
+                }
+                catch (MagickMissingDelegateErrorException)
+                {
+                    img = new MagickImage(MagickColors.White, 512, 512);
+                    new Drawables()
+                      .FontPointSize(18)
+                      .Font("Arial")
+                      .FillColor(MagickColors.Red)
+                      .TextAlignment(ImageMagick.TextAlignment.Center)
+                      .Text(256, 256, $"Could not load\n{Path.GetFileName(filepath)}")
+                      .Draw(img);
+                }
+                
+                // TODO
+                // Add alpha channel toggle.
+                switch (displayChannel)
+                {
+                    case Channels.Red:
+                        {
+                            return img.Separate(Channels.Red).ElementAt(0)?.ToBitmapSource();
+                        }
+                    case Channels.Green:
+                        {
+                            return img.Separate(Channels.Green).ElementAt(0)?.ToBitmapSource();
+                        }
+                    case Channels.Blue:
+                        {
+                            return img.Separate(Channels.Blue).ElementAt(0)?.ToBitmapSource();
+                        }
+                    default:
+                        {
+                            img.Alpha(AlphaOption.Opaque);
+                            return img.ToBitmapSource();
+                        }
+                }
         }
 
         private void Sort_acending(SortMethod method)
@@ -570,6 +658,35 @@ namespace ImageViewer
             public string Path { get; }
             public T Item { get; }
             public int Id { get; }
+        }
+
+        private void Reset_Click(object sender, RoutedEventArgs e)
+        {
+            border.Reset();
+        }
+
+        private void Display_all_channels(object sender, RoutedEventArgs e)
+        {
+            displayChannel = Channels.RGB;
+            Refresh_Image();
+        }
+
+        private void Display_red_channel(object sender, RoutedEventArgs e)
+        {
+            displayChannel = Channels.Red;
+            Refresh_Image();
+        }
+
+        private void Display_green_channel(object sender, RoutedEventArgs e)
+        {
+            displayChannel = Channels.Green;
+            Refresh_Image();
+        }
+
+        private void Display_blue_channel(object sender, RoutedEventArgs e)
+        {
+            displayChannel = Channels.Blue;
+            Refresh_Image();
         }
     }
 }

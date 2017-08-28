@@ -51,10 +51,10 @@ namespace ImageViewer
                 group.Children.Add(tt);
                 child.RenderTransform = group;
                 child.RenderTransformOrigin = new Point(0.0, 0.0);
-                MouseWheel += child_MouseWheel;
-                MouseLeftButtonDown += child_MouseLeftButtonDown;
-                MouseLeftButtonUp += child_MouseLeftButtonUp;
-                MouseMove += child_MouseMove;
+                MouseWheel += Child_MouseWheel;
+                MouseLeftButtonDown += Child_MouseLeftButtonDown;
+                MouseLeftButtonUp += Child_MouseLeftButtonUp;
+                MouseMove += Child_MouseMove;
             }
         }
 
@@ -74,7 +74,7 @@ namespace ImageViewer
             }
         }
 
-        private void child_MouseWheel(object sender, MouseWheelEventArgs e)
+        private void Child_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (child != null)
             {
@@ -99,7 +99,7 @@ namespace ImageViewer
             }
         }
 
-        private void child_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void Child_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (child != null)
             {
@@ -111,7 +111,7 @@ namespace ImageViewer
             }
         }
 
-        private void child_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void Child_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (child != null)
             {
@@ -120,7 +120,7 @@ namespace ImageViewer
             }
         }
 
-        private void child_MouseMove(object sender, MouseEventArgs e)
+        private void Child_MouseMove(object sender, MouseEventArgs e)
         {
             if (child != null)
             {

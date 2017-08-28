@@ -6,14 +6,21 @@
         xmlns:local="clr-namespace:ImageViewer"
         mc:Ignorable="d"
         Title="Frame" Height="350" Width="525">
-    <Grid Name="ImageGrid" Background="Gray" Width="Auto" Height="Auto">
-        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="Gray">
+    <Grid Name="ImageGrid" Width="Auto" Height="Auto">
+        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="#FF202020">
             <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="Imagearea_onloaded" Stretch="Uniform"/>
         </local:ZoomBorder>
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem  Header="View in explorer" Click="View_in_explorer"/>
                 <MenuItem  Header="Toggle A|B" Click="Compare_onclick"/>
+                <MenuItem  Header="Reset" Click="Reset_Click"/>
+                <MenuItem  Header="Channels">
+                    <MenuItem Name="AllChannels" Header="All" Click="Display_all_channels" IsCheckable="True" IsChecked="True" Click="AllChannels_Click"/>
+                    <MenuItem Name="RedChannel" Header="Red" Click="Display_red_channel" IsCheckable="True" Click="RedChannel_Click"/>
+                    <MenuItem Name="GreenChannel" Header="Green" Click="Display_green_channel" IsCheckable="True" Click="GreenChannel_Click"/>
+                    <MenuItem Name="BlueChannel" Header="Blue" Click="Display_blue_channel" IsCheckable="True" Click="BlueChannel_Click"/>
+                </MenuItem>
                 <MenuItem  Header="Sort by">
                     <MenuItem Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Name="SortDecending" Header="Decending" Click="Decending_sort_mode" IsCheckable="True"/>
