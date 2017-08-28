@@ -270,20 +270,17 @@ namespace ImageViewer
                 // UI Controls
                 case Key.R:
                     {
-                        displayChannel = displayChannel == Channels.Red ? Channels.RGB : Channels.Red;
-                        Refresh_Image();
+                        ToggleRedChannel();
                         break;
                     }
                 case Key.G:
                     {
-                        displayChannel = displayChannel == Channels.Green ? Channels.RGB : Channels.Green;
-                        Refresh_Image();
+                        ToggleGreenChannel();
                         break;
                     }
                 case Key.B:
                     {
-                        displayChannel = displayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
-                        Refresh_Image();
+                        ToggleBlueChannel();
                         break;
                     }
                 case Key.F:
@@ -435,45 +432,45 @@ namespace ImageViewer
 
         private BitmapSource Load_image(string filepath)
         {
-                MagickImage img;
-                try
-                {
-                    img = new MagickImage(filepath);
-                }
-                catch (MagickMissingDelegateErrorException)
-                {
-                    img = new MagickImage(MagickColors.White, 512, 512);
-                    new Drawables()
-                      .FontPointSize(18)
-                      .Font("Arial")
-                      .FillColor(MagickColors.Red)
-                      .TextAlignment(ImageMagick.TextAlignment.Center)
-                      .Text(256, 256, $"Could not load\n{Path.GetFileName(filepath)}")
-                      .Draw(img);
-                }
-                
-                // TODO
-                // Add alpha channel toggle.
-                switch (displayChannel)
-                {
-                    case Channels.Red:
-                        {
-                            return img.Separate(Channels.Red).ElementAt(0)?.ToBitmapSource();
-                        }
-                    case Channels.Green:
-                        {
-                            return img.Separate(Channels.Green).ElementAt(0)?.ToBitmapSource();
-                        }
-                    case Channels.Blue:
-                        {
-                            return img.Separate(Channels.Blue).ElementAt(0)?.ToBitmapSource();
-                        }
-                    default:
-                        {
-                            img.Alpha(AlphaOption.Opaque);
-                            return img.ToBitmapSource();
-                        }
-                }
+            MagickImage img;
+            try
+            {
+                img = new MagickImage(filepath);
+            }
+            catch (MagickMissingDelegateErrorException)
+            {
+                img = new MagickImage(MagickColors.White, 512, 512);
+                new Drawables()
+                  .FontPointSize(18)
+                  .Font("Arial")
+                  .FillColor(MagickColors.Red)
+                  .TextAlignment(ImageMagick.TextAlignment.Center)
+                  .Text(256, 256, $"Could not load\n{Path.GetFileName(filepath)}")
+                  .Draw(img);
+            }
+
+            // TODO
+            // Add alpha channel toggle.
+            switch (displayChannel)
+            {
+                case Channels.Red:
+                    {
+                        return img.Separate(Channels.Red).ElementAt(0)?.ToBitmapSource();
+                    }
+                case Channels.Green:
+                    {
+                        return img.Separate(Channels.Green).ElementAt(0)?.ToBitmapSource();
+                    }
+                case Channels.Blue:
+                    {
+                        return img.Separate(Channels.Blue).ElementAt(0)?.ToBitmapSource();
+                    }
+                default:
+                    {
+                        img.Alpha(AlphaOption.Opaque);
+                        return img.ToBitmapSource();
+                    }
+            }
         }
 
         private void Sort_acending(SortMethod method)
@@ -667,25 +664,91 @@ namespace ImageViewer
 
         private void Display_all_channels(object sender, RoutedEventArgs e)
         {
+            DisplayAllChannels();
+        }
+
+        private void DisplayAllChannels()
+        {
             displayChannel = Channels.RGB;
+            AllChannels.IsChecked = true;
+            RedChannel.IsChecked = false;
+            GreenChannel.IsChecked = false;
+            BlueChannel.IsChecked = false;
             Refresh_Image();
         }
 
         private void Display_red_channel(object sender, RoutedEventArgs e)
         {
-            displayChannel = Channels.Red;
+            ToggleRedChannel();
+        }
+
+        private void ToggleRedChannel()
+        {
+            if (displayChannel == Channels.Red)
+            {
+                AllChannels.IsChecked = true;
+                RedChannel.IsChecked = false;
+                GreenChannel.IsChecked = false;
+                BlueChannel.IsChecked = false;
+            }
+            else
+            {
+                AllChannels.IsChecked = false;
+                RedChannel.IsChecked = true;
+                GreenChannel.IsChecked = false;
+                BlueChannel.IsChecked = false;
+            }
+            displayChannel = displayChannel == Channels.Red ? Channels.RGB : Channels.Red;
             Refresh_Image();
         }
 
         private void Display_green_channel(object sender, RoutedEventArgs e)
         {
-            displayChannel = Channels.Green;
+            ToggleGreenChannel();
+        }
+
+        private void ToggleGreenChannel()
+        {
+            if (displayChannel == Channels.Green)
+            {
+                AllChannels.IsChecked = true;
+                RedChannel.IsChecked = false;
+                GreenChannel.IsChecked = false;
+                BlueChannel.IsChecked = false;
+            }
+            else
+            {
+                AllChannels.IsChecked = false;
+                RedChannel.IsChecked = false;
+                GreenChannel.IsChecked = true;
+                BlueChannel.IsChecked = false;
+            }
+            displayChannel = displayChannel == Channels.Green ? Channels.RGB : Channels.Green;
             Refresh_Image();
         }
 
         private void Display_blue_channel(object sender, RoutedEventArgs e)
         {
-            displayChannel = Channels.Blue;
+            ToggleBlueChannel();
+        }
+
+        private void ToggleBlueChannel()
+        {
+            if (displayChannel == Channels.Blue)
+            {
+                AllChannels.IsChecked = true;
+                RedChannel.IsChecked = false;
+                GreenChannel.IsChecked = false;
+                BlueChannel.IsChecked = false;
+            }
+            else
+            {
+                AllChannels.IsChecked = false;
+                RedChannel.IsChecked = false;
+                GreenChannel.IsChecked = false;
+                BlueChannel.IsChecked = true;
+            }
+            displayChannel = displayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
             Refresh_Image();
         }
     }
