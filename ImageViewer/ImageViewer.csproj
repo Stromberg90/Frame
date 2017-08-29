@@ -83,6 +83,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Commands.cs" />
+    <Compile Include="FileFormats.cs" />
     <Compile Include="ImageSet.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SortEnums.cs" />

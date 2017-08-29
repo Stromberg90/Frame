@@ -20,6 +20,7 @@
                     <MenuItem Name="RedChannel" Header="Red" Click="Display_red_channel" IsCheckable="True"/>
                     <MenuItem Name="GreenChannel" Header="Green" Click="Display_green_channel" IsCheckable="True"/>
                     <MenuItem Name="BlueChannel" Header="Blue" Click="Display_blue_channel" IsCheckable="True"/>
+                    <MenuItem Name="AlphaChannel" Header="Alpha" Click="Display_alpha_channel" IsCheckable="True"/>
                 </MenuItem>
                 <MenuItem  Header="Sort by">
                     <MenuItem Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>

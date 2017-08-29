@@ -5,13 +5,14 @@
 using System;
 using System.Windows.Input;
 using System.Collections.Generic;
+using System.IO;
 
 namespace ImageViewer
 {
 
     public class Settings
     {
-        private const string SettingsFilename = "Settings.xml";
+        public string SettingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.xml");
         private const string DefaultSettings =
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Settings>
@@ -29,19 +30,19 @@ namespace ImageViewer
 
         public void Load()
         {
-
-            if (!System.IO.File.Exists(SettingsFilename))
+            if (!File.Exists(SettingsFilePath))
             {
-                System.IO.File.WriteAllText(SettingsFilename, DefaultSettings);
+                File.WriteAllText(SettingsFilePath, DefaultSettings);
             }
 
             ReadSettingsFile();
 
         }
 
+
         private void ReadSettingsFile()
         {
-            using (var SettingsReader = System.Xml.XmlReader.Create(SettingsFilename))
+            using (var SettingsReader = System.Xml.XmlReader.Create(SettingsFilePath))
             {
                 while (SettingsReader.Read())
                 {
@@ -110,6 +111,14 @@ namespace ImageViewer
             // TODO Add more keys.
             switch (s)
             {
+                case "A":
+                    return Key.A;
+                case "B":
+                    return Key.B;
+                case "R":
+                    return Key.R;
+                case "G":
+                    return Key.G;
                 case "Right":
                     return Key.Right;
                 case "Left":
