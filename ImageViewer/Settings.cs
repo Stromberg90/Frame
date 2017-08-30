@@ -12,6 +12,7 @@ namespace ImageViewer
 
     public class Settings
     {
+        public bool hasSettingsLoaded = false;
         public string SettingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.xml");
         private const string DefaultSettings =
 @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -34,14 +35,16 @@ namespace ImageViewer
             {
                 File.WriteAllText(SettingsFilePath, DefaultSettings);
             }
-
             ReadSettingsFile();
-
         }
 
 
         private void ReadSettingsFile()
         {
+            if(hasSettingsLoaded)
+            {
+                System.Threading.Thread.Sleep(10);
+            }
             using (var SettingsReader = System.Xml.XmlReader.Create(SettingsFilePath))
             {
                 while (SettingsReader.Read())
@@ -67,6 +70,10 @@ namespace ImageViewer
                                 SettingsReader.MoveToElement();
                                 break;
                             case "Hotkeys":
+                                if(hasSettingsLoaded)
+                                {
+                                    Hotkeys.Clear();
+                                }
                                 while (SettingsReader.MoveToNextAttribute())
                                 {
                                     switch (SettingsReader.Name)
@@ -81,7 +88,7 @@ namespace ImageViewer
                                             Hotkeys.Add(Commands.DeleteImage, StringToKey(SettingsReader.Value));
                                             break;
                                         default:
-                                            // TODO Add a message box and quit the program.
+                                            // TODO Add a message box and quit the program, or something else.
                                             throw new Exception($"Invalid Hotkey: {SettingsReader.Name} : {SettingsReader.Value}");
                                     }
                                 }
@@ -92,6 +99,10 @@ namespace ImageViewer
                         }
                     }
                 }
+            }
+            if(!hasSettingsLoaded)
+            {
+                hasSettingsLoaded = true;
             }
         }
 

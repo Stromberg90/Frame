@@ -2,9 +2,9 @@
 // GIF Support
 // Loading images without lag
 // Split into more files
-// Slide Show Mode
 // Tab support, images in tabs obviously
 // Save size and position on exit and use that on startup
+// Drag and drop
 
 using System;
 using System.Collections.Generic;
@@ -25,8 +25,13 @@ namespace ImageViewer
 {
     public partial class MainWindow
     {
+        private int SlideshowInterval = 5;
+        private int CurrentSlideshowTime = 0;
         private int before_compare_mode_index;
         private int current_index;
+
+        private bool slideshow_mode;
+        private static System.Windows.Threading.DispatcherTimer slideShowTimer;
 
         private Image image_area;
 
@@ -40,7 +45,8 @@ namespace ImageViewer
         private Channels displayChannel = Channels.RGB;
 
         public SortMode Current_sort_mode { get; set; }
-        public Channels DisplayChannel {
+        public Channels DisplayChannel
+        {
             get => displayChannel;
 
             set
@@ -54,7 +60,6 @@ namespace ImageViewer
         {
             settings = new Settings();
             settings.Load();
-            Setup_settingsfile_watcher();
 
             if (Environment.GetCommandLineArgs().Length > 1)
             {
@@ -81,38 +86,21 @@ namespace ImageViewer
             }
 
             InitializeComponent();
+
             RefreshUI();
+            SetupSlideshow();
+        }
 
-            SortName.IsChecked = true;
-
+        private void SetupSlideshow()
+        {
+            slideShowTimer = new System.Windows.Threading.DispatcherTimer();
+            slideShowTimer.Tick += new EventHandler(Slideshow);
+            slideShowTimer.Interval = new TimeSpan(0, 0, 1);
         }
 
         private void RefreshUI()
         {
             border.Background = settings.Background;
-        }
-
-        private void Setup_settingsfile_watcher()
-        {
-            // This crashes, because the file is being used by the text editor when changed.
-            var watcher = new FileSystemWatcher
-            {
-                Path = Path.GetDirectoryName(settings.SettingsFilePath),
-                Filter = Path.GetFileName(settings.SettingsFilePath),
-                NotifyFilter =
-                    NotifyFilters.LastAccess | NotifyFilters.LastWrite
-            };
-
-            watcher.Changed += (sender, args) => {
-                settings.Load();
-                RefreshUI();
-            };
-            watcher.Deleted += (sender, args) => {
-                settings.Load();
-                RefreshUI();
-            };
-
-            watcher.EnableRaisingEvents = true;
         }
 
         private void Setup_file_watcher(string folder_path)
@@ -171,7 +159,7 @@ namespace ImageViewer
             if (string.IsNullOrEmpty(path)) return;
             var ls = new List<string>();
 
-            foreach(var file in Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly))
+            foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly))
             {
                 foreach (var ext in FileFormats.supported_extensions)
                 {
@@ -271,22 +259,22 @@ namespace ImageViewer
                 // UI Controls
                 case Key.A:
                     {
-                        ToggleAlphaChannel();
+                        SetDisplayChannel(Channels.Alpha);
                         break;
                     }
                 case Key.R:
                     {
-                        ToggleRedChannel();
+                        SetDisplayChannel(Channels.Red);
                         break;
                     }
                 case Key.G:
                     {
-                        ToggleGreenChannel();
+                        SetDisplayChannel(Channels.Green);
                         break;
                     }
                 case Key.B:
                     {
-                        ToggleBlueChannel();
+                        SetDisplayChannel(Channels.Blue);
                         break;
                     }
                 case Key.F:
@@ -294,7 +282,21 @@ namespace ImageViewer
                         border.Reset();
                         break;
                     }
-
+                case Key.S:
+                    {
+                        slideshow_mode = slideshow_mode == true ? false : true;
+                        if (slideshow_mode)
+                        {
+                            slideShowTimer.Start();
+                        }
+                        else
+                        {
+                            slideShowTimer.Stop();
+                        }
+                        UpdateTitle();
+                        CurrentSlideshowTime = 0;
+                        break;
+                    }
                 case Key.LeftCtrl:
                     {
                         scroll_key_down = true;
@@ -313,6 +315,21 @@ namespace ImageViewer
                         break;
                     }
             }
+        }
+        private void Slideshow(object source, EventArgs e)
+        {
+            if (CurrentSlideshowTime < SlideshowInterval)
+            {
+                CurrentSlideshowTime += 1;
+            }
+            else
+            {
+                CurrentSlideshowTime = 0;
+                slideShowTimer.Stop();
+                Switch_Image(SwitchDirection.Next);
+                slideShowTimer.Start();
+            }
+            UpdateTitle();
         }
 
         private void Exit_toggle_mode()
@@ -336,6 +353,10 @@ namespace ImageViewer
 
         private void Switch_Image(SwitchDirection switchDirection)
         {
+            if (slideshow_mode)
+            {
+                CurrentSlideshowTime = 0;
+            }
             switch (switchDirection)
             {
                 case SwitchDirection.Next:
@@ -405,15 +426,54 @@ namespace ImageViewer
                     }
                 }
 
-                if (in_toggle_mode)
-                {
-                    Title = $"[Toggle] {new FileInfo(images.paths[current_index]).Name}";
-                }
-                else
-                {
-                    Title = new FileInfo(images.paths[current_index]).Name;
-                }
+                UpdateTitle();
                 border.Reset();
+            }
+        }
+
+        private void UpdateTitle()
+        {
+            if (in_toggle_mode)
+            {
+                Title = $" [Toggle] {new FileInfo(images.paths[current_index]).Name}";
+            }
+            else
+            {
+                Title = new FileInfo(images.paths[current_index]).Name;
+            }
+
+            if (slideshow_mode)
+            {
+                Title += $" [Slideshow] {CurrentSlideshowTime}";
+            }
+
+            switch (displayChannel)
+            {
+                case Channels.RGB:
+                    {
+                        Title += $" [RGB_]";
+                        break;
+                    }
+                case Channels.Red:
+                    {
+                        Title += $" [R___]";
+                        break;
+                    }
+                case Channels.Green:
+                    {
+                        Title += $" [_G__]";
+                        break;
+                    }
+                case Channels.Blue:
+                    {
+                        Title += $" [__B_]";
+                        break;
+                    }
+                case Channels.Alpha:
+                    {
+                        Title += $" [___A]";
+                        break;
+                    }
             }
         }
 
@@ -425,14 +485,7 @@ namespace ImageViewer
 
                 image_area.Source = image;
 
-                if (in_toggle_mode)
-                {
-                    Title = $"[Toggle] {new FileInfo(images.paths[current_index]).Name}";
-                }
-                else
-                {
-                    Title = new FileInfo(images.paths[current_index]).Name;
-                }
+                UpdateTitle();
             }
         }
 
@@ -672,122 +725,73 @@ namespace ImageViewer
 
         private void Display_all_channels(object sender, RoutedEventArgs e)
         {
-            DisplayAllChannels();
-        }
+            SetDisplayChannel(Channels.RGB);
 
-        private void DisplayAllChannels()
-        {
-            DisplayChannel = Channels.RGB;
-            AllChannels.IsChecked = true;
-            RedChannel.IsChecked = false;
-            GreenChannel.IsChecked = false;
-            BlueChannel.IsChecked = false;
-            AlphaChannel.IsChecked = false;
         }
 
         private void Display_red_channel(object sender, RoutedEventArgs e)
         {
-            ToggleRedChannel();
-        }
-
-        private void ToggleRedChannel()
-        {
-            if (DisplayChannel == Channels.Red)
-            {
-                AllChannels.IsChecked = true;
-                RedChannel.IsChecked = false;
-                GreenChannel.IsChecked = false;
-                BlueChannel.IsChecked = false;
-                AlphaChannel.IsChecked = false;
-            }
-            else
-            {
-                AllChannels.IsChecked = false;
-                RedChannel.IsChecked = true;
-                GreenChannel.IsChecked = false;
-                BlueChannel.IsChecked = false;
-                AlphaChannel.IsChecked = false;
-            }
-            DisplayChannel = DisplayChannel == Channels.Red ? Channels.RGB : Channels.Red;
+            SetDisplayChannel(Channels.Red);
         }
 
         private void Display_green_channel(object sender, RoutedEventArgs e)
         {
-            ToggleGreenChannel();
+            SetDisplayChannel(Channels.Green);
         }
-
-        private void ToggleGreenChannel()
-        {
-            if (DisplayChannel == Channels.Green)
-            {
-                AllChannels.IsChecked = true;
-                RedChannel.IsChecked = false;
-                GreenChannel.IsChecked = false;
-                BlueChannel.IsChecked = false;
-                AlphaChannel.IsChecked = false;
-            }
-            else
-            {
-                AllChannels.IsChecked = false;
-                RedChannel.IsChecked = false;
-                GreenChannel.IsChecked = true;
-                BlueChannel.IsChecked = false;
-                AlphaChannel.IsChecked = false;
-            }
-            DisplayChannel = DisplayChannel == Channels.Green ? Channels.RGB : Channels.Green;
-        }
-
-        private void ToggleAlphaChannel()
-        {
-            if (DisplayChannel == Channels.Alpha)
-            {
-                AllChannels.IsChecked = true;
-                RedChannel.IsChecked = false;
-                GreenChannel.IsChecked = false;
-                BlueChannel.IsChecked = false;
-                AlphaChannel.IsChecked = false;
-            }
-            else
-            {
-                AllChannels.IsChecked = false;
-                RedChannel.IsChecked = false;
-                GreenChannel.IsChecked = false;
-                BlueChannel.IsChecked = false;
-                AlphaChannel.IsChecked = true;
-            }
-            DisplayChannel = DisplayChannel == Channels.Alpha ? Channels.RGB : Channels.Alpha;
-        }
-
 
         private void Display_alpha_channel(object sender, RoutedEventArgs e)
         {
-            ToggleAlphaChannel();
+            SetDisplayChannel(Channels.Alpha);
         }
 
         private void Display_blue_channel(object sender, RoutedEventArgs e)
         {
-            ToggleBlueChannel();
+            SetDisplayChannel(Channels.Blue);
         }
 
-        private void ToggleBlueChannel()
+        private void SetDisplayChannel(Channels channel)
         {
-            if (DisplayChannel == Channels.Blue)
+            AllChannels.IsChecked = false;
+            RedChannel.IsChecked = false;
+            GreenChannel.IsChecked = false;
+            BlueChannel.IsChecked = false;
+            AlphaChannel.IsChecked = false;
+
+            switch (channel)
             {
-                AllChannels.IsChecked = true;
-                RedChannel.IsChecked = false;
-                GreenChannel.IsChecked = false;
-                BlueChannel.IsChecked = false;
-                AlphaChannel.IsChecked = false;
+                case Channels.RGB:
+                    {
+                        AllChannels.IsChecked = true;
+                        DisplayChannel = Channels.RGB;
+                        break;
+                    }
+                case Channels.Blue:
+                    {
+                        BlueChannel.IsChecked = true;
+                        DisplayChannel = DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
+                        break;
+                    }
+                case Channels.Red:
+                    {
+                        RedChannel.IsChecked = true;
+                        DisplayChannel = DisplayChannel == Channels.Red ? Channels.RGB : Channels.Red;
+                        break;
+                    }
+                case Channels.Green:
+                    {
+                        GreenChannel.IsChecked = true;
+                        DisplayChannel = DisplayChannel == Channels.Green ? Channels.RGB : Channels.Green;
+                        break;
+                    }
+                case Channels.Alpha:
+                    {
+                        AlphaChannel.IsChecked = true;
+                        DisplayChannel = DisplayChannel == Channels.Alpha ? Channels.RGB : Channels.Alpha;
+                        break;
+                    }
+                default:
+                    break;
             }
-            else
-            {
-                AllChannels.IsChecked = false;
-                RedChannel.IsChecked = false;
-                GreenChannel.IsChecked = false;
-                BlueChannel.IsChecked = true;
-                AlphaChannel.IsChecked = false;
-            }
-            DisplayChannel = DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
         }
     }
 }

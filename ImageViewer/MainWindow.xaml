@@ -25,7 +25,7 @@
                 <MenuItem  Header="Sort by">
                     <MenuItem Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Name="SortDecending" Header="Decending" Click="Decending_sort_mode" IsCheckable="True"/>
-                    <MenuItem Name="SortName" Header="Name" Click="Sort_by_name"/>
+                    <MenuItem Name="SortName" Header="Name" Click="Sort_by_name" IsChecked="True"/>
                     <MenuItem Name="SortDate" Header="Date Modified" Click="Sort_by_date_modified"/>
                     <MenuItem Name="SortSize" Header="Size" Click="Sort_by_size"/>
                 </MenuItem>

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -97,6 +98,11 @@ namespace ImageViewer
                 tt.X = abosuluteX - relative.X * st.ScaleX;
                 tt.Y = abosuluteY - relative.Y * st.ScaleY;
             }
+        }
+
+        internal void SetBackground(SolidColorBrush background)
+        {
+            Background = background;
         }
 
         private void Child_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
