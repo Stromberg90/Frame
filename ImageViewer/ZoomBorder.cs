@@ -13,17 +13,17 @@ namespace ImageViewer
 {
     public class ZoomBorder : Border
     {
-        private UIElement child;
-        private Point origin;
-        private Point start;
+        UIElement child;
+        Point origin;
+        Point start;
 
-        private TranslateTransform GetTranslateTransform(UIElement element)
+        static TranslateTransform GetTranslateTransform(UIElement element)
         {
             return (TranslateTransform)((TransformGroup)element.RenderTransform)
               .Children.First(tr => tr is TranslateTransform);
         }
 
-        private ScaleTransform GetScaleTransform(UIElement element)
+        static ScaleTransform GetScaleTransform(UIElement element)
         {
             return (ScaleTransform)((TransformGroup)element.RenderTransform)
               .Children.First(tr => tr is ScaleTransform);
@@ -75,7 +75,7 @@ namespace ImageViewer
             }
         }
 
-        private void Child_MouseWheel(object sender, MouseWheelEventArgs e)
+        void Child_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (child != null)
             {
@@ -100,12 +100,7 @@ namespace ImageViewer
             }
         }
 
-        internal void SetBackground(SolidColorBrush background)
-        {
-            Background = background;
-        }
-
-        private void Child_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        void Child_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (child != null)
             {
@@ -117,7 +112,7 @@ namespace ImageViewer
             }
         }
 
-        private void Child_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        void Child_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (child != null)
             {
@@ -126,7 +121,7 @@ namespace ImageViewer
             }
         }
 
-        private void Child_MouseMove(object sender, MouseEventArgs e)
+        void Child_MouseMove(object sender, MouseEventArgs e)
         {
             if (child != null)
             {

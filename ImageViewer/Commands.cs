@@ -1,6 +1,6 @@
 ﻿namespace ImageViewer
 {
-    public enum Commands
+    public enum Command
     {
         NextImage,
         PreviousImage,

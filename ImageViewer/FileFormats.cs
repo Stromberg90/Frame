@@ -10,7 +10,7 @@ namespace ImageViewer
         };
         public static string filter_string = ConstructFilterString();
 
-        private static string ConstructFilterString()
+        static string ConstructFilterString()
         {
             var new_filter_string = new StringBuilder();
             new_filter_string.Append("Image files (");

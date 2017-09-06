@@ -5,13 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImageViewer"
         mc:Ignorable="d"
-        Title="Frame" Height="350" Width="525">
-    <Grid Name="ImageGrid" Width="Auto" Height="Auto">
-        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="#FF202020">
+        Title="Frame" Height="350" Width="525" Background="#FF2E2E2E">
+    <Grid Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0">
+        <StackPanel Panel.ZIndex="2" Height="30" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="100,260,100,10">
+            <Button Name="UIPrevious" Content="P" Width="30" Click="UIPrevious_Click"></Button>
+            <Button Name="UIRedChannel" Content="R" Width="30" Background="Red" Click="Display_red_channel"></Button>
+            <Button Name="UIGreenChannel" Content="G" Width="30" Background="Green" Click="Display_green_channel"></Button>
+            <Button Name="UIBlueChannel" Content="B" Width="30" Background="Blue" Click="Display_blue_channel"></Button>
+            <Button Name="UIAlphaChannel" Content="A" Width="30" Background="Wheat" Click="Display_alpha_channel"></Button>
+            <Button Name="UINext" Content="N" Width="30" Click="UINext_Click"></Button>
+        </StackPanel>
+        <TabControl Name="ImageTabControl" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="Auto" Margin="-2,-20,0,0" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
+        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1">
             <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="Imagearea_onloaded" Stretch="Uniform"/>
         </local:ZoomBorder>
         <Grid.ContextMenu>
             <ContextMenu>
+                <MenuItem Header="Open in Image Editor" Click="OpenInImageEditor"/>
+                <MenuItem Header="Copy path to clipboard" Click="CopyPathToClipboard"/>
                 <MenuItem  Header="View in explorer" Click="View_in_explorer"/>
                 <MenuItem  Header="Toggle A|B" Click="Compare_onclick"/>
                 <MenuItem  Header="Reset" Click="Reset_Click"/>
@@ -32,4 +43,40 @@
             </ContextMenu>
         </Grid.ContextMenu>
     </Grid>
+    <Window.Resources>
+        <Style TargetType="{x:Type TabItem}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TabItem}">
+                        <Border>
+                            <Grid>
+                                <Grid>
+                                    <Border x:Name="border" 
+                                            CornerRadius="3,3,0,0"
+                                            Background="WhiteSmoke"/>
+                                </Grid>
+                                <ContentPresenter ContentSource="Header"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter TargetName="border"
+                                        Property="Background"
+                                        Value="LightGray" />
+                            </Trigger>
+                            <Trigger Property="IsSelected"
+                                     Value="True">
+                                <Setter TargetName="border"
+                                        Property="Background"
+                                        Value="LightGray" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 </Window>

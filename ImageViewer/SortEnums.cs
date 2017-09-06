@@ -3,10 +3,10 @@ namespace ImageViewer
     public enum SortMode
     {
         Ascending,
-        Decending
+        Descending
     }
 
-    internal enum SortMethod
+    enum SortMethod
     {
         Name,
         Date,

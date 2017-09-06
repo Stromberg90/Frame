@@ -6,17 +6,19 @@ using System;
 using System.Windows.Input;
 using System.Collections.Generic;
 using System.IO;
+using System.Globalization;
 
 namespace ImageViewer
 {
 
     public class Settings
     {
-        public bool hasSettingsLoaded = false;
-        public string SettingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.xml");
-        private const string DefaultSettings =
+        bool hasSettingsLoaded;
+        string SettingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.xml");
+        const string DefaultSettings =
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Settings>
+    <Processing Editor = ""null""/>
     <Colors Background = ""32, 32, 32"" />
     <Hotkeys>
         NextImage = ""Right""
@@ -24,8 +26,8 @@ namespace ImageViewer
         DeleteImage = ""Delete""
     </Hotkeys>
 </Settings>";
-        public Dictionary<Commands, Key> Hotkeys = new Dictionary<Commands, Key>();
-
+        public Dictionary<Command, Key> Hotkeys = new Dictionary<Command, Key>();
+        public string ImageEditor;
         public System.Windows.Media.SolidColorBrush Background;
         public System.Drawing.Color BackgroundColor;
 
@@ -39,9 +41,9 @@ namespace ImageViewer
         }
 
 
-        private void ReadSettingsFile()
+        void ReadSettingsFile()
         {
-            if(hasSettingsLoaded)
+            if (hasSettingsLoaded)
             {
                 System.Threading.Thread.Sleep(10);
             }
@@ -53,6 +55,20 @@ namespace ImageViewer
                     {
                         switch (SettingsReader.Name)
                         {
+                            case "Processing":
+                                while (SettingsReader.MoveToNextAttribute())
+                                {
+                                    switch (SettingsReader.Name)
+                                    {
+                                        case "Editor":
+                                            ImageEditor = SettingsReader.GetAttribute(SettingsReader.Name);
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                                SettingsReader.MoveToElement();
+                                break;
                             case "Colors":
                                 while (SettingsReader.MoveToNextAttribute())
                                 {
@@ -63,14 +79,12 @@ namespace ImageViewer
                                             BackgroundColor = System.Drawing.Color.FromArgb(color.R, color.G, color.B);
                                             Background = new System.Windows.Media.SolidColorBrush(color);
                                             break;
-                                        default:
-                                            break;
                                     }
                                 }
                                 SettingsReader.MoveToElement();
                                 break;
                             case "Hotkeys":
-                                if(hasSettingsLoaded)
+                                if (hasSettingsLoaded)
                                 {
                                     Hotkeys.Clear();
                                 }
@@ -79,45 +93,43 @@ namespace ImageViewer
                                     switch (SettingsReader.Name)
                                     {
                                         case "NextImage":
-                                            Hotkeys.Add(Commands.NextImage, StringToKey(SettingsReader.Value));
+                                            Hotkeys.Add(Command.NextImage, StringToKey(SettingsReader.Value));
                                             break;
                                         case "PreviousImage":
-                                            Hotkeys.Add(Commands.PreviousImage, StringToKey(SettingsReader.Value));
+                                            Hotkeys.Add(Command.PreviousImage, StringToKey(SettingsReader.Value));
                                             break;
                                         case "DeleteImage":
-                                            Hotkeys.Add(Commands.DeleteImage, StringToKey(SettingsReader.Value));
+                                            Hotkeys.Add(Command.DeleteImage, StringToKey(SettingsReader.Value));
                                             break;
                                         default:
                                             // TODO Add a message box and quit the program, or something else.
-                                            throw new Exception($"Invalid Hotkey: {SettingsReader.Name} : {SettingsReader.Value}");
+                                            throw new KeyNotFoundException($"Invalid Hotkey: {SettingsReader.Name} : {SettingsReader.Value}");
                                     }
                                 }
                                 SettingsReader.MoveToElement();
-                                break;
-                            default:
                                 break;
                         }
                     }
                 }
             }
-            if(!hasSettingsLoaded)
+            if (!hasSettingsLoaded)
             {
                 hasSettingsLoaded = true;
             }
         }
 
-        private static System.Windows.Media.Color RGBColorFromCSV(string cvs_string)
+        static System.Windows.Media.Color RGBColorFromCSV(string cvs_string)
         {
             var background_raw = cvs_string.Split(',');
-            return System.Windows.Media.Color.FromRgb(byte.Parse(background_raw[0]), byte.Parse(background_raw[1]), byte.Parse(background_raw[2]));
+            return System.Windows.Media.Color.FromRgb(byte.Parse(background_raw[0], CultureInfo.InvariantCulture), byte.Parse(background_raw[1], CultureInfo.InvariantCulture), byte.Parse(background_raw[2], CultureInfo.InvariantCulture));
         }
 
-        public void Save()
+        static public void Save()
         {
             throw new NotImplementedException();
         }
 
-        private Key StringToKey(string s)
+        static Key StringToKey(string s)
         {
             // TODO Add more keys.
             switch (s)
