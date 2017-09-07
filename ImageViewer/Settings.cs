@@ -11,10 +11,10 @@ using System.Globalization;
 namespace ImageViewer
 {
 
-    public class Settings
+    static public class Settings
     {
-        bool hasSettingsLoaded;
-        string SettingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.xml");
+        static bool hasSettingsLoaded;
+        static string SettingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.xml");
         const string DefaultSettings =
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <Settings>
@@ -26,12 +26,18 @@ namespace ImageViewer
         DeleteImage = ""Delete""
     </Hotkeys>
 </Settings>";
-        public Dictionary<Command, Key> Hotkeys = new Dictionary<Command, Key>();
-        public string ImageEditor;
-        public System.Windows.Media.SolidColorBrush Background;
-        public System.Drawing.Color BackgroundColor;
 
-        public void Load()
+        // TODO
+        // So this isn't really working, if I remove this and try and load it from the file, I get a none value in release mode, but not in debug.
+        static public Key NextImage = Key.Right;
+        static public Key PreviousImage = Key.Left;
+        static public Key DeleteImage = Key.Delete;
+
+        static public string ImageEditor;
+        static public System.Windows.Media.SolidColorBrush Background;
+        static public System.Drawing.Color BackgroundColor;
+
+        static public void Load()
         {
             if (!File.Exists(SettingsFilePath))
             {
@@ -41,7 +47,7 @@ namespace ImageViewer
         }
 
 
-        void ReadSettingsFile()
+        static void ReadSettingsFile()
         {
             if (hasSettingsLoaded)
             {
@@ -84,22 +90,18 @@ namespace ImageViewer
                                 SettingsReader.MoveToElement();
                                 break;
                             case "Hotkeys":
-                                if (hasSettingsLoaded)
-                                {
-                                    Hotkeys.Clear();
-                                }
                                 while (SettingsReader.MoveToNextAttribute())
                                 {
                                     switch (SettingsReader.Name)
                                     {
                                         case "NextImage":
-                                            Hotkeys.Add(Command.NextImage, StringToKey(SettingsReader.Value));
+                                            NextImage = StringToKey(SettingsReader.Value);
                                             break;
                                         case "PreviousImage":
-                                            Hotkeys.Add(Command.PreviousImage, StringToKey(SettingsReader.Value));
+                                            PreviousImage = StringToKey(SettingsReader.Value);
                                             break;
                                         case "DeleteImage":
-                                            Hotkeys.Add(Command.DeleteImage, StringToKey(SettingsReader.Value));
+                                            DeleteImage = StringToKey(SettingsReader.Value);
                                             break;
                                         default:
                                             // TODO Add a message box and quit the program, or something else.

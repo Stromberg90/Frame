@@ -5,7 +5,7 @@
 // Save window size and position on exit and use that on startup
 // Drag and drop, drop into image area replaces tab with that image, drop into tab bar makes a new tab with image.
 // Add tabbar color to settings file.
-// Duplicate tab option
+// Layout tabs side by side?
 
 using ImageMagick;
 using Microsoft.VisualBasic.FileIO;
@@ -18,6 +18,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using SearchOption = System.IO.SearchOption;
 
@@ -50,11 +51,8 @@ namespace ImageViewer
 
         Image image_area;
 
-        ImageSet images;
         bool in_toggle_mode;
-        ImageSet last_images;
         bool scroll_key_down;
-        Settings settings;
 
         public Channels DisplayChannel
         {
@@ -69,10 +67,9 @@ namespace ImageViewer
 
         public MainWindow()
         {
-            settings = new Settings();
-            settings.Load();
+            Settings.Load();
 
-            var newTab = new TabItem { Header = Title, IsTabStop = false, FocusVisualStyle = null};
+            var newTab = new TabItem { Header = Title, IsTabStop = false, FocusVisualStyle = null, Foreground=new SolidColorBrush(Color.FromRgb(240, 240, 240))};
             tabs.Add(new TabData(newTab, null, 0));
 
             if (Environment.GetCommandLineArgs().Length > 1)
@@ -81,13 +78,13 @@ namespace ImageViewer
                 tabs[CTabIndex].initialImagePath = file_path;
                 var folder_path = Path.GetDirectoryName(file_path);
                 Supported_image_files_in_directory(folder_path);
-                if (images.paths.ToList().IndexOf(file_path) == -1)
+                if (tabs[CTabIndex].images.paths.IndexOf(file_path) == -1)
                 {
                     tabs[CTabIndex].currentIndex = 0;
                 }
                 else
                 {
-                    tabs[CTabIndex].currentIndex = images.paths.ToList().IndexOf(file_path);
+                    tabs[CTabIndex].currentIndex = tabs[CTabIndex].images.paths.IndexOf(file_path);
                 }
             }
             else
@@ -114,7 +111,7 @@ namespace ImageViewer
 
         void RefreshUI()
         {
-            border.Background = settings.Background;
+            border.Background = Settings.Background;
         }
 
         void Setup_file_watcher(string folder_path)
@@ -145,7 +142,7 @@ namespace ImageViewer
             tabs[CTabIndex].initialImagePath = file_dialog.FileName;
             Supported_image_files_in_directory(folder_path);
 
-            var filenameIndex = images.paths.IndexOf(file_dialog.FileName);
+            var filenameIndex = tabs[CTabIndex].images.paths.IndexOf(file_dialog.FileName);
             if (filenameIndex == -1)
             {
                 tabs[CTabIndex].currentIndex = 0;
@@ -178,25 +175,25 @@ namespace ImageViewer
             {
                 return;
             }
-
-            if (images.paths != null)
+            
+            if (tabs[CTabIndex].images.paths != null)
             {
-                images.paths.Clear();
+                tabs[CTabIndex].images.paths.Clear();
             }
             else
             {
-                images.paths = new List<string>();
+                tabs[CTabIndex].images.paths = new List<string>();
             }
 
             foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly))
             {
                 if (FileFormats.supported_extensions.Contains(Path.GetExtension(file).Remove(0, 1), StringComparer.OrdinalIgnoreCase))
                 {
-                    images.paths.Add(file);
+                    tabs[CTabIndex].images.paths.Add(file);
                 }
             }
 
-            if (images.Is_valid())
+            if (tabs[CTabIndex].images.Is_valid())
             {
                 // TODO File watcher crashes atm, different thread calling and so on, need a dispatcher?
                 // Setup_file_watcher(path);
@@ -207,7 +204,7 @@ namespace ImageViewer
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             base.OnMouseWheel(e);
-            if (tabs.Any() && images.paths.Any())
+            if (tabs.Any() && tabs[CTabIndex].images.paths.Any())
             {
                 if (scroll_key_down)
                 {
@@ -255,34 +252,34 @@ namespace ImageViewer
         {
             base.OnKeyDown(e);
 
-            if (e.Key == settings.Hotkeys[Command.NextImage])
+            if (e.Key == Settings.NextImage)
             {
-                if (tabs.Any() && images.paths.Any())
+                if (tabs.Any() && tabs[CTabIndex].images.paths.Any())
                 {
                     Switch_Image(SwitchDirection.Next);
                 }
             }
-            else if (e.Key == settings.Hotkeys[Command.PreviousImage])
+            else if (e.Key == Settings.PreviousImage)
             {
-                if (tabs.Any() && images.paths.Any())
+                if (tabs.Any() && tabs[CTabIndex].images.paths.Any())
                 {
                     Switch_Image(SwitchDirection.Previous);
                 }
             }
-            else if (e.Key == settings.Hotkeys[Command.DeleteImage])
+            else if (e.Key == Settings.DeleteImage)
             {
-                if (tabs.Any() && images.paths.Any())
+                if (tabs.Any() && tabs[CTabIndex].images.paths.Any())
                 {
                     var res = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
-                                              $"Delete {FileSystem.GetName(images.paths[tabs[CTabIndex].currentIndex])}", MessageBoxButton.YesNo);
+                                              $"Delete {FileSystem.GetName(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex])}", MessageBoxButton.YesNo);
                     if (res == MessageBoxResult.Yes)
                     {
-                        FileSystem.DeleteFile(images.paths[tabs[CTabIndex].currentIndex], UIOption.OnlyErrorDialogs,
+                        FileSystem.DeleteFile(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex], UIOption.OnlyErrorDialogs,
                             RecycleOption.SendToRecycleBin);
-                        if (images.paths.Count > 0)
+                        if (tabs[CTabIndex].images.paths.Count > 0)
                         {
                             Switch_Image(SwitchDirection.Next);
-                            Supported_image_files_in_directory(Path.GetDirectoryName(images.paths[tabs[CTabIndex].currentIndex]));
+                            Supported_image_files_in_directory(Path.GetDirectoryName(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]));
                         }
                         else
                         {
@@ -328,33 +325,25 @@ namespace ImageViewer
                     {
                         if (Keyboard.IsKeyDown(Key.LeftCtrl))
                         {
-                            var file_dialog = Show_open_file_dialog();
-                            if (string.IsNullOrEmpty(file_dialog.SafeFileName))
-                                return;
+                            AddNewTab();
+                        }
+                        break;
+                    }
+                case Key.D:
+                    {
+                        if (Keyboard.IsKeyDown(Key.LeftCtrl))
+                        {
+                            var newTab = new TabItem { Header = Path.GetFileName(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]), IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
 
-                            var newTab = new TabItem { Header = file_dialog.FileName, IsTabStop = false, FocusVisualStyle = null };
-
-                            var folder_path = Path.GetDirectoryName(file_dialog.FileName);
-                            tabs.Add(new TabData(newTab, folder_path));
+                            var folder_path = Path.GetDirectoryName(Path.GetFileName(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]));
+                            var tab = new TabData(newTab, folder_path, tabs[CTabIndex].currentIndex) {
+                                initialImagePath = tabs[CTabIndex].initialImagePath
+                            };
+                            tabs.Add(tab);
 
                             ImageTabControl.Items.Add(newTab);
 
                             ImageTabControl.SelectedIndex = CTabIndex + 1;
-
-                            Supported_image_files_in_directory(folder_path);
-
-                            var filenameIndex = images.paths.ToList().IndexOf(file_dialog.FileName);
-                            if (filenameIndex == -1)
-                            {
-                                tabs[CTabIndex].currentIndex = 0;
-                            }
-                            else
-                            {
-                                tabs[CTabIndex].currentIndex = filenameIndex;
-                            }
-
-                            tabs[CTabIndex].initialImagePath = file_dialog.FileName;
-
                             RefreshTab();
                         }
                         break;
@@ -403,6 +392,38 @@ namespace ImageViewer
             }
         }
 
+        void AddNewTab()
+        {
+            var file_dialog = Show_open_file_dialog();
+            if (string.IsNullOrEmpty(file_dialog.SafeFileName))
+                return;
+
+            var newTab = new TabItem { Header = file_dialog.FileName, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
+
+            var folder_path = Path.GetDirectoryName(file_dialog.FileName);
+            tabs.Add(new TabData(newTab, folder_path));
+
+            ImageTabControl.Items.Add(newTab);
+
+            ImageTabControl.SelectedIndex = CTabIndex + 1;
+
+            Supported_image_files_in_directory(folder_path);
+
+            var filenameIndex = tabs[CTabIndex].images.paths.IndexOf(file_dialog.FileName);
+            if (filenameIndex == -1)
+            {
+                tabs[CTabIndex].currentIndex = 0;
+            }
+            else
+            {
+                tabs[CTabIndex].currentIndex = filenameIndex;
+            }
+
+            tabs[CTabIndex].initialImagePath = file_dialog.FileName;
+
+            RefreshTab();
+        }
+
         void RefreshTab()
         {
             Display_image();
@@ -411,7 +432,7 @@ namespace ImageViewer
 
         void Slideshow(object source, EventArgs e)
         {
-            if (tabs.Any() && images.paths.Any())
+            if (tabs.Any() && tabs[CTabIndex].images.paths.Any())
             {
                 if (CurrentSlideshowTime < SlideshowInterval)
                 {
@@ -441,7 +462,7 @@ namespace ImageViewer
 
         void Exit_toggle_mode()
         {
-            images = last_images;
+            tabs[CTabIndex].images = tabs[CTabIndex].last_images;
             in_toggle_mode = false;
             Set_current_image(before_compare_mode_index);
         }
@@ -469,7 +490,7 @@ namespace ImageViewer
             switch (switchDirection)
             {
                 case SwitchDirection.Next:
-                    if (tabs[CTabIndex].currentIndex < images.paths.Count - 1)
+                    if (tabs[CTabIndex].currentIndex < tabs[CTabIndex].images.paths?.Count - 1)
                     {
                         Set_current_image(tabs[CTabIndex].currentIndex += 1);
                     }
@@ -479,14 +500,16 @@ namespace ImageViewer
                     }
                     break;
                 case SwitchDirection.Previous:
-
-                    if (tabs[CTabIndex].currentIndex > 0)
+                    if(tabs[CTabIndex].images.paths != null)
                     {
-                        Set_current_image(tabs[CTabIndex].currentIndex -= 1);
-                    }
-                    else
-                    {
-                        Set_current_image(tabs[CTabIndex].currentIndex = images.paths.Count - 1);
+                        if (tabs[CTabIndex].currentIndex > 0)
+                        {
+                            Set_current_image(tabs[CTabIndex].currentIndex -= 1);
+                        }
+                        else
+                        {
+                            Set_current_image(tabs[CTabIndex].currentIndex = tabs[CTabIndex].images.paths.Count - 1);
+                        }
                     }
                     break;
             }
@@ -505,9 +528,9 @@ namespace ImageViewer
         {
             if (image_area != null)
             {
-                if (images.Is_valid())
+                if (tabs[CTabIndex].images.Is_valid())
                 {
-                    var image = Load_image(images.paths[tabs[CTabIndex].currentIndex]);
+                    var image = Load_image(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]);
 
                     image_area.Source = image;
                     if (image.Height > border.ActualHeight)
@@ -538,7 +561,7 @@ namespace ImageViewer
 
         void UpdateTitle()
         {
-            if (images.paths == null)
+            if (tabs[CTabIndex].images.paths == null || !tabs[CTabIndex].images.paths.Any())
             {
                 return;
             }
@@ -547,11 +570,11 @@ namespace ImageViewer
 
             if (in_toggle_mode)
             {
-                title = $" [Toggle] {new FileInfo(images.paths[tabs[CTabIndex].currentIndex]).Name}";
+                title = $" [Toggle] {new FileInfo(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]).Name}";
             }
             else
             {
-                title = new FileInfo(images.paths[tabs[CTabIndex].currentIndex]).Name;
+                title = new FileInfo(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]).Name;
             }
 
             if (slideshow_mode)
@@ -592,9 +615,9 @@ namespace ImageViewer
 
         void Refresh_Image()
         {
-            if (images.Is_valid())
+            if (tabs[CTabIndex].images.Is_valid())
             {
-                var image = Load_image(images.paths[tabs[CTabIndex].currentIndex]);
+                var image = Load_image(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]);
 
                 image_area.Source = image;
 
@@ -650,13 +673,13 @@ namespace ImageViewer
         void Sort_acending(SortMethod method)
         {
             var id = 0;
-            var initial_image = images.paths[tabs[CTabIndex].currentIndex];
+            var initial_image = tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex];
             List<string> sorted_paths;
             switch (method)
             {
                 case SortMethod.Name:
                     {
-                        sorted_paths = images.paths.ToList();
+                        sorted_paths = tabs[CTabIndex].images.paths.ToList();
                         sorted_paths.Sort();
 
                         break;
@@ -664,9 +687,9 @@ namespace ImageViewer
 
                 case SortMethod.Date:
                     {
-                        var keys = images.paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
+                        var keys = tabs[CTabIndex].images.paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
 
-                        var date_time_lookup = keys.Zip(images.paths.ToList(), (k, v) => new { k, v })
+                        var date_time_lookup = keys.Zip(tabs[CTabIndex].images.paths.ToList(), (k, v) => new { k, v })
                                                    .ToLookup(x => x.k, x => x.v);
 
                         var id_list = date_time_lookup.SelectMany(pair => pair,
@@ -680,8 +703,8 @@ namespace ImageViewer
                     }
                 case SortMethod.Size:
                     {
-                        var keys = images.paths.ToList().Select(s => new FileInfo(s).Length).ToList();
-                        var size_lookup = keys.Zip(images.paths.ToList(), (k, v) => new { k, v })
+                        var keys = tabs[CTabIndex].images.paths.ToList().Select(s => new FileInfo(s).Length).ToList();
+                        var size_lookup = keys.Zip(tabs[CTabIndex].images.paths.ToList(), (k, v) => new { k, v })
                                               .ToLookup(x => x.k, x => x.v);
 
                         var id_list = size_lookup.SelectMany(pair => pair,
@@ -715,20 +738,20 @@ namespace ImageViewer
 
         void Find_image_after_sort(List<string> sorted_paths, string initial_image)
         {
-            images.paths = sorted_paths;
+            tabs[CTabIndex].images.paths = sorted_paths;
             tabs[CTabIndex].currentIndex = sorted_paths.IndexOf(initial_image);
         }
 
         void Sort_decending(SortMethod method)
         {
             Sort_acending(method);
-            images.paths.Reverse();
-            tabs[CTabIndex].currentIndex = images.paths.ToList().IndexOf(images.paths[tabs[CTabIndex].currentIndex]);
+            tabs[CTabIndex].images.paths.Reverse();
+            tabs[CTabIndex].currentIndex = tabs[CTabIndex].images.paths.ToList().IndexOf(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]);
         }
 
         void View_in_explorer(object sender, RoutedEventArgs e)
         {
-            Process.Start("explorer.exe", "/select, " + images.paths[tabs[CTabIndex].currentIndex]);
+            Process.Start("explorer.exe", "/select, " + tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]);
         }
 
         void Sort_by_name(object sender, RoutedEventArgs e)
@@ -776,8 +799,8 @@ namespace ImageViewer
         {
             if (tabs[CTabIndex].imageSettings.Current_sort_mode == SortMode.Ascending)
             {
-                var inital_image = images.paths[tabs[CTabIndex].currentIndex];
-                var file_paths_list = images.paths;
+                var inital_image = tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex];
+                var file_paths_list = tabs[CTabIndex].images.paths;
                 file_paths_list.Reverse();
                 Find_image_after_sort(file_paths_list, inital_image);
             }
@@ -790,8 +813,8 @@ namespace ImageViewer
         {
             if (tabs[CTabIndex].imageSettings.Current_sort_mode == SortMode.Descending)
             {
-                var inital_image = images.paths[tabs[CTabIndex].currentIndex];
-                var file_paths_list = images.paths;
+                var inital_image = tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex];
+                var file_paths_list = tabs[CTabIndex].images.paths;
                 file_paths_list.Reverse();
                 Find_image_after_sort(file_paths_list, inital_image);
             }
@@ -808,11 +831,11 @@ namespace ImageViewer
 
             if (in_toggle_mode == false)
             {
-                last_images = images;
+                tabs[CTabIndex].last_images = tabs[CTabIndex].images;
                 in_toggle_mode = true;
                 before_compare_mode_index = tabs[CTabIndex].currentIndex;
             }
-            images.paths = new List<string> { images.paths[tabs[CTabIndex].currentIndex], compare_file };
+            tabs[CTabIndex].images.paths = new List<string> { tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex], compare_file };
             Set_current_image(0);
         }
 
@@ -917,16 +940,16 @@ namespace ImageViewer
 
         void CopyPathToClipboard(object sender, RoutedEventArgs e)
         {
-            Clipboard.SetText($"\"{BackwardToForwardSlash(images.paths[tabs[CTabIndex].currentIndex])}\"");
+            Clipboard.SetText($"\"{BackwardToForwardSlash(tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex])}\"");
         }
 
         static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
 
         void OpenInImageEditor(object sender, RoutedEventArgs e)
         {
-            if (settings.ImageEditor != null)
+            if (Settings.ImageEditor != null)
             {
-                Process.Start(settings.ImageEditor, images.paths[tabs[CTabIndex].currentIndex]);
+                Process.Start(Settings.ImageEditor, tabs[CTabIndex].images.paths[tabs[CTabIndex].currentIndex]);
             }
             else
             {
@@ -942,6 +965,11 @@ namespace ImageViewer
         void UINext_Click(object sender, RoutedEventArgs e)
         {
             Switch_Image(SwitchDirection.Next);
+        }
+
+        void UIAddNewTab_Click(object sender, RoutedEventArgs e)
+        {
+            AddNewTab();
         }
     }
 }
