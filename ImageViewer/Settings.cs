@@ -29,6 +29,7 @@ namespace ImageViewer
 
         // TODO
         // So this isn't really working, if I remove this and try and load it from the file, I get a none value in release mode, but not in debug.
+        // Implement save settings file.
         static public Key NextImage = Key.Right;
         static public Key PreviousImage = Key.Left;
         static public Key DeleteImage = Key.Delete;

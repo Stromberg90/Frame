@@ -59,7 +59,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Magick.NET-Q16-AnyCPU, Version=7.0.0.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=MSIL">
-      <HintPath>..\packages\Magick.NET-Q16-AnyCPU.7.0.6.1002\lib\net40\Magick.NET-Q16-AnyCPU.dll</HintPath>
+      <HintPath>..\packages\Magick.NET-Q16-AnyCPU.7.0.7\lib\net40\Magick.NET-Q16-AnyCPU.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
@@ -85,6 +85,7 @@
     </ApplicationDefinition>
     <Compile Include="Commands.cs" />
     <Compile Include="FileFormats.cs" />
+    <Compile Include="FileId.cs" />
     <Compile Include="ImageSet.cs" />
     <Compile Include="ImageSettings.cs" />
     <Compile Include="Settings.cs" />

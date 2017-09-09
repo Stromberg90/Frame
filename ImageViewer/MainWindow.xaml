@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImageViewer"
         mc:Ignorable="d"
-        Title="Frame" Height="350" Width="525" Background="#FF2E2E2E">
+        Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E">
     <Grid Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0">
-        <StackPanel Panel.ZIndex="2" Height="30" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="100,260,100,10">
+        <StackPanel Panel.ZIndex="2" Height="30" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,10">
             <Button Name="UIPrevious" Content="P" Width="30" Click="UIPrevious_Click"></Button>
             <Button Name="UIRedChannel" Content="R" Width="30" Background="Red" Click="Display_red_channel"></Button>
             <Button Name="UIGreenChannel" Content="G" Width="30" Background="Green" Click="Display_green_channel"></Button>
@@ -15,20 +15,34 @@
             <Button Name="UIAlphaChannel" Content="A" Width="30" Background="Wheat" Click="Display_alpha_channel"></Button>
             <Button Name="UINext" Content="N" Width="30" Click="UINext_Click"></Button>
         </StackPanel>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="Auto" Margin="-2,-20,0,0">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="Auto" Margin="-2,-20,0,0" AllowDrop="True" Drop="ImageTabControl_Drop">
             <TabControl Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
             <Button Name="UIAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"></Button>
         </StackPanel>
-        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1">
-            <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="Imagearea_onloaded" Stretch="Uniform"/>
+        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1" AllowDrop="True" Drop="Border_Drop">
+            <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="ImageAreaOnLoaded" Stretch="Uniform"/>
         </local:ZoomBorder>
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem Header="Open in Image Editor" Click="OpenInImageEditor"/>
                 <MenuItem Header="Copy path to clipboard" Click="CopyPathToClipboard"/>
                 <MenuItem  Header="View in explorer" Click="View_in_explorer"/>
+                <Separator/>
                 <MenuItem  Header="Toggle A|B" Click="Compare_onclick"/>
-                <MenuItem  Header="Reset" Click="Reset_Click"/>
+                <MenuItem  Header="Reset View" Click="Reset_Click"/>
+                <MenuItem  Header="Slideshow">
+                    <MenuItem Name="StartSlideshowUI" Header="Start Slideshow" IsEnabled="True" Click="StartSlideshowUI_Click"/>
+                    <MenuItem Name="StopSlideshowUI" Header="Stop Slideshow" IsEnabled="False" Click="StopSlideshowUI_Click"/>
+                    <Separator/>
+                    <MenuItem Name="Slideshow1SecUI" Header="1 Second" IsCheckable="True" Click="Slideshow1SecUI_Click"/>
+                    <MenuItem Name="Slideshow2SecUI" Header="2 Seconds" IsCheckable="True" Click="Slideshow2SecUI_Click"/>
+                    <MenuItem Name="Slideshow3SecUI" Header="3 Seconds" IsCheckable="True" Click="Slideshow3SecUI_Click"/>
+                    <MenuItem Name="Slideshow4SecUI" Header="4 Seconds" IsCheckable="True" Click="Slideshow4SecUI_Click"/>
+                    <MenuItem Name="Slideshow5SecUI" Header="5 Seconds" IsCheckable="True" IsChecked="True" Click="Slideshow5SecUI_Click"/>
+                    <MenuItem Name="Slideshow10SecUI" Header="10 Seconds" IsCheckable="True" Click="Slideshow10SecUI_Click"/>
+                    <MenuItem Name="Slideshow20SecUI" Header="20 Seconds" IsCheckable="True" Click="Slideshow20SecUI_Click"/>
+                    <MenuItem Name="Slideshow30SecUI" Header="30 Seconds" IsCheckable="True" Click="Slideshow30SecUI_Click"/>
+                </MenuItem>
                 <MenuItem  Header="Channels">
                     <MenuItem Name="AllChannels" Header="All" Click="Display_all_channels" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Name="RedChannel" Header="Red" Click="Display_red_channel" IsCheckable="True"/>
@@ -36,9 +50,10 @@
                     <MenuItem Name="BlueChannel" Header="Blue" Click="Display_blue_channel" IsCheckable="True"/>
                     <MenuItem Name="AlphaChannel" Header="Alpha" Click="Display_alpha_channel" IsCheckable="True"/>
                 </MenuItem>
-                <MenuItem  Header="Sort by">
+                <MenuItem  Header="Sort">
                     <MenuItem Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Name="SortDecending" Header="Decending" Click="Decending_sort_mode" IsCheckable="True"/>
+                    <Separator/>
                     <MenuItem Name="SortName" Header="Name" Click="Sort_by_name" IsChecked="True"/>
                     <MenuItem Name="SortDate" Header="Date Modified" Click="Sort_by_date_modified"/>
                     <MenuItem Name="SortSize" Header="Size" Click="Sort_by_size"/>
