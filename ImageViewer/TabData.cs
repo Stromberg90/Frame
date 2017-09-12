@@ -1,38 +1,46 @@
 ﻿using System.Windows.Controls;
+using System.Windows.Media;
 
-// TODO Maybe have a list of paths per tab?
 // TODO Save pan/scale settings per image.
 namespace ImageViewer
 {
     class TabData
     {
+        public TranslateTransform Pan { get; set; }
+        public ScaleTransform Scale { get; set; }
         public TabItem tabItem;
         public ImageSet images;
         public ImageSet last_images;
-        public string initialImagePath;
-        public int currentIndex;
+        public string InitialImagePath { get; set; }
+        public int Index { get; set; }
+        public string Title {
+            set
+            {
+                tabItem.Header = value;
+            }
+            get
+            {
+                return tabItem.Header.ToString();
+            }
+        }
+        public string Filename
+        {
+            get
+            {
+                return new System.IO.FileInfo(images.Paths[Index]).Name;
+            }
+        }
         public ImageSettings imageSettings = new ImageSettings();
         public TabData(TabItem tabItem, string tabPath)
         {
             this.tabItem = tabItem;
-            initialImagePath = tabPath;
+            InitialImagePath = tabPath;
         }
         public TabData(TabItem tabItem, string tabPath, int currentIndex)
         {
             this.tabItem = tabItem;
-            initialImagePath = tabPath;
-            this.currentIndex = currentIndex;
-        }
-
-        public TabData DeepCopy()
-        {
-            TabData other = (TabData)MemberwiseClone();
-            other.currentIndex = currentIndex;
-            other.images.paths = images.paths;
-            other.imageSettings.Current_sort_mode = imageSettings.Current_sort_mode;
-            other.imageSettings.displayChannel= imageSettings.displayChannel;
-            return other;
-
+            InitialImagePath = tabPath;
+            Index = currentIndex;
         }
     }
 }

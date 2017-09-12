@@ -5,7 +5,7 @@ namespace ImageViewer
     public static class FileFormats
     {
         public static string[] supported_extensions = {
-            "bmp", "gif", "ico", "jpg", "png", "wdp", "tiff", "tga", "dds", "hdr", "exr",
+            "bmp", "gif", "ico", "jpg", "png", "wdp", "tiff", "tif", "tga", "dds", "hdr", "exr",
             "xpm", "xbm", "psd"
         };
         public static string filter_string = ConstructFilterString();

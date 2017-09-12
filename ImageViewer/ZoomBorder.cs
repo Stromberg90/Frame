@@ -59,6 +59,22 @@ namespace ImageViewer
             }
         }
 
+        public void SetTransform(TranslateTransform pan, ScaleTransform scale)
+        {
+            if (child != null)
+            {
+                // reset zoom
+                var st = GetScaleTransform(child);
+                st.ScaleX = scale.ScaleX;
+                st.ScaleY = scale.ScaleY;
+
+                // reset pan
+                var tt = GetTranslateTransform(child);
+                tt.X = pan.X;
+                tt.Y = pan.Y;
+            }
+        }
+
         public void Reset()
         {
             if (child != null)

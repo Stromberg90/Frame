@@ -26,11 +26,73 @@ namespace ImageViewer
 {
     public partial class MainWindow
     {
-        int slideshowInterval = 5;
-        int currentSlideshowTime;
-        int beforeCompareModeIndex;
+        static System.Windows.Threading.DispatcherTimer slideshowTimer;
+        int BeforeCompareModeIndex { get; set; }
+        int CurrentSlideshowTime { get; set; }
+        Image imageArea;
+        bool InToggleMode { get; set; }
+        int SlideshowInterval { get; set; } = 5;
+        bool SlideshowMode { get; set; }
+        List<TabData> Tabs { get; set; } = new List<TabData>();
 
-        List<TabData> tabs = new List<TabData>();
+        TabData CurrentTab
+        {
+            get
+            {
+                return Tabs[CurrentTabIndex];
+            }
+        }
+
+        public MainWindow()
+        {
+            InitializeComponent();
+
+            Settings.Load();
+
+            if (Environment.GetCommandLineArgs().Length > 1)
+            {
+                var newTab = new TabItem { Header = Title, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
+                Tabs.Add(new TabData(newTab, null, 0));
+
+                ImageTabControl.Items.Add(newTab);
+
+                ImageTabControl.SelectedIndex = CurrentTabIndex + 1;
+
+                var filePath = Environment.GetCommandLineArgs()[1];
+                CurrentTab.InitialImagePath = filePath;
+                var folderPath = Path.GetDirectoryName(filePath);
+                SupportedImageFilesInDirectory(folderPath);
+                if (CurrentTab.images.Paths.IndexOf(filePath) == -1)
+                {
+                    CurrentTab.Index = 0;
+                }
+                else
+                {
+                    CurrentTab.Index = CurrentTab.images.Paths.IndexOf(filePath);
+                }
+            }
+
+            RefreshUI();
+            SetupSlideshow();
+        }
+
+        enum SlideshowIntervalSec
+        {
+            Sec1,
+            Secs2,
+            Secs3,
+            Secs4,
+            Secs5,
+            Secs10,
+            Secs20,
+            Secs30
+        }
+
+        enum SwitchDirection
+        {
+            Next,
+            Previous
+        }
 
         public int CurrentTabIndex
         {
@@ -43,208 +105,14 @@ namespace ImageViewer
                 return ImageTabControl.SelectedIndex;
             }
         }
-
-        bool slideshowMode;
-        static System.Windows.Threading.DispatcherTimer slideshowTimer;
-
-        Image imageArea;
-
-        bool inToggleMode;
-
         public Channels DisplayChannel
         {
-            get => tabs[CurrentTabIndex].imageSettings.displayChannel;
+            get => CurrentTab.imageSettings.displayChannel;
 
             set
             {
-                tabs[CurrentTabIndex].imageSettings.displayChannel = value;
+                CurrentTab.imageSettings.displayChannel = value;
                 RefreshImage();
-            }
-        }
-
-        public MainWindow()
-        {
-            Settings.Load();
-
-            var newTab = new TabItem { Header = Title, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
-            tabs.Add(new TabData(newTab, null, 0));
-
-            if (Environment.GetCommandLineArgs().Length > 1)
-            {
-                var filePath = Environment.GetCommandLineArgs()[1];
-                tabs[CurrentTabIndex].initialImagePath = filePath;
-                var folderPath = Path.GetDirectoryName(filePath);
-                SupportedImageFilesInDirectory(folderPath);
-                if (tabs[CurrentTabIndex].images.paths.IndexOf(filePath) == -1)
-                {
-                    tabs[CurrentTabIndex].currentIndex = 0;
-                }
-                else
-                {
-                    tabs[CurrentTabIndex].currentIndex = tabs[CurrentTabIndex].images.paths.IndexOf(filePath);
-                }
-            }
-            else
-            {
-                FileBrowser();
-            }
-
-            InitializeComponent();
-
-            ImageTabControl.Items.Add(newTab);
-
-            ImageTabControl.SelectedIndex = CurrentTabIndex + 1;
-
-            RefreshUI();
-            SetupSlideshow();
-        }
-
-        void SetupSlideshow()
-        {
-            slideshowTimer = new System.Windows.Threading.DispatcherTimer();
-            slideshowTimer.Tick += Slideshow;
-            slideshowTimer.Interval = new TimeSpan(0, 0, 1);
-        }
-
-        void RefreshUI()
-        {
-            border.Background = Settings.Background;
-        }
-
-        void SetupDirectoryWatcher()
-        {
-            var index = ImageTabControl != null ? ImageTabControl.SelectedIndex : 0;
-            var watcher = new FileSystemWatcher
-            {
-                Path = Path.GetDirectoryName(tabs[index].initialImagePath),
-                NotifyFilter =
-                    NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName |
-                    NotifyFilters.DirectoryName
-            };
-
-            watcher.Changed += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(tabs[index].initialImagePath));
-            watcher.Created += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(tabs[index].initialImagePath));
-            watcher.Deleted += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(tabs[index].initialImagePath));
-            watcher.Renamed += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(tabs[index].initialImagePath));
-
-            watcher.EnableRaisingEvents = true;
-        }
-
-        bool FileBrowser()
-        {
-            var fileDialog = ShowOpenFileDialog();
-            if (string.IsNullOrEmpty(fileDialog.SafeFileName))
-                return false;
-            string filename = Path.GetFullPath(fileDialog.FileName);
-            ReplaceImageInTab(filename);
-
-            return true;
-        }
-
-        void ReplaceImageInTab(string filename)
-        {
-            var folderPath = Path.GetDirectoryName(filename);
-            if (CurrentTabIndex < 0)
-            {
-                AddNewTab(filename);
-            }
-            tabs[CurrentTabIndex].initialImagePath = filename;
-            SupportedImageFilesInDirectory(folderPath);
-
-            var filenameIndex = tabs[CurrentTabIndex].images.paths.IndexOf(filename);
-            if (filenameIndex == -1)
-            {
-                tabs[CurrentTabIndex].currentIndex = 0;
-            }
-            else
-            {
-                tabs[CurrentTabIndex].currentIndex = filenameIndex;
-            }
-
-            SetupDirectoryWatcher();
-        }
-
-        static OpenFileDialog ShowOpenFileDialog()
-        {
-            var fileDialog = new OpenFileDialog
-            {
-                Multiselect = false,
-                AddExtension = true,
-                Filter = FileFormats.filter_string
-
-            };
-            fileDialog.ShowDialog();
-            return fileDialog;
-        }
-
-        void SupportedImageFilesInDirectory(string path)
-        {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                if (string.IsNullOrEmpty(path))
-                {
-                    return;
-                }
-
-                if (tabs[CurrentTabIndex].images.paths != null)
-                {
-                    tabs[CurrentTabIndex].images.paths.Clear();
-                }
-                else
-                {
-                    tabs[CurrentTabIndex].images.paths = new List<string>();
-                }
-
-                foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly))
-                {
-                    var extension = Path.GetExtension(Path.GetFileName(file));
-                    if (!string.IsNullOrEmpty(extension))
-                    {
-                        if (FileFormats.supported_extensions.Contains(extension.Remove(0, 1), StringComparer.OrdinalIgnoreCase))
-                        {
-                            tabs[CurrentTabIndex].images.paths.Add(file);
-                        }
-                    }
-                }
-
-                if (tabs[CurrentTabIndex].images.Is_valid())
-                {
-                    SortAcending(SortMethod.Name);
-                }
-            });
-        }
-
-        protected override void OnMouseWheel(MouseWheelEventArgs e)
-        {
-            base.OnMouseWheel(e);
-            if (tabs.Any() && tabs[CurrentTabIndex].images.paths.Any())
-            {
-                if (Keyboard.IsKeyDown(Key.LeftCtrl))
-                {
-                    if (e.Delta > 0)
-                    {
-                        SwitchImage(SwitchDirection.Next);
-                    }
-                    else
-                    {
-                        SwitchImage(SwitchDirection.Previous);
-                    }
-                }
-            }
-        }
-
-        protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
-        {
-            if (e.Source == border || e.Source == ImageArea)
-            {
-                if (inToggleMode)
-                {
-                    ExitToggleMode();
-                }
-                if (FileBrowser())
-                {
-                    DisplayImage();
-                }
             }
         }
 
@@ -252,48 +120,18 @@ namespace ImageViewer
         {
             base.OnKeyDown(e);
 
+            RawKeyHandling(e);
+
             if (!CanExcectute())
             {
                 return;
             }
 
+            ValidatedKeyHandling(e);
+        }
 
-            if (e.Key == Settings.NextImage)
-            {
-
-                SwitchImage(SwitchDirection.Next);
-
-            }
-            else if (e.Key == Settings.PreviousImage)
-            {
-
-                SwitchImage(SwitchDirection.Previous);
-
-            }
-            else if (e.Key == Settings.DeleteImage)
-            {
-
-                var res = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
-                                              $"Delete {FileSystem.GetName(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex])}", MessageBoxButton.YesNo);
-                if (res == MessageBoxResult.Yes)
-                {
-                    FileSystem.DeleteFile(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex], UIOption.OnlyErrorDialogs,
-                        RecycleOption.SendToRecycleBin);
-                    if (tabs[CurrentTabIndex].images.paths.Count > 0)
-                    {
-                        SwitchImage(SwitchDirection.Next);
-                        // SupportedImageFilesInDirectory(Path.GetDirectoryName(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]));
-                    }
-                    else
-                    {
-                        if (FileBrowser())
-                        {
-                            DisplayImage();
-                        }
-                    }
-                }
-
-            }
+        void ValidatedKeyHandling(KeyEventArgs e)
+        {
             switch (e.Key)
             {
                 case Key.A:
@@ -321,14 +159,6 @@ namespace ImageViewer
                         border.Reset();
                         break;
                     }
-                case Key.N:
-                    {
-                        if (Keyboard.IsKeyDown(Key.LeftCtrl))
-                        {
-                            AddNewTab();
-                        }
-                        break;
-                    }
                 case Key.D:
                     {
                         if (Keyboard.IsKeyDown(Key.LeftCtrl))
@@ -347,22 +177,78 @@ namespace ImageViewer
                     }
                 case Key.S:
                     {
-                        slideshowMode = !slideshowMode;
-                        if (slideshowMode)
-                        {
-                            slideshowTimer.Start();
-                        }
-                        else
-                        {
-                            slideshowTimer.Stop();
-                        }
-                        UpdateTitle();
-                        currentSlideshowTime = 0;
+                        ToggleSlideshow();
                         break;
                     }
+                case Key.Right:
+                    {
+                        SwitchImage(SwitchDirection.Next);
+                        break;
+                    }
+                case Key.Left:
+                    {
+                        SwitchImage(SwitchDirection.Previous);
+                        break;
+                    }
+                case Key.Space:
+                    {
+                        SwitchImage(SwitchDirection.Next);
+                        break;
+                    }
+                case Key.Delete:
+                    {
+                        DeleteImage();
+                        break;
+                    }
+            }
+        }
+
+        void ToggleSlideshow()
+        {
+            SlideshowMode = !SlideshowMode;
+            if (SlideshowMode)
+            {
+                slideshowTimer.Start();
+            }
+            else
+            {
+                slideshowTimer.Stop();
+            }
+            UpdateTitle();
+            CurrentSlideshowTime = 0;
+        }
+
+        void DeleteImage()
+        {
+            var res = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
+                                          $"Delete {FileSystem.GetName(CurrentTab.images.Paths[CurrentTab.Index])}", MessageBoxButton.YesNo);
+            if (res == MessageBoxResult.Yes)
+            {
+                FileSystem.DeleteFile(CurrentTab.images.Paths[CurrentTab.Index], UIOption.OnlyErrorDialogs,
+                    RecycleOption.SendToRecycleBin);
+                if (CurrentTab.images.Paths.Count > 0)
+                {
+                    SupportedImageFilesInDirectory(Path.GetDirectoryName(CurrentTab.images.Paths[CurrentTab.Index]));
+
+                    SwitchImage(SwitchDirection.Next);
+                }
+                else
+                {
+                    if (FileBrowser())
+                    {
+                        DisplayImage();
+                    }
+                }
+            }
+        }
+
+        void RawKeyHandling(KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
                 case Key.Escape:
                     {
-                        if (inToggleMode)
+                        if (InToggleMode)
                         {
                             ExitToggleMode();
                         }
@@ -372,44 +258,88 @@ namespace ImageViewer
                         }
                         break;
                     }
+                case Key.N:
+                    {
+                        if (Keyboard.IsKeyDown(Key.LeftCtrl))
+                        {
+                            AddNewTab();
+                        }
+                        break;
+                    }
             }
         }
 
-        void DuplicateTab()
+        protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
         {
-            if (!CanExcectute())
+            if (e.Source == border)
             {
-                return;
+                if (InToggleMode)
+                {
+                    ExitToggleMode();
+                }
+                if (FileBrowser())
+                {
+                    DisplayImage();
+                }
             }
+        }
 
-            var newTab = new TabItem { Header = Path.GetFileName(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]), IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
-
-            var folderPath = Path.GetDirectoryName(Path.GetFileName(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]));
-            var tab = new TabData(newTab, folderPath, tabs[CurrentTabIndex].currentIndex)
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            if (Tabs.Any() && CurrentTab.images.Paths.Any())
             {
-                initialImagePath = tabs[CurrentTabIndex].initialImagePath
+                if (Keyboard.IsKeyDown(Key.LeftCtrl))
+                {
+                    if (e.Delta > 0)
+                    {
+                        SwitchImage(SwitchDirection.Next);
+                    }
+                    else
+                    {
+                        SwitchImage(SwitchDirection.Previous);
+                    }
+                }
+            }
+        }
+
+        static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
+
+        static MagickImage ErrorImage(string filepath)
+        {
+            MagickImage image = new MagickImage(MagickColors.White, 512, 512);
+            new Drawables()
+            .FontPointSize(18)
+            .Font("Arial")
+            .FillColor(MagickColors.Red)
+            .TextAlignment(ImageMagick.TextAlignment.Center)
+            .Text(256, 256, $"Could not load\n{Path.GetFileName(filepath)}")
+            .Draw(image);
+
+            return image;
+        }
+
+        static OpenFileDialog ShowOpenFileDialog()
+        {
+            var fileDialog = new OpenFileDialog
+            {
+                Multiselect = false,
+                AddExtension = true,
+                Filter = FileFormats.filter_string
             };
-            tabs.Add(tab);
-
-            ImageTabControl.Items.Add(newTab);
-
-            ImageTabControl.SelectedIndex = CurrentTabIndex + 1;
-            RefreshTab();
+            fileDialog.ShowDialog();
+            return fileDialog;
         }
 
-        void CloseTab()
+        static List<string> TypeSort<T>(IEnumerable<FileId<T>> id_list, Dictionary<T, int> dictionary)
         {
-            if (!CanExcectute())
-            {
-                return;
-            }
+            var id_file_dictionary = id_list.ToDictionary(x => x.Id, x => x.Path);
 
-            tabs.RemoveAt(ImageTabControl.SelectedIndex);
-            if (ImageTabControl.SelectedIndex == 0)
-            {
-                ImageArea.Source = null;
-            }
-            ImageTabControl.Items.RemoveAt(ImageTabControl.SelectedIndex);
+            var keys = dictionary.Keys.ToList();
+            keys.Sort();
+
+            var sorted_paths = keys.Select(l => dictionary[l]).ToList().Select(l => id_file_dictionary[l]).ToList();
+            return sorted_paths;
         }
 
         void AddNewTab()
@@ -421,7 +351,7 @@ namespace ImageViewer
             var newTab = new TabItem { Header = file_dialog.FileName, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
 
             var folderPath = Path.GetDirectoryName(file_dialog.FileName);
-            tabs.Add(new TabData(newTab, folderPath));
+            Tabs.Add(new TabData(newTab, folderPath));
 
             ImageTabControl.Items.Add(newTab);
 
@@ -429,17 +359,17 @@ namespace ImageViewer
 
             SupportedImageFilesInDirectory(folderPath);
 
-            var filenameIndex = tabs[CurrentTabIndex].images.paths.IndexOf(file_dialog.FileName);
+            var filenameIndex = CurrentTab.images.Paths.IndexOf(file_dialog.FileName);
             if (filenameIndex == -1)
             {
-                tabs[CurrentTabIndex].currentIndex = 0;
+                CurrentTab.Index = 0;
             }
             else
             {
-                tabs[CurrentTabIndex].currentIndex = filenameIndex;
+                CurrentTab.Index = filenameIndex;
             }
 
-            tabs[CurrentTabIndex].initialImagePath = file_dialog.FileName;
+            CurrentTab.InitialImagePath = file_dialog.FileName;
 
             RefreshTab();
         }
@@ -452,7 +382,7 @@ namespace ImageViewer
             var newTab = new TabItem { Header = Path.GetFileName(filepath), IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
 
             var folderPath = Path.GetDirectoryName(filepath);
-            tabs.Add(new TabData(newTab, folderPath));
+            Tabs.Add(new TabData(newTab, folderPath));
 
             ImageTabControl.Items.Add(newTab);
 
@@ -460,133 +390,174 @@ namespace ImageViewer
 
             SupportedImageFilesInDirectory(folderPath);
 
-            var filenameIndex = tabs[CurrentTabIndex].images.paths.IndexOf(filepath);
+            var filenameIndex = CurrentTab.images.Paths.IndexOf(filepath);
             if (filenameIndex == -1)
             {
-                tabs[CurrentTabIndex].currentIndex = 0;
+                CurrentTab.Index = 0;
             }
             else
             {
-                tabs[CurrentTabIndex].currentIndex = filenameIndex;
+                CurrentTab.Index = filenameIndex;
             }
 
-            tabs[CurrentTabIndex].initialImagePath = filepath;
+            CurrentTab.InitialImagePath = filepath;
 
             RefreshTab();
             SetupDirectoryWatcher();
         }
 
-        void RefreshTab()
-        {
-            DisplayImage();
-            UpdateTitle();
-        }
-
-        void Slideshow(object source, EventArgs e)
+        void Ascending_sort_mode(object sender, RoutedEventArgs e)
         {
             if (!CanExcectute())
             {
-                slideshowMode = false;
                 return;
             }
 
-            if (currentSlideshowTime < slideshowInterval)
+            if (CurrentTab.imageSettings.Current_sort_mode == SortMode.Descending)
             {
-                currentSlideshowTime += 1;
-                UpdateTitle();
+                var inital_image = CurrentTab.images.Paths[CurrentTab.Index];
+                var file_paths_list = CurrentTab.images.Paths;
+                file_paths_list.Reverse();
+                FindImageAfterSort(file_paths_list, inital_image);
             }
-            else
-            {
-                currentSlideshowTime = 0;
-                slideshowTimer.Stop();
-                SwitchImage(SwitchDirection.Next);
-                slideshowTimer.Start();
-            }
-
-            if (!slideshowMode)
-            {
-                slideshowTimer.Stop();
-                UpdateTitle();
-                currentSlideshowTime = 0;
-            }
-
+            CurrentTab.imageSettings.Current_sort_mode = SortMode.Ascending;
+            SortDecending.IsChecked = false;
+            SortAscending.IsChecked = true;
         }
 
-        void ExitToggleMode()
+        void Border_Drop(object sender, DragEventArgs e)
         {
-            tabs[CurrentTabIndex].images = tabs[CurrentTabIndex].last_images;
-            inToggleMode = false;
-            SetCurrentImage(beforeCompareModeIndex);
+            var filenames = (string[])e.Data.GetData("FileName");
+            ReplaceImageInTab(filenames[0]);
+            RefreshTab();
         }
 
-        void SetCurrentImage(int newIndex)
+        bool CanExcectute()
         {
-            tabs[CurrentTabIndex].currentIndex = newIndex;
-            DisplayImage();
-        }
-
-        enum SwitchDirection
-        {
-            Next,
-            Previous
-        }
-
-        void SwitchImage(SwitchDirection switchDirection)
-        {
-            if (slideshowMode)
+            if (CurrentTabIndex < 0)
             {
-                currentSlideshowTime = 0;
+                return false;
             }
-            imageArea.Source = null;
-            UpdateLayout();
-            switch (switchDirection)
+            if (CurrentTab.Index == -1)
             {
-                case SwitchDirection.Next:
-                    if (tabs[CurrentTabIndex].currentIndex < tabs[CurrentTabIndex].images.paths?.Count - 1)
-                    {
-                        SetCurrentImage(tabs[CurrentTabIndex].currentIndex += 1);
-                    }
-                    else
-                    {
-                        SetCurrentImage(0);
-                    }
-                    break;
-                case SwitchDirection.Previous:
-                    if (tabs[CurrentTabIndex].images.paths != null)
-                    {
-                        if (tabs[CurrentTabIndex].currentIndex > 0)
-                        {
-                            SetCurrentImage(tabs[CurrentTabIndex].currentIndex -= 1);
-                        }
-                        else
-                        {
-                            SetCurrentImage(tabs[CurrentTabIndex].currentIndex = tabs[CurrentTabIndex].images.paths.Count - 1);
-                        }
-                    }
-                    break;
+                return false;
             }
+            if (!Tabs.Any())
+            {
+                return false;
+            }
+            if (CurrentTab.images.Paths == null)
+            {
+                return false;
+            }
+            if (!CurrentTab.images.Paths.Any())
+            {
+                return false;
+            }
+            return true;
         }
 
-        void ImageAreaOnLoaded(object sender, RoutedEventArgs e)
+        void CloseTab()
         {
-            imageArea = sender as Image;
-            if (imageArea != null)
+            if (!CanExcectute())
             {
-                DisplayImage();
+                return;
             }
+
+            Tabs.RemoveAt(ImageTabControl.SelectedIndex);
+            if (ImageTabControl.SelectedIndex == 0)
+            {
+                ImageArea.Source = null;
+            }
+            ImageTabControl.Items.RemoveAt(ImageTabControl.SelectedIndex);
+        }
+
+        void Compare_onclick(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            var compare_file = ShowOpenFileDialog().FileName;
+            if (string.IsNullOrEmpty(compare_file))
+                return;
+
+            if (InToggleMode == false)
+            {
+                CurrentTab.last_images = CurrentTab.images;
+                InToggleMode = true;
+                BeforeCompareModeIndex = CurrentTab.Index;
+            }
+            CurrentTab.images.Paths = new List<string> { CurrentTab.images.Paths[CurrentTab.Index], compare_file };
+            SetCurrentImage(0);
+        }
+
+        void CopyPathToClipboard(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            Clipboard.SetText($"\"{BackwardToForwardSlash(CurrentTab.images.Paths[CurrentTab.Index])}\"");
+        }
+
+        void Decending_sort_mode(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            if (CurrentTab.imageSettings.Current_sort_mode == SortMode.Ascending)
+            {
+                var inital_image = CurrentTab.images.Paths[CurrentTab.Index];
+                var file_paths_list = CurrentTab.images.Paths;
+                file_paths_list.Reverse();
+                FindImageAfterSort(file_paths_list, inital_image);
+            }
+            CurrentTab.imageSettings.Current_sort_mode = SortMode.Descending;
+            SortDecending.IsChecked = true;
+            SortAscending.IsChecked = false;
+        }
+
+        void Display_all_channels(object sender, RoutedEventArgs e)
+        {
+            SetDisplayChannel(Channels.RGB);
+        }
+
+        void Display_alpha_channel(object sender, RoutedEventArgs e)
+        {
+            SetDisplayChannel(Channels.Alpha);
+        }
+
+        void Display_blue_channel(object sender, RoutedEventArgs e)
+        {
+            SetDisplayChannel(Channels.Blue);
+        }
+
+        void Display_green_channel(object sender, RoutedEventArgs e)
+        {
+            SetDisplayChannel(Channels.Green);
+        }
+
+        void Display_red_channel(object sender, RoutedEventArgs e)
+        {
+            SetDisplayChannel(Channels.Red);
         }
 
         void DisplayImage()
         {
-            if(tabs[CurrentTabIndex].currentIndex == -1)
+            if (CurrentTabIndex < 0 || CurrentTab.Index == -1)
             {
                 return;
             }
             if (imageArea != null)
             {
-                if (tabs[CurrentTabIndex].images.Is_valid())
+                if (CurrentTab.images.IsValid())
                 {
-                    var image = Load_image(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]);
+                    var image = Load_image(CurrentTab.images.Paths[CurrentTab.Index]);
 
                     imageArea.Source = image;
                     if (image.Height > border.ActualHeight)
@@ -611,74 +582,86 @@ namespace ImageViewer
 
                     UpdateTitle();
                     border.Reset();
+                    // TODO Read this from the tab, but on image next/previous it should overwrite this.
+                    border.SetTransform(new TranslateTransform(100, 100), new ScaleTransform(20, 20));
+
                 }
             }
         }
 
-        void UpdateTitle()
+        void DuplicateTab()
         {
             if (!CanExcectute())
             {
                 return;
             }
 
-            string title;
+            var newTab = new TabItem { Header = Path.GetFileName(CurrentTab.images.Paths[CurrentTab.Index]), IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
 
-            if (inToggleMode)
+            var folderPath = Path.GetDirectoryName(Path.GetFileName(CurrentTab.images.Paths[CurrentTab.Index]));
+            var tab = new TabData(newTab, folderPath, CurrentTab.Index)
             {
-                title = $" [Toggle] {new FileInfo(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]).Name}";
-            }
-            else
-            {
-                title = new FileInfo(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]).Name;
-            }
+                InitialImagePath = CurrentTab.InitialImagePath,
+                images = CurrentTab.images
+            };
+            Tabs.Add(tab);
 
-            if (slideshowMode)
-            {
-                title += $" [Slideshow] {currentSlideshowTime}";
-            }
+            ImageTabControl.Items.Add(newTab);
 
-            switch (DisplayChannel)
-            {
-                case Channels.RGB:
-                    {
-                        title += $" [RGB_]";
-                        break;
-                    }
-                case Channels.Red:
-                    {
-                        title += $" [R___]";
-                        break;
-                    }
-                case Channels.Green:
-                    {
-                        title += $" [_G__]";
-                        break;
-                    }
-                case Channels.Blue:
-                    {
-                        title += $" [__B_]";
-                        break;
-                    }
-                case Channels.Alpha:
-                    {
-                        title += $" [___A]";
-                        break;
-                    }
-            }
-            tabs[CurrentTabIndex].tabItem.Header = title;
+            ImageTabControl.SelectedIndex = CurrentTabIndex + 1;
+            RefreshTab();
         }
 
-        void RefreshImage()
+        void ExitToggleMode()
         {
-            if (tabs[CurrentTabIndex].images.Is_valid())
+            CurrentTab.images = CurrentTab.last_images;
+            InToggleMode = false;
+            SetCurrentImage(BeforeCompareModeIndex);
+        }
+
+        bool FileBrowser()
+        {
+            var fileDialog = ShowOpenFileDialog();
+            if (string.IsNullOrEmpty(fileDialog.SafeFileName))
+                return false;
+            string filename = Path.GetFullPath(fileDialog.FileName);
+            ReplaceImageInTab(filename);
+
+            return true;
+        }
+
+        void FindImageAfterSort(List<string> sorted_paths, string initial_image)
+        {
+            CurrentTab.images.Paths = sorted_paths;
+            CurrentTab.Index = sorted_paths.IndexOf(initial_image);
+        }
+
+        void ImageAreaOnLoaded(object sender, RoutedEventArgs e)
+        {
+            imageArea = sender as Image;
+            if (imageArea != null)
             {
-                var image = Load_image(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]);
-
-                imageArea.Source = image;
-
-                UpdateTitle();
+                DisplayImage();
             }
+        }
+
+        void ImageTabControl_Drop(object sender, DragEventArgs e)
+        {
+            var filenames = (string[])e.Data.GetData("FileName");
+            AddNewTab(Path.GetFullPath(filenames[0]));
+        }
+
+        void ImageTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+            
+            var folder_path = Path.GetDirectoryName(Tabs[ImageTabControl.SelectedIndex].InitialImagePath);
+            SupportedImageFilesInDirectory(folder_path);
+
+            RefreshTab();
         }
 
         BitmapSource Load_image(string filepath)
@@ -688,16 +671,13 @@ namespace ImageViewer
             {
                 image = new MagickImage(filepath);
             }
+            catch (MagickCoderErrorException)
+            {
+                image = ErrorImage(filepath);
+            }
             catch (MagickMissingDelegateErrorException)
             {
-                image = new MagickImage(MagickColors.White, 512, 512);
-                new Drawables()
-                  .FontPointSize(18)
-                  .Font("Arial")
-                  .FillColor(MagickColors.Red)
-                  .TextAlignment(ImageMagick.TextAlignment.Center)
-                  .Text(256, 256, $"Could not load\n{Path.GetFileName(filepath)}")
-                  .Draw(image);
+                image = ErrorImage(filepath);
             }
 
             switch (DisplayChannel)
@@ -726,234 +706,97 @@ namespace ImageViewer
             }
         }
 
-        void SortAcending(SortMethod method)
+        void OpenInImageEditor(object sender, RoutedEventArgs e)
         {
-            var id = 0;
-            string initialImage;
-            if (tabs[CurrentTabIndex].images.paths.Count < tabs[CurrentTabIndex].currentIndex)
+            if (!CanExcectute())
             {
-                initialImage = tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex];
+                return;
+            }
+            if (!string.IsNullOrEmpty(Settings.ImageEditor))
+            {
+                if (File.Exists(Settings.ImageEditor))
+                {
+                    Process.Start(Settings.ImageEditor, CurrentTab.images.Paths[CurrentTab.Index]);
+                    return;
+                }
+                if (MessageBox.Show("Editor not found\nDo you want to browse for editor?", "Missing file", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    ImageEditorBrowse();
+                }
             }
             else
             {
-                initialImage = tabs[CurrentTabIndex].initialImagePath;
+                if (MessageBox.Show("No image editor specified in settings file\nDo you want to browse for editor?", "Missing Image Editor", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    ImageEditorBrowse();
+                }
             }
-            List<string> sortedPaths;
-            switch (method)
+            Settings.Save();
+        }
+
+        void ImageEditorBrowse()
+        {
+            var file_dialog = new OpenFileDialog
             {
-                case SortMethod.Name:
-                    {
-                        sortedPaths = tabs[CurrentTabIndex].images.paths.ToList();
-                        sortedPaths.Sort();
-                        break;
-                    }
-
-                case SortMethod.Date:
-                    {
-                        var keys = tabs[CurrentTabIndex].images.paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
-
-                        var dateTimeLookup = keys.Zip(tabs[CurrentTabIndex].images.paths.ToList(), (k, v) => new { k, v })
-                                                   .ToLookup(x => x.k, x => x.v);
-
-                        var idList = dateTimeLookup.SelectMany(pair => pair,
-                                                          (pair, value) => new FileId<DateTime>(value, pair.Key, id += 1))
-                                                      .ToList();
-
-                        var dateIdDictionary = idList.ToDictionary(x => x.Item.AddMilliseconds(x.Id), x => x.Id);
-                        sortedPaths = TypeSort(idList, dateIdDictionary);
-                        break;
-                    }
-                case SortMethod.Size:
-                    {
-                        var keys = tabs[CurrentTabIndex].images.paths.ToList().Select(s => new FileInfo(s).Length).ToList();
-                        var size_lookup = keys.Zip(tabs[CurrentTabIndex].images.paths.ToList(), (k, v) => new { k, v })
-                                              .ToLookup(x => x.k, x => x.v);
-
-                        var id_list = size_lookup.SelectMany(pair => pair,
-                                                     (pair, value) => new FileId<long>(value, pair.Key, id += 1)).ToList();
-
-
-                        var date_id_dictionary = id_list.ToDictionary(x => x.Item + x.Id, x => x.Id);
-                        sortedPaths = TypeSort(id_list, date_id_dictionary);
-                        break;
-                    }
-                default:
-                    {
-                        return;
-                    }
+                Multiselect = false,
+                AddExtension = true,
+                Filter = "Executable Files (*.exe, *.lnk)|*.exe;*.lnk"
+            };
+            if (file_dialog.ShowDialog() == true)
+            {
+                Settings.ImageEditor = file_dialog.FileName;
+                Process.Start(Settings.ImageEditor, CurrentTab.images.Paths[CurrentTab.Index]);
             }
-            FindImageAfterSort(sortedPaths, initialImage);
-
-        }
-
-        static List<string> TypeSort<T>(IEnumerable<FileId<T>> id_list, Dictionary<T, int> dictionary)
-        {
-            var id_file_dictionary = id_list.ToDictionary(x => x.Id, x => x.Path);
-
-            var keys = dictionary.Keys.ToList();
-            keys.Sort();
-
-            var sorted_paths = keys.Select(l => dictionary[l]).ToList().Select(l => id_file_dictionary[l]).ToList();
-            return sorted_paths;
-        }
-
-        void FindImageAfterSort(List<string> sorted_paths, string initial_image)
-        {
-            tabs[CurrentTabIndex].images.paths = sorted_paths;
-            tabs[CurrentTabIndex].currentIndex = sorted_paths.IndexOf(initial_image);
-        }
-
-        void Sort_decending(SortMethod method)
-        {
-            SortAcending(method);
-            tabs[CurrentTabIndex].images.paths.Reverse();
-            tabs[CurrentTabIndex].currentIndex = tabs[CurrentTabIndex].images.paths.ToList().IndexOf(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]);
-        }
-
-        void View_in_explorer(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
+            else
             {
                 return;
             }
-
-            Process.Start("explorer.exe", "/select, " + tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]);
         }
 
-        bool CanExcectute()
+        void RefreshImage()
         {
-            if(tabs[CurrentTabIndex].currentIndex == -1)
+            if (CurrentTab.images.IsValid())
             {
-                return false;
+                var image = Load_image(CurrentTab.images.Paths[CurrentTab.Index]);
+
+                imageArea.Source = image;
+
+                UpdateTitle();
             }
+        }
+
+        void RefreshTab()
+        {
+            DisplayImage();
+            UpdateTitle();
+        }
+
+        void RefreshUI()
+        {
+            border.Background = Settings.Background;
+        }
+
+        void ReplaceImageInTab(string filename)
+        {
+            var folderPath = Path.GetDirectoryName(filename);
             if (CurrentTabIndex < 0)
             {
-                return false;
+                AddNewTab(filename);
             }
-            if (!tabs.Any())
+            CurrentTab.InitialImagePath = filename;
+            SupportedImageFilesInDirectory(folderPath);
+
+            var filenameIndex = CurrentTab.images.Paths.IndexOf(filename);
+            if (filenameIndex == -1)
             {
-                return false;
+                CurrentTab.Index = 0;
             }
-            if (!tabs[CurrentTabIndex].images.paths.Any())
+            else
             {
-                return false;
-            }
-            return true;
-        }
-
-        void Sort_by_name(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
+                CurrentTab.Index = filenameIndex;
             }
 
-            Sort(SortMethod.Name);
-            SortName.IsChecked = true;
-            SortSize.IsChecked = false;
-            SortDate.IsChecked = false;
-        }
-
-        void Sort_by_size(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            Sort(SortMethod.Size);
-            SortSize.IsChecked = true;
-            SortName.IsChecked = false;
-            SortDate.IsChecked = false;
-        }
-
-        void Sort_by_date_modified(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            Sort(SortMethod.Date);
-            SortDate.IsChecked = true;
-            SortName.IsChecked = false;
-            SortSize.IsChecked = false;
-        }
-
-        void Sort(SortMethod sort_method)
-        {
-            switch (tabs[CurrentTabIndex].imageSettings.Current_sort_mode)
-            {
-                case SortMode.Ascending:
-                    {
-                        SortAcending(sort_method);
-                        break;
-                    }
-                case SortMode.Descending:
-                    {
-                        Sort_decending(sort_method);
-                        break;
-                    }
-            }
-        }
-
-        void Decending_sort_mode(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            if (tabs[CurrentTabIndex].imageSettings.Current_sort_mode == SortMode.Ascending)
-            {
-                var inital_image = tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex];
-                var file_paths_list = tabs[CurrentTabIndex].images.paths;
-                file_paths_list.Reverse();
-                FindImageAfterSort(file_paths_list, inital_image);
-            }
-            tabs[CurrentTabIndex].imageSettings.Current_sort_mode = SortMode.Descending;
-            SortDecending.IsChecked = true;
-            SortAscending.IsChecked = false;
-        }
-
-        void Ascending_sort_mode(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            if (tabs[CurrentTabIndex].imageSettings.Current_sort_mode == SortMode.Descending)
-            {
-                var inital_image = tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex];
-                var file_paths_list = tabs[CurrentTabIndex].images.paths;
-                file_paths_list.Reverse();
-                FindImageAfterSort(file_paths_list, inital_image);
-            }
-            tabs[CurrentTabIndex].imageSettings.Current_sort_mode = SortMode.Ascending;
-            SortDecending.IsChecked = false;
-            SortAscending.IsChecked = true;
-        }
-
-        void Compare_onclick(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            var compare_file = ShowOpenFileDialog().FileName;
-            if (string.IsNullOrEmpty(compare_file))
-                return;
-
-            if (inToggleMode == false)
-            {
-                tabs[CurrentTabIndex].last_images = tabs[CurrentTabIndex].images;
-                inToggleMode = true;
-                beforeCompareModeIndex = tabs[CurrentTabIndex].currentIndex;
-            }
-            tabs[CurrentTabIndex].images.paths = new List<string> { tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex], compare_file };
-            SetCurrentImage(0);
+            SetupDirectoryWatcher();
         }
 
         void Reset_Click(object sender, RoutedEventArgs e)
@@ -961,29 +804,10 @@ namespace ImageViewer
             border.Reset();
         }
 
-        void Display_all_channels(object sender, RoutedEventArgs e)
+        void SetCurrentImage(int newIndex)
         {
-            SetDisplayChannel(Channels.RGB);
-        }
-
-        void Display_red_channel(object sender, RoutedEventArgs e)
-        {
-            SetDisplayChannel(Channels.Red);
-        }
-
-        void Display_green_channel(object sender, RoutedEventArgs e)
-        {
-            SetDisplayChannel(Channels.Green);
-        }
-
-        void Display_alpha_channel(object sender, RoutedEventArgs e)
-        {
-            SetDisplayChannel(Channels.Alpha);
-        }
-
-        void Display_blue_channel(object sender, RoutedEventArgs e)
-        {
-            SetDisplayChannel(Channels.Blue);
+            CurrentTab.Index = newIndex;
+            DisplayImage();
         }
 
         void SetDisplayChannel(Channels channel)
@@ -1034,141 +858,69 @@ namespace ImageViewer
             }
         }
 
-        void ImageTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        void SetupDirectoryWatcher()
         {
-            if (tabs[CurrentTabIndex].currentIndex == -1)
+            var index = ImageTabControl != null ? ImageTabControl.SelectedIndex : 0;
+            var watcher = new FileSystemWatcher
             {
-                return;
-            }
-            if (ImageTabControl.SelectedIndex < 0)
-            {
-                return;
-            }
-            if (tabs.Count == 1)
-            {
-                return;
-            }
-            var folder_path = Path.GetDirectoryName(tabs[ImageTabControl.SelectedIndex].initialImagePath);
-            SupportedImageFilesInDirectory(folder_path);
+                Path = Path.GetDirectoryName(Tabs[index].InitialImagePath),
+                NotifyFilter =
+                    NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName |
+                    NotifyFilters.DirectoryName
+            };
 
-            RefreshTab();
+            watcher.Changed += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(Tabs[index].InitialImagePath));
+            watcher.Created += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(Tabs[index].InitialImagePath));
+            watcher.Deleted += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(Tabs[index].InitialImagePath));
+            watcher.Renamed += (sender, args) => SupportedImageFilesInDirectory(Path.GetDirectoryName(Tabs[index].InitialImagePath));
+
+            watcher.EnableRaisingEvents = true;
         }
 
-        void CopyPathToClipboard(object sender, RoutedEventArgs e)
+        void SetupSlideshow()
+        {
+            slideshowTimer = new System.Windows.Threading.DispatcherTimer();
+            slideshowTimer.Tick += Slideshow;
+            slideshowTimer.Interval = new TimeSpan(0, 0, 1);
+        }
+        void Slideshow(object source, EventArgs e)
         {
             if (!CanExcectute())
             {
+                SlideshowMode = false;
                 return;
             }
 
-            Clipboard.SetText($"\"{BackwardToForwardSlash(tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex])}\"");
-        }
-
-        static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
-
-        void OpenInImageEditor(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
+            if (CurrentSlideshowTime < SlideshowInterval)
             {
-                return;
-            }
-            // Check if I can find the Image Editor 
-            if (Settings.ImageEditor != null)
-            {
-                Process.Start(Settings.ImageEditor, tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]);
+                CurrentSlideshowTime += 1;
+                UpdateTitle();
             }
             else
             {
-                if (MessageBox.Show("No image editor specified in settings file\nDo you want to browse for editor?", "Missing Image Editor", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                {
-                    var file_dialog = new OpenFileDialog
-                    {
-                        Multiselect = false,
-                        AddExtension = true,
-                        Filter = "Executable Files (*.exe, *.lnk)|*.exe;*.lnk"
-
-                    };
-                    file_dialog.ShowDialog();
-
-                    Settings.ImageEditor = file_dialog.FileName;
-                    Process.Start(Settings.ImageEditor, tabs[CurrentTabIndex].images.paths[tabs[CurrentTabIndex].currentIndex]);
-                    // TODO Add this after I've implemented save.
-                    // Settings.Save();
-                }
+                CurrentSlideshowTime = 0;
+                slideshowTimer.Stop();
+                SwitchImage(SwitchDirection.Next);
+                slideshowTimer.Start();
             }
-        }
 
-        void UIPrevious_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
+            if (!SlideshowMode)
             {
-                return;
+                slideshowTimer.Stop();
+                UpdateTitle();
+                CurrentSlideshowTime = 0;
             }
-
-            SwitchImage(SwitchDirection.Previous);
         }
 
-        void UINext_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            SwitchImage(SwitchDirection.Next);
-        }
-
-        void UIAddNewTab_Click(object sender, RoutedEventArgs e)
-        {
-            AddNewTab();
-        }
-
-        void ImageTabControl_Drop(object sender, DragEventArgs e)
-        {
-            var filenames = (string[])e.Data.GetData("FileName");
-            AddNewTab(Path.GetFullPath(filenames[0]));
-        }
-
-        void Border_Drop(object sender, DragEventArgs e)
-        {
-            var filenames = (string[])e.Data.GetData("FileName");
-            ReplaceImageInTab(filenames[0]);
-            RefreshTab();
-        }
-
-        void StartSlideshowUI_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            slideshowMode = true;
-            UpdateTitle();
-            currentSlideshowTime = 0;
-            slideshowTimer.Start();
-            StartSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
-            StopSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
-        }
-
-        void StopSlideshowUI_Click(object sender, RoutedEventArgs e)
-        {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
-            slideshowMode = false;
-            UpdateTitle();
-            currentSlideshowTime = 0;
-            slideshowTimer.Stop();
-            StartSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
-            StopSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
-        }
+        void Slideshow10SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs10);
 
         void Slideshow1SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Sec1);
 
+        void Slideshow20SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs20);
+
         void Slideshow2SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs2);
+
+        void Slideshow30SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs30);
 
         void Slideshow3SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs3);
 
@@ -1176,31 +928,8 @@ namespace ImageViewer
 
         void Slideshow5SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs5);
 
-        void Slideshow10SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs10);
-
-        void Slideshow20SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs20);
-
-        void Slideshow30SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUI(SlideshowIntervalSec.Secs30);
-
-        enum SlideshowIntervalSec
-        {
-            Sec1,
-            Secs2,
-            Secs3,
-            Secs4,
-            Secs5,
-            Secs10,
-            Secs20,
-            Secs30
-        }
-
         void SlideshowIntervalUI(SlideshowIntervalSec newInterval)
         {
-            if (!CanExcectute())
-            {
-                return;
-            }
-
             Slideshow1SecUI.IsChecked = false;
             Slideshow2SecUI.IsChecked = false;
             Slideshow3SecUI.IsChecked = false;
@@ -1215,52 +944,359 @@ namespace ImageViewer
                 case SlideshowIntervalSec.Sec1:
                     {
                         Slideshow1SecUI.IsChecked = true;
-                        slideshowInterval = 1;
+                        SlideshowInterval = 1;
                         break;
                     }
                 case SlideshowIntervalSec.Secs2:
                     {
                         Slideshow2SecUI.IsChecked = true;
-                        slideshowInterval = 2;
+                        SlideshowInterval = 2;
                         break;
                     }
                 case SlideshowIntervalSec.Secs3:
                     {
                         Slideshow3SecUI.IsChecked = true;
-                        slideshowInterval = 3;
+                        SlideshowInterval = 3;
                         break;
                     }
                 case SlideshowIntervalSec.Secs4:
                     {
                         Slideshow4SecUI.IsChecked = true;
-                        slideshowInterval = 4;
+                        SlideshowInterval = 4;
                         break;
                     }
                 case SlideshowIntervalSec.Secs5:
                     {
                         Slideshow5SecUI.IsChecked = true;
-                        slideshowInterval = 5;
+                        SlideshowInterval = 5;
                         break;
                     }
                 case SlideshowIntervalSec.Secs10:
                     {
                         Slideshow10SecUI.IsChecked = true;
-                        slideshowInterval = 10;
+                        SlideshowInterval = 10;
                         break;
                     }
                 case SlideshowIntervalSec.Secs20:
                     {
                         Slideshow20SecUI.IsChecked = true;
-                        slideshowInterval = 20;
+                        SlideshowInterval = 20;
                         break;
                     }
                 case SlideshowIntervalSec.Secs30:
                     {
                         Slideshow30SecUI.IsChecked = true;
-                        slideshowInterval = 30;
+                        SlideshowInterval = 30;
                         break;
                     }
             }
+        }
+
+        void Sort(SortMethod sort_method)
+        {
+            switch (CurrentTab.imageSettings.Current_sort_mode)
+            {
+                case SortMode.Ascending:
+                    {
+                        SortAcending(sort_method);
+                        break;
+                    }
+                case SortMode.Descending:
+                    {
+                        Sort_decending(sort_method);
+                        break;
+                    }
+            }
+        }
+
+        void Sort_by_date_modified(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            Sort(SortMethod.Date);
+            SortDate.IsChecked = true;
+            SortName.IsChecked = false;
+            SortSize.IsChecked = false;
+        }
+
+        void Sort_by_name(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            Sort(SortMethod.Name);
+            SortName.IsChecked = true;
+            SortSize.IsChecked = false;
+            SortDate.IsChecked = false;
+        }
+
+        void Sort_by_size(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            Sort(SortMethod.Size);
+            SortSize.IsChecked = true;
+            SortName.IsChecked = false;
+            SortDate.IsChecked = false;
+        }
+
+        void Sort_decending(SortMethod method)
+        {
+            SortAcending(method);
+            CurrentTab.images.Paths.Reverse();
+            CurrentTab.Index = CurrentTab.images.Paths.ToList().IndexOf(CurrentTab.images.Paths[CurrentTab.Index]);
+        }
+
+        void SortAcending(SortMethod method)
+        {
+            var id = 0;
+            string initialImage;
+            if (CurrentTab.images.Paths.Count < CurrentTab.Index)
+            {
+                initialImage = CurrentTab.InitialImagePath;
+            }
+            else
+            {
+                initialImage = CurrentTab.images.Paths[CurrentTab.Index];
+            }
+            List<string> sortedPaths;
+            switch (method)
+            {
+                case SortMethod.Name:
+                    {
+                        sortedPaths = CurrentTab.images.Paths.ToList();
+                        sortedPaths.Sort();
+                        break;
+                    }
+
+                case SortMethod.Date:
+                    {
+                        var keys = CurrentTab.images.Paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
+
+                        var dateTimeLookup = keys.Zip(CurrentTab.images.Paths.ToList(), (k, v) => new { k, v })
+                                                   .ToLookup(x => x.k, x => x.v);
+
+                        var idList = dateTimeLookup.SelectMany(pair => pair,
+                                                          (pair, value) => new FileId<DateTime>(value, pair.Key, id += 1))
+                                                      .ToList();
+
+                        var dateIdDictionary = idList.ToDictionary(x => x.Item.AddMilliseconds(x.Id), x => x.Id);
+                        sortedPaths = TypeSort(idList, dateIdDictionary);
+                        break;
+                    }
+                case SortMethod.Size:
+                    {
+                        var keys = CurrentTab.images.Paths.ToList().Select(s => new FileInfo(s).Length).ToList();
+                        var size_lookup = keys.Zip(CurrentTab.images.Paths.ToList(), (k, v) => new { k, v })
+                                              .ToLookup(x => x.k, x => x.v);
+
+                        var id_list = size_lookup.SelectMany(pair => pair,
+                                                     (pair, value) => new FileId<long>(value, pair.Key, id += 1)).ToList();
+
+                        var date_id_dictionary = id_list.ToDictionary(x => x.Item + x.Id, x => x.Id);
+                        sortedPaths = TypeSort(id_list, date_id_dictionary);
+                        break;
+                    }
+                default:
+                    {
+                        return;
+                    }
+            }
+            FindImageAfterSort(sortedPaths, initialImage);
+        }
+
+        void StartSlideshowUI_Click(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            SlideshowMode = true;
+            UpdateTitle();
+            CurrentSlideshowTime = 0;
+            slideshowTimer.Start();
+            StartSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
+            StopSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
+        }
+
+        void StopSlideshowUI_Click(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            SlideshowMode = false;
+            UpdateTitle();
+            CurrentSlideshowTime = 0;
+            slideshowTimer.Stop();
+            StartSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
+            StopSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
+        }
+
+        void SupportedImageFilesInDirectory(string path)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (string.IsNullOrEmpty(path))
+                {
+                    return;
+                }
+
+                if (CurrentTab.images.Paths != null)
+                {
+                    CurrentTab.images.Paths.Clear();
+                }
+                else
+                {
+                    CurrentTab.images.Paths = new List<string>();
+                }
+
+                foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly))
+                {
+                    var extension = Path.GetExtension(Path.GetFileName(file));
+                    if (!string.IsNullOrEmpty(extension))
+                    {
+                        if (FileFormats.supported_extensions.Contains(extension.Remove(0, 1), StringComparer.OrdinalIgnoreCase))
+                        {
+                            CurrentTab.images.Paths.Add(file);
+                        }
+                    }
+                }
+
+                if (CurrentTab.images.IsValid())
+                {
+                    SortAcending(SortMethod.Name);
+                }
+            });
+        }
+        void SwitchImage(SwitchDirection switchDirection)
+        {
+            if (SlideshowMode)
+            {
+                CurrentSlideshowTime = 0;
+            }
+            UpdateLayout();
+            switch (switchDirection)
+            {
+                case SwitchDirection.Next:
+                    if (CurrentTab.Index < CurrentTab.images.Paths?.Count - 1)
+                    {
+                        SetCurrentImage(CurrentTab.Index += 1);
+                    }
+                    else
+                    {
+                        SetCurrentImage(0);
+                    }
+                    break;
+
+                case SwitchDirection.Previous:
+                    if (CurrentTab.images.Paths != null)
+                    {
+                        if (CurrentTab.Index > 0)
+                        {
+                            SetCurrentImage(CurrentTab.Index -= 1);
+                        }
+                        else
+                        {
+                            SetCurrentImage(CurrentTab.Index = CurrentTab.images.Paths.Count - 1);
+                        }
+                    }
+                    break;
+            }
+        }
+        void UIAddNewTab_Click(object sender, RoutedEventArgs e)
+        {
+            AddNewTab();
+        }
+
+        void UINext_Click(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            SwitchImage(SwitchDirection.Next);
+        }
+
+        void UIPrevious_Click(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            SwitchImage(SwitchDirection.Previous);
+        }
+
+        void UpdateTitle()
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            if (InToggleMode)
+            {
+                CurrentTab.Title = $" [Toggle] {CurrentTab.Filename}";
+            }
+            else
+            {
+                CurrentTab.Title = CurrentTab.Filename;
+            }
+
+            if (SlideshowMode)
+            {
+                CurrentTab.Title += $" [Slideshow] {CurrentSlideshowTime}";
+            }
+
+            switch (DisplayChannel)
+            {
+                case Channels.RGB:
+                    {
+                        CurrentTab.Title += $" [RGB_]";
+                        break;
+                    }
+                case Channels.Red:
+                    {
+                        CurrentTab.Title += $" [R___]";
+                        break;
+                    }
+                case Channels.Green:
+                    {
+                        CurrentTab.Title += $" [_G__]";
+                        break;
+                    }
+                case Channels.Blue:
+                    {
+                        CurrentTab.Title += $" [__B_]";
+                        break;
+                    }
+                case Channels.Alpha:
+                    {
+                        CurrentTab.Title += $" [___A]";
+                        break;
+                    }
+            }
+        }
+        void View_in_explorer(object sender, RoutedEventArgs e)
+        {
+            if (!CanExcectute())
+            {
+                return;
+            }
+
+            Process.Start("explorer.exe", "/select, " + CurrentTab.images.Paths[CurrentTab.Index]);
         }
     }
 }

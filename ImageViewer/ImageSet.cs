@@ -2,10 +2,10 @@ using System.Linq;
 
 namespace ImageViewer {
     struct ImageSet {
-        public System.Collections.Generic.List<string> paths;
+        public System.Collections.Generic.List<string> Paths { get; set; }
 
-        public bool Is_valid() {
-            return paths != null && paths.Any();
+        public bool IsValid() {
+            return Paths != null && Paths.Any();
         }
     }
 }
