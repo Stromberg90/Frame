@@ -5,28 +5,61 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImageViewer"
         mc:Ignorable="d"
-        Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E">
+        Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0">
-        <StackPanel Panel.ZIndex="2" Height="30" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,10">
-            <Button Name="UIPrevious" Content="P" Width="30" Click="UIPrevious_Click"></Button>
-            <Button Name="UIRedChannel" Content="R" Width="30" Background="Red" Click="Display_red_channel"></Button>
-            <Button Name="UIGreenChannel" Content="G" Width="30" Background="Green" Click="Display_green_channel"></Button>
-            <Button Name="UIBlueChannel" Content="B" Width="30" Background="Blue" Click="Display_blue_channel"></Button>
-            <Button Name="UIAlphaChannel" Content="A" Width="30" Background="Wheat" Click="Display_alpha_channel"></Button>
-            <Button Name="UINext" Content="N" Width="30" Click="UINext_Click"></Button>
+        <StackPanel Panel.ZIndex="3" Height="48" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,15">
+            <Button Name="UIPrevious" Width="48" Click="UIPrevious_Click"  Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000"  Focusable="False">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/Resources/Previous.png"></Image>
+                </StackPanel>
+            </Button>
+            <Button Name="UIRedChannel" Width="48" Click="Display_red_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/Resources/RedChannel.png"></Image>
+                </StackPanel>
+            </Button>
+            <Button Name="UIGreenChannel" Width="48" Click="Display_green_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/Resources/GreenChannel.png"></Image>
+                </StackPanel>
+            </Button>
+            <Button Name="UIBlueChannel" Width="48" Click="Display_blue_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/Resources/BlueChannel.png"></Image>
+                </StackPanel>
+            </Button>
+            <Button Name="UIAlphaChannel" Width="48" Click="Display_alpha_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/Resources/AlphaChannel.png"></Image>
+                </StackPanel>
+            </Button>
+            <Button Name="UINext" Width="48" Click="UINext_Click" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="pack://application:,,,/Resources/Next.png"></Image>
+                </StackPanel>
+            </Button>
         </StackPanel>
+        <StatusBar Panel.ZIndex="2" Height="15" VerticalAlignment="Bottom"  Background="#FF555555">
+            <TextBlock Name="FooterSizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <Separator/>
+            <TextBlock Name="FooterChannelsText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <Separator/>
+            <TextBlock Name="FooterCompressionMethodText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+        </StatusBar>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="Auto" Margin="-2,-20,0,0" AllowDrop="True" Drop="ImageTabControl_Drop">
             <TabControl Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
             <Button Name="UIAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"></Button>
         </StackPanel>
-        <local:ZoomBorder x:Name="border" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1" AllowDrop="True" Drop="Border_Drop">
+        <local:ZoomBorder x:Name="zoomBorder" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1" AllowDrop="True" Drop="Border_Drop">
             <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="ImageAreaOnLoaded" Stretch="Uniform"/>
         </local:ZoomBorder>
         <Grid.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="Open in Image Editor" Click="OpenInImageEditor"/>
-                <MenuItem Header="Copy path to clipboard" Click="CopyPathToClipboard"/>
-                <MenuItem  Header="View in explorer" Click="View_in_explorer"/>
+                <MenuItem Name="AlwaysOnTopUI" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
+                <Separator/>
+                <MenuItem Header="Open In Image Editor" Click="OpenInImageEditor"/>
+                <MenuItem Header="Copy Path To Clipboard" Click="CopyPathToClipboard"/>
+                <MenuItem  Header="View In Explorer" Click="ViewInExplorer"/>
                 <Separator/>
                 <MenuItem  Header="Toggle A|B" Click="Compare_onclick"/>
                 <MenuItem  Header="Reset View" Click="Reset_Click"/>
@@ -50,6 +83,7 @@
                     <MenuItem Name="BlueChannel" Header="Blue" Click="Display_blue_channel" IsCheckable="True"/>
                     <MenuItem Name="AlphaChannel" Header="Alpha" Click="Display_alpha_channel" IsCheckable="True"/>
                 </MenuItem>
+                <Separator/>
                 <MenuItem  Header="Sort">
                     <MenuItem Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
                     <MenuItem Name="SortDecending" Header="Decending" Click="Decending_sort_mode" IsCheckable="True"/>
@@ -58,6 +92,8 @@
                     <MenuItem Name="SortDate" Header="Date Modified" Click="Sort_by_date_modified"/>
                     <MenuItem Name="SortSize" Header="Size" Click="Sort_by_size"/>
                 </MenuItem>
+                <Separator/>
+                <MenuItem Header="Reset Settings" Click="ResetSettings_Click"/>
             </ContextMenu>
         </Grid.ContextMenu>
     </Grid>
@@ -69,7 +105,7 @@
                         <Border>
                             <Grid>
                                 <Grid>
-                                    <Border x:Name="border" 
+                                    <Border x:Name="zoomBorder" 
                                             CornerRadius="3,3,0,0"
                                             Background="#FF515151"/>
                                 </Grid>
@@ -81,13 +117,13 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver"
                                      Value="True">
-                                <Setter TargetName="border"
+                                <Setter TargetName="zoomBorder"
                                         Property="Background"
                                         Value="LightGray" />
                             </Trigger>
                             <Trigger Property="IsSelected"
                                      Value="True">
-                                <Setter TargetName="border"
+                                <Setter TargetName="zoomBorder"
                                         Property="Background"
                                         Value="Gray" />
                             </Trigger>

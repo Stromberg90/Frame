@@ -5,9 +5,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-// ReSharper disable InconsistentNaming
-
-
 // Taken from stackoverflow http://stackoverflow.com/questions/741956/pan-zoom-image post by Wiesław Šoltés
 namespace ImageViewer
 {
@@ -59,20 +56,42 @@ namespace ImageViewer
             }
         }
 
-        public void SetTransform(TranslateTransform pan, ScaleTransform scale)
+        public void SetTranslateTransform(TranslateTransform pan)
         {
-            if (child != null)
+            if (child != null && pan != null)
             {
-                // reset zoom
-                var st = GetScaleTransform(child);
-                st.ScaleX = scale.ScaleX;
-                st.ScaleY = scale.ScaleY;
-
-                // reset pan
                 var tt = GetTranslateTransform(child);
                 tt.X = pan.X;
                 tt.Y = pan.Y;
             }
+        }
+
+        public void SetScaleTransform(ScaleTransform scale)
+        {
+            if (child != null && scale != null)
+            {
+                var st = GetScaleTransform(child);
+                st.ScaleX = scale.ScaleX;
+                st.ScaleY = scale.ScaleY;
+            }
+        }
+
+        public TranslateTransform GetTranslateTransform()
+        {
+            if (child != null)
+            {
+                return GetTranslateTransform(child);
+            }
+            return null;
+        }
+
+        public ScaleTransform GetScaleTransform()
+        {
+            if (child != null)
+            {
+                return GetScaleTransform(child);
+            }
+            return null;
         }
 
         public void Reset()
