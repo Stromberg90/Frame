@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace ImageViewer
+namespace Frame
 {
     public static class FileFormats
     {

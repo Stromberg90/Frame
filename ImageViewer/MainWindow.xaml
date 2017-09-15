@@ -1,13 +1,14 @@
-﻿<Window x:Class="ImageViewer.MainWindow"
+﻿<Window x:Class="Frame.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ImageViewer"
+        xmlns:local="clr-namespace:Frame"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0">
-        <StackPanel Panel.ZIndex="3" Height="48" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,15">
+        <StackPanel Name="UIPanel" Panel.ZIndex="3" Height="48" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,15" >
             <Button Name="UIPrevious" Width="48" Click="UIPrevious_Click"  Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000"  Focusable="False">
                 <StackPanel Orientation="Horizontal">
                     <Image Source="pack://application:,,,/Resources/Previous.png"></Image>
@@ -44,18 +45,30 @@
             <Separator/>
             <TextBlock Name="FooterChannelsText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
             <Separator/>
-            <TextBlock Name="FooterCompressionMethodText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <TextBlock Name="FooterFilesizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
         </StatusBar>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="Auto" Margin="-2,-20,0,0" AllowDrop="True" Drop="ImageTabControl_Drop">
             <TabControl Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
             <Button Name="UIAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"></Button>
         </StackPanel>
-        <local:ZoomBorder x:Name="zoomBorder" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1" AllowDrop="True" Drop="Border_Drop">
+        <xctk:Zoombox x:Name="zoomBorder" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1" AllowDrop="True" Drop="Border_Drop" IsAnimated="False" Cursor="Arrow" AutoWrapContentWithViewbox="False" Margin="0,0,0,15" ViewStackMode="Disabled" >
+            <xctk:Zoombox.ZoomModifiers>
+                <xctk:KeyModifierCollection>
+                    <xctk:KeyModifier>Exact</xctk:KeyModifier>
+                </xctk:KeyModifierCollection>
+            </xctk:Zoombox.ZoomModifiers>
+            <xctk:Zoombox.DragModifiers>
+                <xctk:KeyModifierCollection>
+                    <xctk:KeyModifier>Exact</xctk:KeyModifier>
+                </xctk:KeyModifierCollection>
+            </xctk:Zoombox.DragModifiers>
             <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="ImageAreaOnLoaded" Stretch="Uniform"/>
-        </local:ZoomBorder>
+        </xctk:Zoombox>
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem Name="AlwaysOnTopUI" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
+                <Separator/>
+                <MenuItem Name="ToggleControlsUI" Header="Toggle Controls" IsCheckable="False" Click="ToggleControlsUI_Click"/>
                 <Separator/>
                 <MenuItem Header="Open In Image Editor" Click="OpenInImageEditor"/>
                 <MenuItem Header="Copy Path To Clipboard" Click="CopyPathToClipboard"/>

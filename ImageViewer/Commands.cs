@@ -1,4 +1,4 @@
-﻿namespace ImageViewer
+﻿namespace Frame
 {
     public enum Command
     {

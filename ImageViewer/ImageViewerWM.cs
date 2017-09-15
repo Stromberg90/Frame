@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace ImageViewer
+namespace Frame
 {
     public enum SlideshowInterval
     {

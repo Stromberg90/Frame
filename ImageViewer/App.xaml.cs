@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace ImageViewer
+namespace Frame
 {
     /// <summary>
     /// Interaction logic for App.xaml

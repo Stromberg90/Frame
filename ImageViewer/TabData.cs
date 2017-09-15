@@ -1,12 +1,12 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace ImageViewer
+namespace Frame
 {
     class TabData
     {
-        public TranslateTransform Pan { get; set; } = new TranslateTransform(0.0, 0.0);
-        public ScaleTransform Scale { get; set; } = new ScaleTransform(1.0, 1.0);
+        public System.Windows.Point Pan { get; set; } = new System.Windows.Point(0.0, 0.0);
+        public double Scale { get; set; } = 1.0;
         public TabItem tabItem;
         public ImageSet images;
         public ImageSet last_images;

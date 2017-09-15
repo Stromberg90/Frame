@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace ImageViewer {
+namespace Frame {
     struct ImageSet {
         public System.Collections.Generic.List<string> Paths { get; set; }
 

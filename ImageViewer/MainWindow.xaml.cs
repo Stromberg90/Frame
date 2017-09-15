@@ -6,9 +6,10 @@
 // Layout tabs side by side?
 // Options window, maybe I can add the hotkeys in there as well
 // Font size settings
-// About dialog, with ImageMagick Credit
+// About dialog, with ImageMagick and Extended WPF Toolkit Credit
 // Pick color under mouse, copy value to clipboard?
 // Able to auto hide or just hide the buttons.
+// Add zoom scale to footer
 
 using ImageMagick;
 using Microsoft.VisualBasic.FileIO;
@@ -23,7 +24,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace ImageViewer
+namespace Frame
 {
     public partial class MainWindow
     {
@@ -59,6 +60,8 @@ namespace ImageViewer
 
             RefreshUI();
             SetupSlideshow();
+            zoomBorder.CenterContent();
+
         }
 
         public Channels DisplayChannel
@@ -112,7 +115,7 @@ namespace ImageViewer
                     }
                 case Key.F:
                     {
-                        zoomBorder.Reset();
+                        zoomBorder.CenterContent();
                         break;
                     }
                 case Key.D:
@@ -472,6 +475,7 @@ namespace ImageViewer
                     var image = LoadImage(ImageViewerWM.CurrentTab.Path);
 
                     ImageArea.Source = image;
+
                     if (image.Height > zoomBorder.ActualHeight)
                     {
                         ImageArea.Height = zoomBorder.ActualHeight;
@@ -494,8 +498,10 @@ namespace ImageViewer
 
                     ImageViewerWM.CurrentTab.UpdateTitle();
                     UpdateFooter();
-                    zoomBorder.SetScaleTransform(ImageViewerWM.CurrentTab.Scale);
-                    zoomBorder.SetTranslateTransform(ImageViewerWM.CurrentTab.Pan);
+                    zoomBorder.CenterContent();
+
+                    zoomBorder.Scale = ImageViewerWM.CurrentTab.Scale;
+                    zoomBorder.Position = ImageViewerWM.CurrentTab.Pan;
 
                 }
             }
@@ -537,17 +543,17 @@ namespace ImageViewer
                 var fileinfo = new FileInfo(ImageViewerWM.CurrentTab.images.Paths[ImageViewerWM.CurrentTab.Index]);
                 if (fileinfo.Length < 1024)
                 {
-                    FooterCompressionMethodText.Text = $"Filesize: {fileinfo.Length}Bytes";
+                    FooterFilesizeText.Text = $"Filesize: {fileinfo.Length}Bytes";
                 }
                 else if(fileinfo.Length < 1048576)
                 {
                     var filesize = (double)(fileinfo.Length / 1024f);
-                    FooterCompressionMethodText.Text = $"Filesize: {filesize:N2}KB";
+                    FooterFilesizeText.Text = $"Filesize: {filesize:N2}KB";
                 }
                 else
                 {
                     var filesize = (double)(fileinfo.Length / 1024f) / 1024f;
-                    FooterCompressionMethodText.Text = $"Filesize: {filesize:N2}MB";
+                    FooterFilesizeText.Text = $"Filesize: {filesize:N2}MB";
                 }
             }
         }
@@ -622,10 +628,8 @@ namespace ImageViewer
                 {
                     if (tab.tabItem == (TabItem)e.RemovedItems[0])
                     {
-                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Pan.X = zoomBorder.GetTranslateTransform().X;
-                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Pan.Y = zoomBorder.GetTranslateTransform().Y;
-                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Scale.ScaleX = zoomBorder.GetScaleTransform().ScaleX;
-                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Scale.ScaleY = zoomBorder.GetScaleTransform().ScaleY;
+                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Pan = new Point(zoomBorder.Position.X, zoomBorder.Position.Y);
+                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Scale = zoomBorder.Scale;
                     }
                 }
             }
@@ -765,7 +769,8 @@ namespace ImageViewer
 
         void Reset_Click(object sender, RoutedEventArgs e)
         {
-            zoomBorder.Reset();
+            zoomBorder.CenterContent();
+            zoomBorder.Scale = 1.0;
         }
 
         void SetCurrentImage(int newIndex)
@@ -1067,7 +1072,10 @@ namespace ImageViewer
                     }
                     break;
             }
-            zoomBorder.Reset();
+            zoomBorder.CenterContent();
+            zoomBorder.Scale = 1.0;
+
+
         }
         void UIAddNewTab_Click(object sender, RoutedEventArgs e)
         {
@@ -1124,6 +1132,7 @@ namespace ImageViewer
             Height = Properties.Settings.Default.WindowSize.Height;
 
             WindowState = (WindowState)Properties.Settings.Default.WindowState;
+            UIPanel.Visibility = Properties.Settings.Default.ControlsVisible == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
         void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -1131,6 +1140,7 @@ namespace ImageViewer
             var location = new System.Drawing.Point((int)Left, (int)Top);
             Properties.Settings.Default.WindowLocation = location;
             Properties.Settings.Default.WindowState = (int)WindowState;
+            Properties.Settings.Default.ControlsVisible = UIPanel.Visibility == Visibility.Visible;
             if (WindowState == WindowState.Normal)
             {
                 var size = new System.Drawing.Size((int)Width, (int)Height);
@@ -1143,6 +1153,11 @@ namespace ImageViewer
             }
 
             Properties.Settings.Default.Save();
+        }
+
+        void ToggleControlsUI_Click(object sender, RoutedEventArgs e)
+        {
+            UIPanel.Visibility = UIPanel.Visibility == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 }

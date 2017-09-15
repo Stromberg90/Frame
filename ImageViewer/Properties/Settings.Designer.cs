@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ImageViewer.Properties {
+namespace Frame.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -106,6 +106,19 @@ namespace ImageViewer.Properties {
         public global::System.Collections.Specialized.StringCollection SupportedExtensions {
             get {
                 return ((global::System.Collections.Specialized.StringCollection)(this["SupportedExtensions"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
+        public bool ControlsVisible {
+            get {
+                return ((bool)(this["ControlsVisible"]));
+            }
+            set {
+                this["ControlsVisible"] = value;
             }
         }
     }
