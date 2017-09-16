@@ -1,5 +1,7 @@
-# ImageViewer
-Simple Imageviewer I made for myself,
+# Frame
 
-I got some ideas on what I want to do so I can use it as my default image viewer.
-![](http://i.imgur.com/qjdloyC.jpg)
+Features
+* Tabs
+* Channel Viewing useful for artist, where several textures are packed into one.
+
+![](https://i.imgur.com/A12rSD1.png)
