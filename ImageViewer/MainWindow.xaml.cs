@@ -10,11 +10,13 @@
 // Pick color under mouse, copy value to clipboard?
 // Able to auto hide or just hide the buttons.
 // Add zoom scale to footer
+// Icons ugly, don't fit the style.
 
 using ImageMagick;
 using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -38,6 +40,7 @@ namespace Frame
             if (Environment.GetCommandLineArgs().Length > 1)
             {
                 var newTab = new TabItem { Header = Title, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
+
                 ImageViewerWM.Tabs.Add(new TabData(newTab, null, 0));
 
                 ImageTabControl.Items.Add(newTab);
@@ -60,7 +63,8 @@ namespace Frame
 
             RefreshUI();
             SetupSlideshow();
-            zoomBorder.CenterContent();
+            UpdateFooter();
+            ZoomBorder.CenterContent();
 
         }
 
@@ -115,7 +119,7 @@ namespace Frame
                     }
                 case Key.F:
                     {
-                        zoomBorder.CenterContent();
+                        ZoomBorder.CenterContent();
                         break;
                     }
                 case Key.D:
@@ -174,6 +178,7 @@ namespace Frame
                 slideshowTimer.Stop();
             }
             ImageViewerWM.CurrentTab.UpdateTitle();
+            UpdateFooter();
             ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
         }
 
@@ -237,11 +242,12 @@ namespace Frame
         {
             if (e != null)
             {
-                if (e.Source == zoomBorder || e.Source == ImageArea)
+                if (e.Source == ZoomBorder || e.Source == ImageArea)
                 {
                     if (FileBrowser())
                     {
                         DisplayImage();
+                        ZoomBorder.CenterContent();
                     }
                 }
             }
@@ -291,6 +297,7 @@ namespace Frame
             var newTab = new TabItem { Header = file_dialog.FileName, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
 
             var folderPath = Path.GetDirectoryName(file_dialog.FileName);
+
             ImageViewerWM.Tabs.Add(new TabData(newTab, folderPath));
 
             ImageTabControl.Items.Add(newTab);
@@ -386,6 +393,7 @@ namespace Frame
                 GC.Collect();
             }
             ImageTabControl.Items.RemoveAt(ImageTabControl.SelectedIndex);
+            UpdateFooter();
         }
 
         void Compare_onclick(object sender, RoutedEventArgs e)
@@ -464,29 +472,31 @@ namespace Frame
 
         void DisplayImage()
         {
+
             if (ImageViewerWM.CurrentTabIndex < 0 || ImageViewerWM.CurrentTab.Index == -1)
             {
                 return;
             }
             if (ImageArea != null)
             {
+
                 if (ImageViewerWM.CurrentTab.images.IsValid())
                 {
                     var image = LoadImage(ImageViewerWM.CurrentTab.Path);
-
+                    
                     ImageArea.Source = image;
-
-                    if (image.Height > zoomBorder.ActualHeight)
+                    
+                    if (image.Height > ZoomBorder.ActualHeight)
                     {
-                        ImageArea.Height = zoomBorder.ActualHeight;
+                        ImageArea.Height = ZoomBorder.ActualHeight;
                     }
-                    else if (image.Width > zoomBorder.ActualWidth)
+                    else if (image.Width > ZoomBorder.ActualWidth)
                     {
-                        ImageArea.Width = zoomBorder.ActualWidth;
+                        ImageArea.Width = ZoomBorder.ActualWidth;
                     }
                     else
                     {
-                        if (image.Width < zoomBorder.ActualWidth)
+                        if (image.Width < ZoomBorder.ActualWidth)
                         {
                             ImageArea.Height = image.Height;
                         }
@@ -498,62 +508,80 @@ namespace Frame
 
                     ImageViewerWM.CurrentTab.UpdateTitle();
                     UpdateFooter();
-                    zoomBorder.CenterContent();
-
-                    zoomBorder.Scale = ImageViewerWM.CurrentTab.Scale;
-                    zoomBorder.Position = ImageViewerWM.CurrentTab.Pan;
-
+                    ZoomBorder.CenterContent();
                 }
             }
+
         }
 
         void UpdateFooter()
         {
-            // Should probably save this info when reading the image the first time.
+            // Turn mode into a enum?
+            if(ImageViewerWM.CurrentTabIndex == -1)
             {
-                var fileinfo = new MagickImageInfo(ImageViewerWM.CurrentTab.images.Paths[ImageViewerWM.CurrentTab.Index]);
-                FooterSizeText.Text = $"Size: {fileinfo.Width}x{fileinfo.Height}";
-                string channel = Channels.RGB.ToString();
-                switch (DisplayChannel)
-                {
-                    case (Channels.Red):
-                        {
-                            channel = "Red";
-                            break;
-                        }
-                    case (Channels.Green):
-                        {
-                            channel = "Green";
-                            break;
-                        }
-                    case (Channels.Blue):
-                        {
-                            channel = "Blue";
-                            break;
-                        }
-                    case (Channels.Opacity):
-                        {
-                            channel = "Alpha";
-                            break;
-                        }
-                }
-                FooterChannelsText.Text = $"Channels: {channel}";
+                FooterModeText.Text = "Mode: ";
+                FooterSizeText.Text = "Size: ";
+                FooterChannelsText.Text = "Channels: ";
+                FooterFilesizeText.Text = "Filesize: ";
             }
+            else
             {
-                var fileinfo = new FileInfo(ImageViewerWM.CurrentTab.images.Paths[ImageViewerWM.CurrentTab.Index]);
-                if (fileinfo.Length < 1024)
+                if (ImageViewerWM.CurrentTab.InSlideshowMode)
                 {
-                    FooterFilesizeText.Text = $"Filesize: {fileinfo.Length}Bytes";
+                    FooterModeText.Text = $"Mode: Slideshow {ImageViewerWM.CurrentTab.CurrentSlideshowTime}";
                 }
-                else if(fileinfo.Length < 1048576)
+                else if (ImageViewerWM.CurrentTab.InToggleMode)
                 {
-                    var filesize = (double)(fileinfo.Length / 1024f);
-                    FooterFilesizeText.Text = $"Filesize: {filesize:N2}KB";
+                    FooterModeText.Text = $"Mode: Toggle";
                 }
                 else
                 {
-                    var filesize = (double)(fileinfo.Length / 1024f) / 1024f;
-                    FooterFilesizeText.Text = $"Filesize: {filesize:N2}MB";
+                    FooterModeText.Text = $"Mode: Normal";
+                }
+                {
+
+                    FooterSizeText.Text = $"Size: {ImageViewerWM.CurrentTab.Width}x{ImageViewerWM.CurrentTab.Height}";
+                    string channel = Channels.RGB.ToString();
+                    switch (DisplayChannel)
+                    {
+                        case (Channels.Red):
+                            {
+                                channel = "Red";
+                                break;
+                            }
+                        case (Channels.Green):
+                            {
+                                channel = "Green";
+                                break;
+                            }
+                        case (Channels.Blue):
+                            {
+                                channel = "Blue";
+                                break;
+                            }
+                        case (Channels.Opacity):
+                            {
+                                channel = "Alpha";
+                                break;
+                            }
+                    }
+                    FooterChannelsText.Text = $"Channels: {channel}";
+                }
+                {
+                    if (ImageViewerWM.CurrentTab.Size < 1024)
+                    {
+                        FooterFilesizeText.Text = $"Filesize: {ImageViewerWM.CurrentTab.Size}Bytes";
+                    }
+                    else if (ImageViewerWM.CurrentTab.Size < 1048576)
+                    {
+                        var filesize = (double)(ImageViewerWM.CurrentTab.Size / 1024f);
+                        FooterFilesizeText.Text = $"Filesize: {filesize:N2}KB";
+                    }
+                    else
+                    {
+                        var filesize = (double)(ImageViewerWM.CurrentTab.Size / 1024f) / 1024f;
+                        FooterFilesizeText.Text = $"Filesize: {filesize:N2}MB";
+                    }
                 }
             }
         }
@@ -578,7 +606,6 @@ namespace Frame
             ImageTabControl.Items.Insert(ImageViewerWM.CurrentTabIndex + 1, newTab);
 
             ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
-            RefreshTab();
         }
 
         void ExitToggleMode()
@@ -628,8 +655,8 @@ namespace Frame
                 {
                     if (tab.tabItem == (TabItem)e.RemovedItems[0])
                     {
-                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Pan = new Point(zoomBorder.Position.X, zoomBorder.Position.Y);
-                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Scale = zoomBorder.Scale;
+                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Pan = new Point(ZoomBorder.Position.X, ZoomBorder.Position.Y);
+                        ImageViewerWM.Tabs[ImageViewerWM.Tabs.IndexOf(tab)].Scale = ZoomBorder.Scale;
                     }
                 }
             }
@@ -642,15 +669,28 @@ namespace Frame
             var folder_path = Path.GetDirectoryName(ImageViewerWM.Tabs[ImageTabControl.SelectedIndex].InitialImagePath);
             SupportedImageFilesInDirectoryDispatch(folder_path);
 
+            ZoomBorder.Scale = ImageViewerWM.CurrentTab.Scale;
+            ZoomBorder.Position = ImageViewerWM.CurrentTab.Pan;
             RefreshTab();
+            ZoomBorder.CenterContent();
         }
 
         BitmapSource LoadImage(string filepath)
         {
             MagickImage image;
+            MagickImageCollection imageCollection;
+
             try
             {
-                image = new MagickImage(filepath);
+                if(Path.GetExtension(filepath) == ".gif")
+                {
+                    imageCollection = new MagickImageCollection(filepath);
+                    image = (MagickImage)imageCollection[0];
+                }
+                else
+                {
+                    image = new MagickImage(filepath);
+                }
             }
             catch (MagickCoderErrorException)
             {
@@ -664,6 +704,10 @@ namespace Frame
             {
                 GC.Collect();
             }
+
+            ImageViewerWM.CurrentTab.Size = image.FileSize;
+            ImageViewerWM.CurrentTab.Width = image.Width;
+            ImageViewerWM.CurrentTab.Height = image.Height;
 
             switch (DisplayChannel)
             {
@@ -723,9 +767,11 @@ namespace Frame
         {
             if (ImageViewerWM.CurrentTab.images.IsValid())
             {
+
                 var image = LoadImage(ImageViewerWM.CurrentTab.Path);
 
                 ImageArea.Source = image;
+
 
                 ImageViewerWM.CurrentTab.UpdateTitle();
                 UpdateFooter();
@@ -741,7 +787,7 @@ namespace Frame
 
         void RefreshUI()
         {
-            zoomBorder.Background = new SolidColorBrush(Color.FromRgb(Properties.Settings.Default.BackgroundColor.R, Properties.Settings.Default.BackgroundColor.G, Properties.Settings.Default.BackgroundColor.B));
+            ZoomBorder.Background = new SolidColorBrush(Color.FromRgb(Properties.Settings.Default.BackgroundColor.R, Properties.Settings.Default.BackgroundColor.G, Properties.Settings.Default.BackgroundColor.B));
         }
 
         void ReplaceImageInTab(string filename)
@@ -769,8 +815,8 @@ namespace Frame
 
         void Reset_Click(object sender, RoutedEventArgs e)
         {
-            zoomBorder.CenterContent();
-            zoomBorder.Scale = 1.0;
+            ZoomBorder.CenterContent();
+            ZoomBorder.Scale = 1.0;
         }
 
         void SetCurrentImage(int newIndex)
@@ -786,42 +832,108 @@ namespace Frame
                 return;
             }
 
-            AllChannels.IsChecked = false;
-            RedChannel.IsChecked = false;
-            GreenChannel.IsChecked = false;
-            BlueChannel.IsChecked = false;
-            AlphaChannel.IsChecked = false;
-
             switch (channel)
             {
                 case Channels.RGB:
                     {
                         AllChannels.IsChecked = true;
+                        RedChannel.IsChecked = false;
+                        GreenChannel.IsChecked = false;
+                        BlueChannel.IsChecked = false;
+                        AlphaChannel.IsChecked = false;
                         DisplayChannel = Channels.RGB;
-                        break;
-                    }
-                case Channels.Blue:
-                    {
-                        BlueChannel.IsChecked = true;
-                        DisplayChannel = DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
                         break;
                     }
                 case Channels.Red:
                     {
-                        RedChannel.IsChecked = true;
+                        if (DisplayChannel == Channels.Red)
+                        {
+                            AllChannels.IsChecked = true;
+                            RedChannel.IsChecked = false;
+                            GreenChannel.IsChecked = false;
+                            BlueChannel.IsChecked = false;
+                            AlphaChannel.IsChecked = false;
+                        }
+                        else
+                        {
+                            AllChannels.IsChecked = false;
+                            RedChannel.IsChecked = true;
+                            GreenChannel.IsChecked = false;
+                            BlueChannel.IsChecked = false;
+                            AlphaChannel.IsChecked = false;
+                        }
+
                         DisplayChannel = DisplayChannel == Channels.Red ? Channels.RGB : Channels.Red;
+
                         break;
                     }
                 case Channels.Green:
                     {
-                        GreenChannel.IsChecked = true;
+
+                        if (DisplayChannel == Channels.Green)
+                        {
+                            AllChannels.IsChecked = true;
+                            RedChannel.IsChecked = false;
+                            GreenChannel.IsChecked = false;
+                            BlueChannel.IsChecked = false;
+                            AlphaChannel.IsChecked = false;
+                        }
+                        else
+                        {
+                            AllChannels.IsChecked = false;
+                            RedChannel.IsChecked = false;
+                            GreenChannel.IsChecked = true;
+                            BlueChannel.IsChecked = false;
+                            AlphaChannel.IsChecked = false;
+                        }
                         DisplayChannel = DisplayChannel == Channels.Green ? Channels.RGB : Channels.Green;
+
+                        break;
+                    }
+                case Channels.Blue:
+                    {
+
+                        if (DisplayChannel == Channels.Blue)
+                        {
+                            AllChannels.IsChecked = true;
+                            RedChannel.IsChecked = false;
+                            GreenChannel.IsChecked = false;
+                            BlueChannel.IsChecked = false;
+                            AlphaChannel.IsChecked = false;
+                        }
+                        else
+                        {
+                            AllChannels.IsChecked = false;
+                            RedChannel.IsChecked = false;
+                            GreenChannel.IsChecked = false;
+                            BlueChannel.IsChecked = true;
+                            AlphaChannel.IsChecked = false;
+                        }
+                        DisplayChannel = DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
+
                         break;
                     }
                 case Channels.Alpha:
                     {
-                        AlphaChannel.IsChecked = true;
+
+                        if (DisplayChannel == Channels.Alpha)
+                        {
+                            AllChannels.IsChecked = true;
+                            RedChannel.IsChecked = false;
+                            GreenChannel.IsChecked = false;
+                            BlueChannel.IsChecked = false;
+                            AlphaChannel.IsChecked = false;
+                        }
+                        else
+                        {
+                            AllChannels.IsChecked = false;
+                            RedChannel.IsChecked = false;
+                            GreenChannel.IsChecked = false;
+                            BlueChannel.IsChecked = false;
+                            AlphaChannel.IsChecked = true;
+                        }
                         DisplayChannel = DisplayChannel == Channels.Alpha ? Channels.RGB : Channels.Alpha;
+
                         break;
                     }
             }
@@ -863,6 +975,7 @@ namespace Frame
             if (ImageViewerWM.CurrentTab.CurrentSlideshowTime < ImageViewerWM.SlideshowInterval)
             {
                 ImageViewerWM.CurrentTab.CurrentSlideshowTime += 1;
+                UpdateFooter();
                 ImageViewerWM.CurrentTab.UpdateTitle();
             }
             else
@@ -877,6 +990,7 @@ namespace Frame
             {
                 slideshowTimer.Stop();
                 ImageViewerWM.CurrentTab.UpdateTitle();
+                UpdateFooter();
                 ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
             }
         }
@@ -1072,8 +1186,8 @@ namespace Frame
                     }
                     break;
             }
-            zoomBorder.CenterContent();
-            zoomBorder.Scale = 1.0;
+            ZoomBorder.CenterContent();
+            ZoomBorder.Scale = 1.0;
 
 
         }
@@ -1132,7 +1246,6 @@ namespace Frame
             Height = Properties.Settings.Default.WindowSize.Height;
 
             WindowState = (WindowState)Properties.Settings.Default.WindowState;
-            UIPanel.Visibility = Properties.Settings.Default.ControlsVisible == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
         void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -1140,7 +1253,6 @@ namespace Frame
             var location = new System.Drawing.Point((int)Left, (int)Top);
             Properties.Settings.Default.WindowLocation = location;
             Properties.Settings.Default.WindowState = (int)WindowState;
-            Properties.Settings.Default.ControlsVisible = UIPanel.Visibility == Visibility.Visible;
             if (WindowState == WindowState.Normal)
             {
                 var size = new System.Drawing.Size((int)Width, (int)Height);
@@ -1153,11 +1265,6 @@ namespace Frame
             }
 
             Properties.Settings.Default.Save();
-        }
-
-        void ToggleControlsUI_Click(object sender, RoutedEventArgs e)
-        {
-            UIPanel.Visibility = UIPanel.Visibility == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 }

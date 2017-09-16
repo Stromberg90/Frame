@@ -8,67 +8,67 @@
         mc:Ignorable="d"
         Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0">
-        <StackPanel Name="UIPanel" Panel.ZIndex="3" Height="48" Width="Auto" Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,15" >
-            <Button Name="UIPrevious" Width="48" Click="UIPrevious_Click"  Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000"  Focusable="False">
-                <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Resources/Previous.png"></Image>
-                </StackPanel>
-            </Button>
-            <Button Name="UIRedChannel" Width="48" Click="Display_red_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
-                <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Resources/RedChannel.png"></Image>
-                </StackPanel>
-            </Button>
-            <Button Name="UIGreenChannel" Width="48" Click="Display_green_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
-                <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Resources/GreenChannel.png"></Image>
-                </StackPanel>
-            </Button>
-            <Button Name="UIBlueChannel" Width="48" Click="Display_blue_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
-                <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Resources/BlueChannel.png"></Image>
-                </StackPanel>
-            </Button>
-            <Button Name="UIAlphaChannel" Width="48" Click="Display_alpha_channel" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
-                <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Resources/AlphaChannel.png"></Image>
-                </StackPanel>
-            </Button>
-            <Button Name="UINext" Width="48" Click="UINext_Click" Background="#00DDDDDD" BorderBrush="#00707070" Foreground="#00000000" Focusable="False">
-                <StackPanel Orientation="Horizontal">
-                    <Image Source="pack://application:,,,/Resources/Next.png"></Image>
-                </StackPanel>
-            </Button>
-        </StackPanel>
         <StatusBar Panel.ZIndex="2" Height="15" VerticalAlignment="Bottom"  Background="#FF555555">
+            <TextBlock Name="FooterModeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <Separator/>
             <TextBlock Name="FooterSizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
             <Separator/>
             <TextBlock Name="FooterChannelsText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
             <Separator/>
             <TextBlock Name="FooterFilesizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
         </StatusBar>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="Auto" Margin="-2,-20,0,0" AllowDrop="True" Drop="ImageTabControl_Drop">
-            <TabControl Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
-            <Button Name="UIAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"></Button>
-        </StackPanel>
-        <xctk:Zoombox x:Name="zoomBorder" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1" AllowDrop="True" Drop="Border_Drop" IsAnimated="False" Cursor="Arrow" AutoWrapContentWithViewbox="False" Margin="0,0,0,15" ViewStackMode="Disabled" >
-            <xctk:Zoombox.ZoomModifiers>
-                <xctk:KeyModifierCollection>
-                    <xctk:KeyModifier>Exact</xctk:KeyModifier>
-                </xctk:KeyModifierCollection>
-            </xctk:Zoombox.ZoomModifiers>
-            <xctk:Zoombox.DragModifiers>
-                <xctk:KeyModifierCollection>
-                    <xctk:KeyModifier>Exact</xctk:KeyModifier>
-                </xctk:KeyModifierCollection>
-            </xctk:Zoombox.DragModifiers>
-            <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="ImageAreaOnLoaded" Stretch="Uniform"/>
-        </xctk:Zoombox>
+        <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0">
+            <StackPanel Orientation="Horizontal" AllowDrop="True" Drop="ImageTabControl_Drop" Width="Auto">
+                <TabControl Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
+                <Button Name="UIAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Focusable="False"></Button>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Focusable="False">
+                <xctk:DropDownButton Content="Slideshow" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
+                    <xctk:DropDownButton.DropDownContent>
+                        <Menu Focusable="False">
+                            <MenuItem Name="StartSlideshowUI" Header="Start Slideshow" IsEnabled="True" Click="StartSlideshowUI_Click"/>
+                            <MenuItem Name="StopSlideshowUI" Header="Stop Slideshow" IsEnabled="False" Click="StopSlideshowUI_Click"/>
+                            <Separator/>
+                            <MenuItem Name="Slideshow1SecUI" Header="1 Second" IsCheckable="True" Click="Slideshow1SecUI_Click"/>
+                            <MenuItem Name="Slideshow2SecUI" Header="2 Seconds" IsCheckable="True" Click="Slideshow2SecUI_Click"/>
+                            <MenuItem Name="Slideshow3SecUI" Header="3 Seconds" IsCheckable="True" Click="Slideshow3SecUI_Click"/>
+                            <MenuItem Name="Slideshow4SecUI" Header="4 Seconds" IsCheckable="True" Click="Slideshow4SecUI_Click"/>
+                            <MenuItem Name="Slideshow5SecUI" Header="5 Seconds" IsCheckable="True" IsChecked="True" Click="Slideshow5SecUI_Click"/>
+                            <MenuItem Name="Slideshow10SecUI" Header="10 Seconds" IsCheckable="True" Click="Slideshow10SecUI_Click"/>
+                            <MenuItem Name="Slideshow20SecUI" Header="20 Seconds" IsCheckable="True" Click="Slideshow20SecUI_Click"/>
+                            <MenuItem Name="Slideshow30SecUI" Header="30 Seconds" IsCheckable="True" Click="Slideshow30SecUI_Click"/>
+                        </Menu>
+                    </xctk:DropDownButton.DropDownContent>
+                </xctk:DropDownButton>
+                <xctk:DropDownButton Content="Channels" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
+                    <xctk:DropDownButton.DropDownContent>
+                        <Menu Focusable="False">
+                            <MenuItem Name="AllChannels" Header="All" Click="Display_all_channels" IsCheckable="True" IsChecked="True"/>
+                            <MenuItem Name="RedChannel" Header="Red" Click="Display_red_channel" IsCheckable="True"/>
+                            <MenuItem Name="GreenChannel" Header="Green" Click="Display_green_channel" IsCheckable="True"/>
+                            <MenuItem Name="BlueChannel" Header="Blue" Click="Display_blue_channel" IsCheckable="True"/>
+                            <MenuItem Name="AlphaChannel" Header="Alpha" Click="Display_alpha_channel" IsCheckable="True"/>
+                        </Menu>
+                    </xctk:DropDownButton.DropDownContent>
+                </xctk:DropDownButton>
+            </StackPanel>
+        </Grid>
+            <xctk:Zoombox x:Name="ZoomBorder" ClipToBounds="True" Background="#FF202020" Panel.ZIndex="1" AllowDrop="True" Drop="Border_Drop" IsAnimated="False" Cursor="Arrow" AutoWrapContentWithViewbox="False" Margin="0,0,0,15" ViewStackMode="Disabled" >
+                <xctk:Zoombox.ZoomModifiers>
+                    <xctk:KeyModifierCollection>
+                        <xctk:KeyModifier>Exact</xctk:KeyModifier>
+                    </xctk:KeyModifierCollection>
+                </xctk:Zoombox.ZoomModifiers>
+                <xctk:Zoombox.DragModifiers>
+                    <xctk:KeyModifierCollection>
+                        <xctk:KeyModifier>Exact</xctk:KeyModifier>
+                    </xctk:KeyModifierCollection>
+                </xctk:Zoombox.DragModifiers>
+                <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="ImageAreaOnLoaded" Stretch="Uniform"/>
+            </xctk:Zoombox>
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem Name="AlwaysOnTopUI" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
-                <Separator/>
-                <MenuItem Name="ToggleControlsUI" Header="Toggle Controls" IsCheckable="False" Click="ToggleControlsUI_Click"/>
                 <Separator/>
                 <MenuItem Header="Open In Image Editor" Click="OpenInImageEditor"/>
                 <MenuItem Header="Copy Path To Clipboard" Click="CopyPathToClipboard"/>
@@ -76,26 +76,6 @@
                 <Separator/>
                 <MenuItem  Header="Toggle A|B" Click="Compare_onclick"/>
                 <MenuItem  Header="Reset View" Click="Reset_Click"/>
-                <MenuItem  Header="Slideshow">
-                    <MenuItem Name="StartSlideshowUI" Header="Start Slideshow" IsEnabled="True" Click="StartSlideshowUI_Click"/>
-                    <MenuItem Name="StopSlideshowUI" Header="Stop Slideshow" IsEnabled="False" Click="StopSlideshowUI_Click"/>
-                    <Separator/>
-                    <MenuItem Name="Slideshow1SecUI" Header="1 Second" IsCheckable="True" Click="Slideshow1SecUI_Click"/>
-                    <MenuItem Name="Slideshow2SecUI" Header="2 Seconds" IsCheckable="True" Click="Slideshow2SecUI_Click"/>
-                    <MenuItem Name="Slideshow3SecUI" Header="3 Seconds" IsCheckable="True" Click="Slideshow3SecUI_Click"/>
-                    <MenuItem Name="Slideshow4SecUI" Header="4 Seconds" IsCheckable="True" Click="Slideshow4SecUI_Click"/>
-                    <MenuItem Name="Slideshow5SecUI" Header="5 Seconds" IsCheckable="True" IsChecked="True" Click="Slideshow5SecUI_Click"/>
-                    <MenuItem Name="Slideshow10SecUI" Header="10 Seconds" IsCheckable="True" Click="Slideshow10SecUI_Click"/>
-                    <MenuItem Name="Slideshow20SecUI" Header="20 Seconds" IsCheckable="True" Click="Slideshow20SecUI_Click"/>
-                    <MenuItem Name="Slideshow30SecUI" Header="30 Seconds" IsCheckable="True" Click="Slideshow30SecUI_Click"/>
-                </MenuItem>
-                <MenuItem  Header="Channels">
-                    <MenuItem Name="AllChannels" Header="All" Click="Display_all_channels" IsCheckable="True" IsChecked="True"/>
-                    <MenuItem Name="RedChannel" Header="Red" Click="Display_red_channel" IsCheckable="True"/>
-                    <MenuItem Name="GreenChannel" Header="Green" Click="Display_green_channel" IsCheckable="True"/>
-                    <MenuItem Name="BlueChannel" Header="Blue" Click="Display_blue_channel" IsCheckable="True"/>
-                    <MenuItem Name="AlphaChannel" Header="Alpha" Click="Display_alpha_channel" IsCheckable="True"/>
-                </MenuItem>
                 <Separator/>
                 <MenuItem  Header="Sort">
                     <MenuItem Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
@@ -118,25 +98,26 @@
                         <Border>
                             <Grid>
                                 <Grid>
-                                    <Border x:Name="zoomBorder" 
+                                    <Border x:Name="ZoomBorder" 
                                             CornerRadius="3,3,0,0"
                                             Background="#FF515151"/>
                                 </Grid>
                                 <ContentPresenter ContentSource="Header"
                                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
+                                                      Margin="2,1"/>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver"
                                      Value="True">
-                                <Setter TargetName="zoomBorder"
+                                <Setter TargetName="ZoomBorder"
                                         Property="Background"
                                         Value="LightGray" />
                             </Trigger>
                             <Trigger Property="IsSelected"
                                      Value="True">
-                                <Setter TargetName="zoomBorder"
+                                <Setter TargetName="ZoomBorder"
                                         Property="Background"
                                         Value="Gray" />
                             </Trigger>

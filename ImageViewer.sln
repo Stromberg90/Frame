@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frame", "ImageViewer\Frame.csproj", "{1F1512F4-5558-45A8-B8FB-7FFEBF72663D}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "FrameSetup", "FrameSetup\FrameSetup.vdproj", "{4834E1C7-EB6A-4427-9E0A-85846C4D420F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,12 +21,6 @@ Global
 		{1F1512F4-5558-45A8-B8FB-7FFEBF72663D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1F1512F4-5558-45A8-B8FB-7FFEBF72663D}.Release|x64.ActiveCfg = Release|x64
 		{1F1512F4-5558-45A8-B8FB-7FFEBF72663D}.Release|x64.Build.0 = Release|x64
-		{4834E1C7-EB6A-4427-9E0A-85846C4D420F}.Debug|Any CPU.ActiveCfg = Debug
-		{4834E1C7-EB6A-4427-9E0A-85846C4D420F}.Debug|x64.ActiveCfg = Debug
-		{4834E1C7-EB6A-4427-9E0A-85846C4D420F}.Debug|x64.Build.0 = Debug
-		{4834E1C7-EB6A-4427-9E0A-85846C4D420F}.Release|Any CPU.ActiveCfg = Release
-		{4834E1C7-EB6A-4427-9E0A-85846C4D420F}.Release|x64.ActiveCfg = Release
-		{4834E1C7-EB6A-4427-9E0A-85846C4D420F}.Release|x64.Build.0 = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

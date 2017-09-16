@@ -108,18 +108,5 @@ namespace Frame.Properties {
                 return ((global::System.Collections.Specialized.StringCollection)(this["SupportedExtensions"]));
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
-        public bool ControlsVisible {
-            get {
-                return ((bool)(this["ControlsVisible"]));
-            }
-            set {
-                this["ControlsVisible"] = value;
-            }
-        }
     }
 }

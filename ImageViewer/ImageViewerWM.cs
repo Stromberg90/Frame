@@ -75,6 +75,7 @@ namespace Frame
                 Filter = FileFormats.filter_string
             };
             fileDialog.ShowDialog();
+            
             return fileDialog;
         }
 

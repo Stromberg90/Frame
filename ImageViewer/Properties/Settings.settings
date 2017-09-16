@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ImageViewer.Properties" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Frame.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
     <Setting Name="WindowLocation" Type="System.Drawing.Point" Scope="User">
@@ -36,9 +36,6 @@
   &lt;string&gt;xbm&lt;/string&gt;
   &lt;string&gt;psd&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
-    </Setting>
-    <Setting Name="ControlsVisible" Roaming="true" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

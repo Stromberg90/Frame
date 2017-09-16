@@ -37,6 +37,10 @@ namespace Frame
             }
         }
 
+        public object Width { get; internal set; }
+        public object Height { get; internal set; }
+        public long Size { get; internal set; }
+
         public TabData(TabItem tabItem, string tabPath)
         {
             this.tabItem = tabItem;
@@ -52,19 +56,7 @@ namespace Frame
 
         public void UpdateTitle()
         {
-            if (InToggleMode)
-            {
-                Title = $" [Toggle] {Filename}";
-            }
-            else
-            {
-                Title = Filename;
-            }
-
-            if (InSlideshowMode)
-            {
-                Title += $" [Slideshow] {CurrentSlideshowTime}";
-            }
+            Title = Filename;
         }
     }
 }
