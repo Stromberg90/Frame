@@ -27,7 +27,7 @@ namespace Frame
 
     class ImageViewerWM
     {
-        public static readonly string VERSION = "1.0.1";
+        public static readonly string VERSION = "1.0.2";
         public List<TabData> Tabs { get; set; } = new List<TabData>();
         public int BeforeCompareModeIndex { get; set; }
         public int SlideshowInterval { get; set; } = 5;
