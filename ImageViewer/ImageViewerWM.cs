@@ -27,6 +27,7 @@ namespace Frame
 
     class ImageViewerWM
     {
+        public static readonly string VERSION = "1.0.1";
         public List<TabData> Tabs { get; set; } = new List<TabData>();
         public int BeforeCompareModeIndex { get; set; }
         public int SlideshowInterval { get; set; } = 5;
@@ -75,7 +76,7 @@ namespace Frame
                 Filter = FileFormats.filter_string
             };
             fileDialog.ShowDialog();
-            
+
             return fileDialog;
         }
 
@@ -98,7 +99,7 @@ namespace Frame
             }
         }
 
-        public void Sort_decending(SortMethod method)
+        public void SortDecending(SortMethod method)
         {
             SortAcending(method);
             CurrentTab.images.Paths.Reverse();
@@ -191,7 +192,7 @@ namespace Frame
                     }
                 case SortMode.Descending:
                     {
-                        Sort_decending(sort_method);
+                        SortDecending(sort_method);
                         break;
                     }
             }

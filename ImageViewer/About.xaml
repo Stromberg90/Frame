@@ -1,0 +1,33 @@
+﻿<Window x:Class="Frame.About"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Frame"
+        mc:Ignorable="d"
+        Title="About" Height="300" Width="350" Background="#FF2E2E2E">
+    <StackPanel MouseDown="Grid_MouseDown" Margin="2" VerticalAlignment="Center">
+        <TextBlock Text="Frame" FontSize="18" Foreground="#FFF0F0F0"/>
+        <TextBlock Name="VersionText" Text="Version: 0.0.0" Foreground="#FFF0F0F0"/>
+        <TextBlock Name="CopyrightText" Text="© 2016 - {} Andreas Strømberg. All rights reserved." Foreground="#FFF0F0F0"/>
+        <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>
+        <TextBlock>
+            <Hyperlink NavigateUri="https://github.com/Stromberg90/ImageViewer" RequestNavigate="Hyperlink_RequestNavigate">
+                 Program Website
+            </Hyperlink>
+        </TextBlock>
+        <TextBlock>
+            <Hyperlink NavigateUri="http://www.strombergart.com" RequestNavigate="Hyperlink_RequestNavigate">
+                 Personal Website
+            </Hyperlink>
+        </TextBlock>
+        <Separator/>
+        <TextBlock Text="References:" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="Extended.Wpf.Toolkit(3.1.0) by Xceed" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="   License: Ms-PL" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="Magick.NET(7.0.7.300) by Dirk Lemstra" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="   License: Apache License 2.0" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="Optional(3.2.0) by Nils Lück" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="   License: MIT" Foreground="#FFF0F0F0"/>
+    </StackPanel>
+</Window>

@@ -6,17 +6,21 @@
 // Layout tabs side by side?
 // Options window, maybe I can add the hotkeys in there as well
 // Font size settings
-// About dialog, with ImageMagick and Extended WPF Toolkit Credit
 // Pick color under mouse, copy value to clipboard?
-// Able to auto hide or just hide the buttons.
 // Add zoom scale to footer
-// Icons ugly, don't fit the style.
+// Can I make a thumbnail using the render size first, then I can load in the real image in the background and replace.
+// Data bindings
+// Tiling image toggle
+// Mip toggle
+// Make a option where dragging the image creates a new tab instead of replacing it.
+// Show hotkey next to menuitem
+// Single instance window, where it opens files in the current instance of the program.
+// Can I read sort setting from file explorer?
 
 using ImageMagick;
 using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -32,16 +36,39 @@ namespace Frame
     {
         ImageViewerWM ImageViewerWM { get; set; } = new ImageViewerWM();
         static System.Windows.Threading.DispatcherTimer slideshowTimer;
+        About aboutDialog = new About();
+        Process[] procs = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName);
 
         public MainWindow()
         {
             InitializeComponent();
+            /*
+            if (procs.Length > 1)
+            {
+                var sinfo = new ProcessStartInfo
+                {
+                    RedirectStandardInput = true
+                };
+                Process.GetCurrentProcess().StartInfo = sinfo;
+                Application.Current.Shutdown();
+                var inp = procs[procs.Length - 1].StandardInput;
+                // procs[procs.Length - 1].Start();
+                inp.WriteLine(true);
+            }
+            else
+            {
+                var sinfo = new ProcessStartInfo
+                {
+                    RedirectStandardInput = true
+                };
+                Process.GetCurrentProcess().StartInfo = sinfo;
+            }*/
 
             if (Environment.GetCommandLineArgs().Length > 1)
             {
-                var newTab = new TabItem { Header = Title, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
+                var newTab = NewTabItem();
 
-                ImageViewerWM.Tabs.Add(new TabData(newTab, null, 0));
+                ImageViewerWM.Tabs.Add(new TabData(newTab, null, 0) { CloseTabAction = CloseTabIndex });
 
                 ImageTabControl.Items.Add(newTab);
 
@@ -65,7 +92,37 @@ namespace Frame
             SetupSlideshow();
             UpdateFooter();
             ZoomBorder.CenterContent();
+        }
 
+        void CloseTabIndex(TabData data)
+        {
+            var currently_selected_item = ImageTabControl.SelectedItem;
+            var currently_selected_index = ImageTabControl.SelectedIndex;
+            int newIndex = ImageTabControl.Items.IndexOf(data.tabItem);
+            if(newIndex < 0)
+            {
+                CloseTab();
+            }
+            else
+            {
+                ImageViewerWM.CurrentTabIndex = newIndex;
+                ImageTabControl.SelectedIndex = newIndex;
+                CloseTab();
+                if (currently_selected_index != newIndex)
+                {
+                    ImageTabControl.SelectedItem = currently_selected_item;
+                }
+            }
+        }
+
+        TabItem NewTabItem()
+        {
+            var closeTabButton = new Button { Content = "-", IsTabStop = false, FocusVisualStyle = null, Background = new SolidColorBrush(Color.FromArgb(0, 240, 240, 240)), Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, BorderThickness= new Thickness(0) };
+            var tabInternalControl = new StackPanel { Orientation = Orientation.Horizontal };
+            tabInternalControl.Children.Add(new TextBlock());
+            tabInternalControl.Children.Add(closeTabButton);
+
+            return new TabItem { Header = tabInternalControl, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
         }
 
         public Channels DisplayChannel
@@ -119,7 +176,7 @@ namespace Frame
                     }
                 case Key.F:
                     {
-                        ZoomBorder.CenterContent();
+                        ResetView();
                         break;
                     }
                 case Key.D:
@@ -145,12 +202,32 @@ namespace Frame
                     }
                 case Key.Right:
                     {
-                        SwitchImage(SwitchDirection.Next);
+                        if (Keyboard.IsKeyDown(Key.LeftCtrl))
+                        {
+                            if(ImageTabControl.SelectedIndex != ImageTabControl.Items.Count - 1)
+                            {
+                                ImageTabControl.SelectedIndex += 1;
+                            }
+                        }
+                        else
+                        {
+                            SwitchImage(SwitchDirection.Next);
+                        }
                         break;
                     }
                 case Key.Left:
                     {
-                        SwitchImage(SwitchDirection.Previous);
+                        if (Keyboard.IsKeyDown(Key.LeftCtrl))
+                        {
+                            if(ImageTabControl.SelectedIndex > 0)
+                            {
+                                ImageTabControl.SelectedIndex -= 1;
+                            }
+                        }
+                        else
+                        {
+                            SwitchImage(SwitchDirection.Previous);
+                        }
                         break;
                     }
                 case Key.Space:
@@ -168,8 +245,15 @@ namespace Frame
 
         void ToggleSlideshow()
         {
-            ImageViewerWM.CurrentTab.InSlideshowMode = !ImageViewerWM.CurrentTab.InSlideshowMode;
-            if (ImageViewerWM.CurrentTab.InSlideshowMode)
+            if(ImageViewerWM.CurrentTab.Mode == ApplicationMode.Slideshow)
+            {
+                ImageViewerWM.CurrentTab.Mode = ApplicationMode.Normal;
+            }
+            else
+            {
+                ImageViewerWM.CurrentTab.Mode = ApplicationMode.Slideshow;
+            }
+            if (ImageViewerWM.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
                 slideshowTimer.Start();
             }
@@ -212,19 +296,7 @@ namespace Frame
             {
                 case Key.Escape:
                     {
-                        if(ImageViewerWM.Tabs.Count == 0)
-                        {
-                            Close();
-                            break;
-                        }
-                        if (ImageViewerWM.CurrentTab.InToggleMode)
-                        {
-                            ExitToggleMode();
-                        }
-                        else
-                        {
-                            Close();
-                        }
+                        Close();
                         break;
                     }
                 case Key.N:
@@ -247,7 +319,6 @@ namespace Frame
                     if (FileBrowser())
                     {
                         DisplayImage();
-                        ZoomBorder.CenterContent();
                     }
                 }
             }
@@ -294,17 +365,30 @@ namespace Frame
             if (string.IsNullOrEmpty(file_dialog.SafeFileName))
                 return;
 
-            var newTab = new TabItem { Header = file_dialog.FileName, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
+            var newTab = NewTabItem();
 
             var folderPath = Path.GetDirectoryName(file_dialog.FileName);
 
-            ImageViewerWM.Tabs.Add(new TabData(newTab, folderPath));
+            TabData item = new TabData(newTab, folderPath)
+            {
+                CloseTabAction = CloseTabIndex,
+            };
+            ImageViewerWM.Tabs.Add(item);
 
             ImageTabControl.Items.Add(newTab);
 
-            ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
+            if(ImageViewerWM.CurrentTabIndex == -1 )
+            {
+                ImageViewerWM.CurrentTabIndex = 0;
+                ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex;
+                SupportedImageFilesInDirectoryDispatch(folderPath);
+            }
+            else
+            {
+                ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
+                SupportedImageFilesInDirectoryDispatch(folderPath);
+            }
 
-            SupportedImageFilesInDirectoryDispatch(folderPath);
 
             var filenameIndex = ImageViewerWM.CurrentTab.images.Paths.IndexOf(file_dialog.FileName);
             if (filenameIndex == -1)
@@ -326,14 +410,25 @@ namespace Frame
             if (string.IsNullOrEmpty(Path.GetFileName(filepath)))
                 return;
 
-            var newTab = new TabItem { Header = Path.GetFileName(filepath), IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
+            var newTab = NewTabItem();
 
             var folderPath = Path.GetDirectoryName(filepath);
-            ImageViewerWM.Tabs.Add(new TabData(newTab, folderPath));
+            TabData item = new TabData(newTab, folderPath) { CloseTabAction = CloseTabIndex};
+            ImageViewerWM.Tabs.Add(item);
 
             ImageTabControl.Items.Add(newTab);
 
-            ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
+            if (ImageViewerWM.CurrentTabIndex == -1)
+            {
+                ImageViewerWM.CurrentTabIndex = 0;
+                SupportedImageFilesInDirectoryDispatch(folderPath);
+                ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex;
+            }
+            else
+            {
+                SupportedImageFilesInDirectoryDispatch(folderPath);
+                ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
+            }
 
             SupportedImageFilesInDirectoryDispatch(folderPath);
 
@@ -407,12 +502,6 @@ namespace Frame
             if (string.IsNullOrEmpty(compare_file))
                 return;
 
-            if (ImageViewerWM.CurrentTab.InToggleMode == false)
-            {
-                ImageViewerWM.CurrentTab.last_images = ImageViewerWM.CurrentTab.images;
-                ImageViewerWM.CurrentTab.InToggleMode = true;
-                ImageViewerWM.BeforeCompareModeIndex = ImageViewerWM.CurrentTab.Index;
-            }
             ImageViewerWM.CurrentTab.images.Paths = new List<string> { ImageViewerWM.CurrentTab.Path, compare_file };
             SetCurrentImage(0);
         }
@@ -424,6 +513,15 @@ namespace Frame
                 return;
             }
             Clipboard.SetText($"\"{BackwardToForwardSlash(ImageViewerWM.CurrentTab.Path)}\"");
+        }
+
+        void CopyFilenameToClipboard(object sender, RoutedEventArgs e)
+        {
+            if (!ImageViewerWM.CanExcectute())
+            {
+                return;
+            }
+            Clipboard.SetText($"\"{BackwardToForwardSlash(Path.GetFileName(ImageViewerWM.CurrentTab.Path))}\"");
         }
 
         void Decending_sort_mode(object sender, RoutedEventArgs e)
@@ -472,7 +570,7 @@ namespace Frame
 
         void DisplayImage()
         {
-
+            ResetView();
             if (ImageViewerWM.CurrentTabIndex < 0 || ImageViewerWM.CurrentTab.Index == -1)
             {
                 return;
@@ -483,9 +581,9 @@ namespace Frame
                 if (ImageViewerWM.CurrentTab.images.IsValid())
                 {
                     var image = LoadImage(ImageViewerWM.CurrentTab.Path);
-                    
+
                     ImageArea.Source = image;
-                    
+
                     if (image.Height > ZoomBorder.ActualHeight)
                     {
                         ImageArea.Height = ZoomBorder.ActualHeight;
@@ -508,7 +606,6 @@ namespace Frame
 
                     ImageViewerWM.CurrentTab.UpdateTitle();
                     UpdateFooter();
-                    ZoomBorder.CenterContent();
                 }
             }
 
@@ -516,8 +613,7 @@ namespace Frame
 
         void UpdateFooter()
         {
-            // Turn mode into a enum?
-            if(ImageViewerWM.CurrentTabIndex == -1)
+            if (ImageViewerWM.CurrentTabIndex == -1)
             {
                 FooterModeText.Text = "Mode: ";
                 FooterSizeText.Text = "Size: ";
@@ -526,24 +622,25 @@ namespace Frame
             }
             else
             {
-                if (ImageViewerWM.CurrentTab.InSlideshowMode)
+                if(ImageViewerWM.CurrentTab.Mode == ApplicationMode.Slideshow)
                 {
-                    FooterModeText.Text = $"Mode: Slideshow {ImageViewerWM.CurrentTab.CurrentSlideshowTime}";
-                }
-                else if (ImageViewerWM.CurrentTab.InToggleMode)
-                {
-                    FooterModeText.Text = $"Mode: Toggle";
+                    FooterModeText.Text = $"Mode: {ImageViewerWM.CurrentTab.Mode} " + ImageViewerWM.CurrentTab.CurrentSlideshowTime;
                 }
                 else
                 {
-                    FooterModeText.Text = $"Mode: Normal";
+                    FooterModeText.Text = $"Mode: {ImageViewerWM.CurrentTab.Mode}";
                 }
                 {
-
                     FooterSizeText.Text = $"Size: {ImageViewerWM.CurrentTab.Width}x{ImageViewerWM.CurrentTab.Height}";
-                    string channel = Channels.RGB.ToString();
+
+                    string channel = string.Empty;
                     switch (DisplayChannel)
                     {
+                        case (Channels.RGB):
+                            {
+                                channel = DisplayChannel.ToString();
+                                break;
+                            }
                         case (Channels.Red):
                             {
                                 channel = "Red";
@@ -551,12 +648,12 @@ namespace Frame
                             }
                         case (Channels.Green):
                             {
-                                channel = "Green";
+                                channel = DisplayChannel.ToString();
                                 break;
                             }
                         case (Channels.Blue):
                             {
-                                channel = "Blue";
+                                channel = DisplayChannel.ToString();
                                 break;
                             }
                         case (Channels.Opacity):
@@ -593,26 +690,31 @@ namespace Frame
                 return;
             }
 
-            var newTab = new TabItem { Header = Path.GetFileName(ImageViewerWM.CurrentTab.Path), IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
+            var newTab = NewTabItem();
 
             var folderPath = Path.GetDirectoryName(ImageViewerWM.CurrentTab.Path);
             var tab = new TabData(newTab, folderPath, ImageViewerWM.CurrentTab.Index)
             {
                 InitialImagePath = ImageViewerWM.CurrentTab.InitialImagePath,
-                images = ImageViewerWM.CurrentTab.images
+                images = ImageViewerWM.CurrentTab.images,
+                CloseTabAction = CloseTabIndex
             };
+
+            tab.imageSettings = new ImageSettings { displayChannel = ImageViewerWM.CurrentTab.imageSettings.displayChannel, CurrentSortMode = ImageViewerWM.CurrentTab.imageSettings.CurrentSortMode };
+
+            var orginalTabPan = new Point(ZoomBorder.Position.X, ZoomBorder.Position.Y);
+            var orginalTabScale = ZoomBorder.Scale;
+
             ImageViewerWM.Tabs.Insert(ImageViewerWM.CurrentTabIndex + 1, tab);
 
             ImageTabControl.Items.Insert(ImageViewerWM.CurrentTabIndex + 1, newTab);
 
             ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
-        }
 
-        void ExitToggleMode()
-        {
-            ImageViewerWM.CurrentTab.images = ImageViewerWM.CurrentTab.last_images;
-            ImageViewerWM.CurrentTab.InToggleMode = false;
-            SetCurrentImage(ImageViewerWM.BeforeCompareModeIndex);
+            ImageViewerWM.CurrentTab.Pan = orginalTabPan;
+            ImageViewerWM.CurrentTab.Scale = orginalTabScale;
+            ZoomBorder.Position = orginalTabPan;
+            ZoomBorder.Scale = orginalTabScale;
         }
 
         bool FileBrowser()
@@ -661,7 +763,7 @@ namespace Frame
                 }
             }
 
-            if(ImageViewerWM.CurrentTab.InSlideshowMode)
+            if (ImageViewerWM.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
                 slideshowTimer.Start();
             }
@@ -669,10 +771,11 @@ namespace Frame
             var folder_path = Path.GetDirectoryName(ImageViewerWM.Tabs[ImageTabControl.SelectedIndex].InitialImagePath);
             SupportedImageFilesInDirectoryDispatch(folder_path);
 
-            ZoomBorder.Scale = ImageViewerWM.CurrentTab.Scale;
-            ZoomBorder.Position = ImageViewerWM.CurrentTab.Pan;
             RefreshTab();
             ZoomBorder.CenterContent();
+
+            ZoomBorder.Scale = ImageViewerWM.CurrentTab.Scale;
+            ZoomBorder.Position = ImageViewerWM.CurrentTab.Pan;
         }
 
         BitmapSource LoadImage(string filepath)
@@ -682,7 +785,7 @@ namespace Frame
 
             try
             {
-                if(Path.GetExtension(filepath) == ".gif")
+                if (Path.GetExtension(filepath) == ".gif")
                 {
                     imageCollection = new MagickImageCollection(filepath);
                     image = (MagickImage)imageCollection[0];
@@ -814,6 +917,11 @@ namespace Frame
         }
 
         void Reset_Click(object sender, RoutedEventArgs e)
+        {
+            ResetView();
+        }
+
+        void ResetView()
         {
             ZoomBorder.CenterContent();
             ZoomBorder.Scale = 1.0;
@@ -968,7 +1076,7 @@ namespace Frame
         {
             if (!ImageViewerWM.CanExcectute())
             {
-                ImageViewerWM.CurrentTab.InSlideshowMode = false;
+                ImageViewerWM.CurrentTab.Mode = ApplicationMode.Normal;
                 return;
             }
 
@@ -986,7 +1094,7 @@ namespace Frame
                 slideshowTimer.Start();
             }
 
-            if (!ImageViewerWM.CurrentTab.InSlideshowMode)
+            if (ImageViewerWM.CurrentTab.Mode != ApplicationMode.Slideshow)
             {
                 slideshowTimer.Stop();
                 ImageViewerWM.CurrentTab.UpdateTitle();
@@ -1121,7 +1229,7 @@ namespace Frame
                 return;
             }
 
-            ImageViewerWM.CurrentTab.InSlideshowMode = true;
+            ImageViewerWM.CurrentTab.Mode = ApplicationMode.Slideshow;
             ImageViewerWM.CurrentTab.UpdateTitle();
             ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
             slideshowTimer.Start();
@@ -1136,7 +1244,7 @@ namespace Frame
                 return;
             }
 
-            ImageViewerWM.CurrentTab.InSlideshowMode = false;
+            ImageViewerWM.CurrentTab.Mode = ApplicationMode.Normal;
             ImageViewerWM.CurrentTab.UpdateTitle();
             ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
             slideshowTimer.Stop();
@@ -1154,7 +1262,7 @@ namespace Frame
 
         void SwitchImage(SwitchDirection switchDirection)
         {
-            if (ImageViewerWM.CurrentTab.InSlideshowMode)
+            if (ImageViewerWM.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
                 ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
             }
@@ -1265,6 +1373,18 @@ namespace Frame
             }
 
             Properties.Settings.Default.Save();
+        }
+
+        void About_Click(object sender, RoutedEventArgs e)
+        {
+            aboutDialog.Top = Top + (Height / 2.0) - (aboutDialog.Height / 2.0);
+            aboutDialog.Left = Left + (Width / 2.0) - (aboutDialog.Width / 2.0);
+            aboutDialog.ShowDialog();
+        }
+
+        void Window_Closed(object sender, EventArgs e)
+        {
+            Application.Current.Shutdown();
         }
     }
 }

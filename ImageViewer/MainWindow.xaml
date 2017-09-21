@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Frame"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E" Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed">
     <Grid Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0">
         <StatusBar Panel.ZIndex="2" Height="15" VerticalAlignment="Bottom"  Background="#FF555555">
             <TextBlock Name="FooterModeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
@@ -64,17 +64,19 @@
                         <xctk:KeyModifier>Exact</xctk:KeyModifier>
                     </xctk:KeyModifierCollection>
                 </xctk:Zoombox.DragModifiers>
-                <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="ImageAreaOnLoaded" Stretch="Uniform"/>
-            </xctk:Zoombox>
+            <Image x:Name="ImageArea" HorizontalAlignment="Center" Height="Auto" VerticalAlignment="Center" Width="Auto" Loaded="ImageAreaOnLoaded" Stretch="Uniform" />
+        </xctk:Zoombox>
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem Name="AlwaysOnTopUI" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
                 <Separator/>
                 <MenuItem Header="Open In Image Editor" Click="OpenInImageEditor"/>
-                <MenuItem Header="Copy Path To Clipboard" Click="CopyPathToClipboard"/>
+                <MenuItem Header="Copy">
+                    <MenuItem Header="Copy Path To Clipboard" Click="CopyPathToClipboard"/>
+                    <MenuItem Header="Copy Filename To Clipboard" Click="CopyFilenameToClipboard"/>
+                </MenuItem>
                 <MenuItem  Header="View In Explorer" Click="ViewInExplorer"/>
                 <Separator/>
-                <MenuItem  Header="Toggle A|B" Click="Compare_onclick"/>
                 <MenuItem  Header="Reset View" Click="Reset_Click"/>
                 <Separator/>
                 <MenuItem  Header="Sort">
@@ -87,6 +89,8 @@
                 </MenuItem>
                 <Separator/>
                 <MenuItem Header="Reset Settings" Click="ResetSettings_Click"/>
+                <Separator/>
+                <MenuItem Header="About" Click="About_Click"/>
             </ContextMenu>
         </Grid.ContextMenu>
     </Grid>
@@ -98,7 +102,7 @@
                         <Border>
                             <Grid>
                                 <Grid>
-                                    <Border x:Name="ZoomBorder" 
+                                    <Border x:Name="Border" 
                                             CornerRadius="3,3,0,0"
                                             Background="#FF515151"/>
                                 </Grid>
@@ -111,13 +115,13 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver"
                                      Value="True">
-                                <Setter TargetName="ZoomBorder"
+                                <Setter TargetName="Border"
                                         Property="Background"
                                         Value="LightGray" />
                             </Trigger>
                             <Trigger Property="IsSelected"
                                      Value="True">
-                                <Setter TargetName="ZoomBorder"
+                                <Setter TargetName="Border"
                                         Property="Background"
                                         Value="Gray" />
                             </Trigger>
