@@ -1,12 +1,18 @@
 using System.Collections.Generic;
+using Optional;
+using Optional.Unsafe;
 using System.Linq;
 
 namespace Frame {
-    struct ImageSet {
-        public List<string> Paths { get; set; }
+    class ImageSet {
+        public Option<List<string>> Paths { get; set; } = Option.Some(new List<string>());
 
         public bool IsValid() {
-            return Paths != null && Paths.Any();
+            if(!Paths.HasValue)
+            {
+                return false;
+            }
+            return Paths.ValueOrFailure().Any();
         }
     }
 }

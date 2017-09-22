@@ -29,6 +29,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Optional;
+using Optional.Unsafe;
 
 namespace Frame
 {
@@ -66,11 +68,10 @@ namespace Frame
 
             if (Environment.GetCommandLineArgs().Length > 1)
             {
-                var newTab = NewTabItem();
+                TabData tab = new TabData(null, 0) { CloseTabAction = CloseTabIndex };
+                ImageViewerWM.Tabs.Add(tab);
 
-                ImageViewerWM.Tabs.Add(new TabData(newTab, null, 0) { CloseTabAction = CloseTabIndex });
-
-                ImageTabControl.Items.Add(newTab);
+                ImageTabControl.Items.Add(tab.tabItem);
 
                 ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
 
@@ -78,13 +79,13 @@ namespace Frame
                 ImageViewerWM.CurrentTab.InitialImagePath = filePath;
                 var folderPath = Path.GetDirectoryName(filePath);
                 SupportedImageFilesInDirectoryDispatch(folderPath);
-                if (ImageViewerWM.CurrentTab.images.Paths.IndexOf(filePath) == -1)
+                if (ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure().IndexOf(filePath) == -1)
                 {
                     ImageViewerWM.CurrentTab.Index = 0;
                 }
                 else
                 {
-                    ImageViewerWM.CurrentTab.Index = ImageViewerWM.CurrentTab.images.Paths.IndexOf(filePath);
+                    ImageViewerWM.CurrentTab.Index = ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure().IndexOf(filePath);
                 }
             }
 
@@ -115,23 +116,13 @@ namespace Frame
             }
         }
 
-        TabItem NewTabItem()
-        {
-            var closeTabButton = new Button { Content = "-", IsTabStop = false, FocusVisualStyle = null, Background = new SolidColorBrush(Color.FromArgb(0, 240, 240, 240)), Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)), HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, BorderThickness= new Thickness(0) };
-            var tabInternalControl = new StackPanel { Orientation = Orientation.Horizontal };
-            tabInternalControl.Children.Add(new TextBlock());
-            tabInternalControl.Children.Add(closeTabButton);
-
-            return new TabItem { Header = tabInternalControl, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
-        }
-
         public Channels DisplayChannel
         {
-            get => ImageViewerWM.CurrentTab.imageSettings.displayChannel;
+            get => ImageViewerWM.CurrentTab.ImageSettings.displayChannel;
 
             set
             {
-                ImageViewerWM.CurrentTab.imageSettings.displayChannel = value;
+                ImageViewerWM.CurrentTab.ImageSettings.displayChannel = value;
                 RefreshImage();
             }
         }
@@ -274,7 +265,7 @@ namespace Frame
             {
                 FileSystem.DeleteFile(ImageViewerWM.CurrentTab.Path, UIOption.OnlyErrorDialogs,
                     RecycleOption.SendToRecycleBin);
-                if (ImageViewerWM.CurrentTab.images.Paths.Count > 0)
+                if (ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure().Count > 0)
                 {
                     SupportedImageFilesInDirectoryDispatch(Path.GetDirectoryName(ImageViewerWM.CurrentTab.Path));
 
@@ -327,7 +318,7 @@ namespace Frame
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
             base.OnMouseWheel(e);
-            if (ImageViewerWM.Tabs.Any() && ImageViewerWM.CurrentTab.images.Paths.Any())
+            if (ImageViewerWM.Tabs.Any() && ImageViewerWM.CurrentTab.Images.IsValid())
             {
                 if ((e != null) && Keyboard.IsKeyDown(Key.LeftCtrl))
                 {
@@ -365,17 +356,15 @@ namespace Frame
             if (string.IsNullOrEmpty(file_dialog.SafeFileName))
                 return;
 
-            var newTab = NewTabItem();
-
             var folderPath = Path.GetDirectoryName(file_dialog.FileName);
 
-            TabData item = new TabData(newTab, folderPath)
+            TabData item = new TabData(folderPath)
             {
                 CloseTabAction = CloseTabIndex,
             };
             ImageViewerWM.Tabs.Add(item);
 
-            ImageTabControl.Items.Add(newTab);
+            ImageTabControl.Items.Add(item.tabItem);
 
             if(ImageViewerWM.CurrentTabIndex == -1 )
             {
@@ -390,7 +379,7 @@ namespace Frame
             }
 
 
-            var filenameIndex = ImageViewerWM.CurrentTab.images.Paths.IndexOf(file_dialog.FileName);
+            var filenameIndex = ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure().IndexOf(file_dialog.FileName);
             if (filenameIndex == -1)
             {
                 ImageViewerWM.CurrentTab.Index = 0;
@@ -410,13 +399,11 @@ namespace Frame
             if (string.IsNullOrEmpty(Path.GetFileName(filepath)))
                 return;
 
-            var newTab = NewTabItem();
-
             var folderPath = Path.GetDirectoryName(filepath);
-            TabData item = new TabData(newTab, folderPath) { CloseTabAction = CloseTabIndex};
+            TabData item = new TabData( folderPath) { CloseTabAction = CloseTabIndex};
             ImageViewerWM.Tabs.Add(item);
 
-            ImageTabControl.Items.Add(newTab);
+            ImageTabControl.Items.Add(item.tabItem);
 
             if (ImageViewerWM.CurrentTabIndex == -1)
             {
@@ -432,7 +419,7 @@ namespace Frame
 
             SupportedImageFilesInDirectoryDispatch(folderPath);
 
-            var filenameIndex = ImageViewerWM.CurrentTab.images.Paths.IndexOf(filepath);
+            var filenameIndex = ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure().IndexOf(filepath);
             if (filenameIndex == -1)
             {
                 ImageViewerWM.CurrentTab.Index = 0;
@@ -455,14 +442,14 @@ namespace Frame
                 return;
             }
 
-            if (ImageViewerWM.CurrentTab.imageSettings.CurrentSortMode == SortMode.Descending)
+            if (ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode == SortMode.Descending)
             {
                 var inital_image = ImageViewerWM.CurrentTab.Path;
-                var file_paths_list = ImageViewerWM.CurrentTab.images.Paths;
+                var file_paths_list = ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure();
                 file_paths_list.Reverse();
                 ImageViewerWM.FindImageAfterSort(file_paths_list, inital_image);
             }
-            ImageViewerWM.CurrentTab.imageSettings.CurrentSortMode = SortMode.Ascending;
+            ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode = SortMode.Ascending;
             SortDecending.IsChecked = false;
             SortAscending.IsChecked = true;
         }
@@ -502,7 +489,7 @@ namespace Frame
             if (string.IsNullOrEmpty(compare_file))
                 return;
 
-            ImageViewerWM.CurrentTab.images.Paths = new List<string> { ImageViewerWM.CurrentTab.Path, compare_file };
+            ImageViewerWM.CurrentTab.Images.Paths = Option.Some(new List<string> { ImageViewerWM.CurrentTab.Path, compare_file });
             SetCurrentImage(0);
         }
 
@@ -531,14 +518,14 @@ namespace Frame
                 return;
             }
 
-            if (ImageViewerWM.CurrentTab.imageSettings.CurrentSortMode == SortMode.Ascending)
+            if (ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode == SortMode.Ascending)
             {
                 var inital_image = ImageViewerWM.CurrentTab.Path;
-                var file_paths_list = ImageViewerWM.CurrentTab.images.Paths;
+                var file_paths_list = ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure();
                 file_paths_list.Reverse();
                 ImageViewerWM.FindImageAfterSort(file_paths_list, inital_image);
             }
-            ImageViewerWM.CurrentTab.imageSettings.CurrentSortMode = SortMode.Descending;
+            ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode = SortMode.Descending;
             SortDecending.IsChecked = true;
             SortAscending.IsChecked = false;
         }
@@ -578,7 +565,7 @@ namespace Frame
             if (ImageArea != null)
             {
 
-                if (ImageViewerWM.CurrentTab.images.IsValid())
+                if (ImageViewerWM.CurrentTab.Images.IsValid())
                 {
                     var image = LoadImage(ImageViewerWM.CurrentTab.Path);
 
@@ -690,24 +677,23 @@ namespace Frame
                 return;
             }
 
-            var newTab = NewTabItem();
 
             var folderPath = Path.GetDirectoryName(ImageViewerWM.CurrentTab.Path);
-            var tab = new TabData(newTab, folderPath, ImageViewerWM.CurrentTab.Index)
+            var tab = new TabData(folderPath, ImageViewerWM.CurrentTab.Index)
             {
                 InitialImagePath = ImageViewerWM.CurrentTab.InitialImagePath,
-                images = ImageViewerWM.CurrentTab.images,
+                Images = ImageViewerWM.CurrentTab.Images,
                 CloseTabAction = CloseTabIndex
             };
 
-            tab.imageSettings = new ImageSettings { displayChannel = ImageViewerWM.CurrentTab.imageSettings.displayChannel, CurrentSortMode = ImageViewerWM.CurrentTab.imageSettings.CurrentSortMode };
+            tab.ImageSettings = new ImageSettings { displayChannel = ImageViewerWM.CurrentTab.ImageSettings.displayChannel, CurrentSortMode = ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode };
 
             var orginalTabPan = new Point(ZoomBorder.Position.X, ZoomBorder.Position.Y);
             var orginalTabScale = ZoomBorder.Scale;
 
             ImageViewerWM.Tabs.Insert(ImageViewerWM.CurrentTabIndex + 1, tab);
 
-            ImageTabControl.Items.Insert(ImageViewerWM.CurrentTabIndex + 1, newTab);
+            ImageTabControl.Items.Insert(ImageViewerWM.CurrentTabIndex + 1, tab.tabItem);
 
             ImageTabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
 
@@ -868,7 +854,7 @@ namespace Frame
 
         void RefreshImage()
         {
-            if (ImageViewerWM.CurrentTab.images.IsValid())
+            if (ImageViewerWM.CurrentTab.Images.IsValid())
             {
 
                 var image = LoadImage(ImageViewerWM.CurrentTab.Path);
@@ -884,7 +870,10 @@ namespace Frame
         void RefreshTab()
         {
             DisplayImage();
-            ImageViewerWM.CurrentTab.UpdateTitle();
+            if(ImageViewerWM.CurrentTab.Images.IsValid())
+            {
+                ImageViewerWM.CurrentTab.UpdateTitle();
+            }
             UpdateFooter();
         }
 
@@ -903,7 +892,7 @@ namespace Frame
             ImageViewerWM.CurrentTab.InitialImagePath = filename;
             SupportedImageFilesInDirectoryDispatch(folderPath);
 
-            var filenameIndex = ImageViewerWM.CurrentTab.images.Paths.IndexOf(filename);
+            var filenameIndex = ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure().IndexOf(filename);
             if (filenameIndex == -1)
             {
                 ImageViewerWM.CurrentTab.Index = 0;
@@ -1270,7 +1259,7 @@ namespace Frame
             switch (switchDirection)
             {
                 case SwitchDirection.Next:
-                    if (ImageViewerWM.CurrentTab.Index < ImageViewerWM.CurrentTab.images.Paths?.Count - 1)
+                    if (ImageViewerWM.CurrentTab.Index < ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure()?.Count - 1)
                     {
                         SetCurrentImage(ImageViewerWM.CurrentTab.Index += 1);
                     }
@@ -1281,7 +1270,7 @@ namespace Frame
                     break;
 
                 case SwitchDirection.Previous:
-                    if (ImageViewerWM.CurrentTab.images.Paths != null)
+                    if(ImageViewerWM.CurrentTab.Images.Paths.HasValue)
                     {
                         if (ImageViewerWM.CurrentTab.Index > 0)
                         {
@@ -1289,7 +1278,7 @@ namespace Frame
                         }
                         else
                         {
-                            SetCurrentImage(ImageViewerWM.CurrentTab.Index = ImageViewerWM.CurrentTab.images.Paths.Count - 1);
+                            SetCurrentImage(ImageViewerWM.CurrentTab.Index = ImageViewerWM.CurrentTab.Images.Paths.ValueOrFailure().Count - 1);
                         }
                     }
                     break;
