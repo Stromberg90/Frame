@@ -29,5 +29,7 @@
         <TextBlock Text="   License: Apache License 2.0" Foreground="#FFF0F0F0"/>
         <TextBlock Text="Optional(3.2.0) by Nils Lück" Foreground="#FFF0F0F0"/>
         <TextBlock Text="   License: MIT" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="CyotekImageBox(1.2.1) by Cyotek" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="   License: MIT" Foreground="#FFF0F0F0"/>
     </StackPanel>
 </Window>

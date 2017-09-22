@@ -15,8 +15,8 @@ namespace Frame
     class TabData
     {
         public Action<TabData> CloseTabAction;
-        public Point Pan { get; set; } = new Point(0.0, 0.0);
-        public double Scale { get; set; } = 1.0;
+        public System.Drawing.Point Pan { get; set; } = new System.Drawing.Point(0, 0);
+        public int Scale { get; set; } = 100;
         public TabItem tabItem = TabItem();
         public ImageSet Images { get; set; } = new ImageSet();
         public ImageSettings ImageSettings { get; set; } = new ImageSettings();
