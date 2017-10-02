@@ -134,7 +134,6 @@
     <Compile Include="Commands.cs" />
     <Compile Include="FileFormats.cs" />
     <Compile Include="FileId.cs" />
-    <Compile Include="ImageSet.cs" />
     <Compile Include="ImageSettings.cs" />
     <Compile Include="ImageViewerWM.cs" />
     <Compile Include="OptionsWindow.xaml.cs">
@@ -146,6 +145,8 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="SortEnums.cs" />
+    <Compile Include="SortingManager.cs" />
+    <Compile Include="TabControlManager.cs" />
     <Compile Include="TabData.cs" />
     <Page Include="About.xaml">
       <SubType>Designer</SubType>

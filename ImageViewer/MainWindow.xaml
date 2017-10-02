@@ -3,12 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:ct="clr-namespace:Cyotek.Windows.Forms;assembly=Cyotek.Windows.Forms.ImageBox" 
-        xmlns:local="clr-namespace:Frame"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:Forms="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms" x:Class="Frame.MainWindow"
-        mc:Ignorable="d"
-        Title="Frame" Height="350" Width="525" MinHeight="250" MinWidth="250" Background="#FF2E2E2E" Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed">
+        xmlns:ct="clr-namespace:Cyotek.Windows.Forms;assembly=Cyotek.Windows.Forms.ImageBox"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+    x:Class="Frame.MainWindow"
+    mc:Ignorable="d"
+    Title="Frame" 
+    Height="350" Width="525" 
+    MinHeight="250" MinWidth="250" 
+    Background="#FF2E2E2E" 
+    Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed">
     <Window.Resources>
         <Style TargetType="{x:Type TabItem}">
             <Setter Property="Template">
@@ -55,8 +58,10 @@
             <TextBlock x:Name="FooterChannelsText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
             <Separator/>
             <TextBlock x:Name="FooterFilesizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <Separator/>
+            <TextBlock x:Name="FooterZoomText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
         </StatusBar>
-        <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0">
+        <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0" KeyDown="Window_KeyDown">
             <StackPanel Orientation="Horizontal" AllowDrop="True" Drop="ImageTabControl_Drop" Width="Auto">
                 <TabControl x:Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
                 <Button x:Name="UIAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Focusable="False"/>
@@ -82,18 +87,22 @@
                 <xctk:DropDownButton Content="Channels" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
                     <xctk:DropDownButton.DropDownContent>
                         <Menu Focusable="False">
-                            <MenuItem x:Name="AllChannels" Header="All" Click="Display_all_channels" IsCheckable="True" IsChecked="True"/>
-                            <MenuItem x:Name="RedChannel" Header="Red" Click="Display_red_channel" IsCheckable="True"/>
-                            <MenuItem x:Name="GreenChannel" Header="Green" Click="Display_green_channel" IsCheckable="True"/>
-                            <MenuItem x:Name="BlueChannel" Header="Blue" Click="Display_blue_channel" IsCheckable="True"/>
-                            <MenuItem x:Name="AlphaChannel" Header="Alpha" Click="Display_alpha_channel" IsCheckable="True"/>
+                            <MenuItem x:Name="AllChannels" Header="RGB" Click="Display_all_channels"/>
+                            <MenuItem x:Name="RedChannel" Header="Red" Click="Display_red_channel"/>
+                            <MenuItem x:Name="GreenChannel" Header="Green" Click="Display_green_channel"/>
+                            <MenuItem x:Name="BlueChannel" Header="Blue" Click="Display_blue_channel"/>
+                            <MenuItem x:Name="AlphaChannel" Header="Alpha" Click="Display_alpha_channel"/>
                         </Menu>
                     </xctk:DropDownButton.DropDownContent>
                 </xctk:DropDownButton>
             </StackPanel>
         </Grid>
-        <WindowsFormsHost x:Name="winFormsHost" AllowDrop="True" Drop="ImageTabControl_Drop" Background="#FF202020" Margin="0,0,0,15" >
-            <ct:ImageBox x:Name="ImageArea" MouseClick="ImageArea_MouseClick" AllowDoubleClick="True" MouseDoubleClick="ImageArea_MouseDoubleClick" KeyDown="ImageArea_KeyDown" ShowPixelGrid="False" GridScale="None" GridColor="#FF202020" AllowDrop="True" DragDrop="ImageArea_DragDrop" BorderStyle="None" ShortcutsEnabled="False" TabStop="False" BackColor="#FF202020" />
+        <WindowsFormsHost x:Name="winFormsHost" AllowDrop="True" Drop="ImageTabControl_Drop" Background="#FF202020" Margin="0,0,0,15" Loaded="winFormsHost_Loaded">
+            <ct:ImageBox x:Name="ImageArea" MouseClick="ImageArea_MouseClick" AllowDoubleClick="True" 
+                         MouseDoubleClick="ImageArea_MouseDoubleClick" KeyDown="ImageArea_KeyDown" 
+                         ShowPixelGrid="False" GridScale="None" GridColor="#FF202020" AllowDrop="True" 
+                         DragDrop="ImageArea_DragDrop" BorderStyle="None" ShortcutsEnabled="False" 
+                         TabStop="False" BackColor="#FF202020"/>
             <WindowsFormsHost.ContextMenu>
                 <ContextMenu>
                     <MenuItem x:Name="AlwaysOnTopUI" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>

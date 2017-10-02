@@ -56,7 +56,7 @@ namespace Frame
             {
                 return false;
             }
-            if(!CurrentTab.Images.IsValid())
+            if(!CurrentTab.IsValid())
             {
                 return false;
             }
@@ -93,138 +93,6 @@ namespace Frame
             else
             {
                 return;
-            }
-        }
-
-        public void SortDecending(SortMethod method)
-        {
-            SortAcending(method);
-            CurrentTab.Images.Paths.ValueOrFailure().Reverse();
-            CurrentTab.Index = CurrentTab.Images.Paths.ValueOrFailure().ToList().IndexOf(CurrentTab.Path);
-        }
-
-        public void SortAcending(SortMethod method)
-        {
-            var id = 0;
-            string initialImage;
-            if (CurrentTab.Images.Paths.ValueOrFailure().Count < CurrentTab.Index)
-            {
-                initialImage = CurrentTab.InitialImagePath;
-            }
-            else
-            {
-                initialImage = CurrentTab.Path;
-            }
-            List<string> sortedPaths;
-            switch (method)
-            {
-                case SortMethod.Name:
-                    {
-                        sortedPaths = CurrentTab.Images.Paths.ValueOrFailure().ToList();
-                        sortedPaths.Sort();
-                        break;
-                    }
-
-                case SortMethod.Date:
-                    {
-                        var keys = CurrentTab.Images.Paths.ValueOrFailure().ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
-
-                        var dateTimeLookup = keys.Zip(CurrentTab.Images.Paths.ValueOrFailure().ToList(), (k, v) => new { k, v })
-                                                   .ToLookup(x => x.k, x => x.v);
-
-                        var idList = dateTimeLookup.SelectMany(pair => pair,
-                                                          (pair, value) => new FileId<DateTime>(value, pair.Key, id += 1))
-                                                      .ToList();
-
-                        var dateIdDictionary = idList.ToDictionary(x => x.Item.AddMilliseconds(x.Id), x => x.Id);
-                        sortedPaths = TypeSort(idList, dateIdDictionary);
-                        break;
-                    }
-                case SortMethod.Size:
-                    {
-                        var keys = CurrentTab.Images.Paths.ValueOrFailure().ToList().Select(s => new FileInfo(s).Length).ToList();
-                        var size_lookup = keys.Zip(CurrentTab.Images.Paths.ValueOrFailure().ToList(), (k, v) => new { k, v })
-                                              .ToLookup(x => x.k, x => x.v);
-
-                        var id_list = size_lookup.SelectMany(pair => pair,
-                                                     (pair, value) => new FileId<long>(value, pair.Key, id += 1)).ToList();
-
-                        var date_id_dictionary = id_list.ToDictionary(x => x.Item + x.Id, x => x.Id);
-                        sortedPaths = TypeSort(id_list, date_id_dictionary);
-                        break;
-                    }
-                default:
-                    {
-                        return;
-                    }
-            }
-            FindImageAfterSort(sortedPaths, initialImage);
-        }
-
-        public void FindImageAfterSort(List<string> sorted_paths, string initial_image)
-        {
-            CurrentTab.Images.Paths.Map(x => x = sorted_paths);
-            CurrentTab.Index = sorted_paths.IndexOf(initial_image);
-        }
-
-        public static List<string> TypeSort<T>(IEnumerable<FileId<T>> id_list, Dictionary<T, int> dictionary)
-        {
-            var id_file_dictionary = id_list.ToDictionary(x => x.Id, x => x.Path);
-
-            var keys = dictionary.Keys.ToList();
-            keys.Sort();
-
-            var sorted_paths = keys.Select(l => dictionary[l]).ToList().Select(l => id_file_dictionary[l]).ToList();
-            return sorted_paths;
-        }
-
-        public void Sort(SortMethod sort_method)
-        {
-            switch (CurrentTab.ImageSettings.CurrentSortMode)
-            {
-                case SortMode.Ascending:
-                    {
-                        SortAcending(sort_method);
-                        break;
-                    }
-                case SortMode.Descending:
-                    {
-                        SortDecending(sort_method);
-                        break;
-                    }
-            }
-        }
-
-        public void SupportedImageFilesInDirectory(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return;
-            }
-
-            CurrentTab.Images.Paths.ValueOr(new List<string>()).Clear();
-
-            foreach (var file in Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly))
-            {
-                var extension = Path.GetExtension(Path.GetFileName(file));
-                if (!string.IsNullOrEmpty(extension))
-                {
-                    // Should find a way to check without upper case characters and that crap.
-                    if (Properties.Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
-                    {
-                        CurrentTab.Images.Paths.ValueOr(new List<string>()).Add(file);
-                        continue;
-                    }
-                    if (Properties.Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
-                    {
-                        CurrentTab.Images.Paths.ValueOr(new List<string>()).Add(file);
-                    }
-                }
-            }
-
-            if (CurrentTab.Images.IsValid())
-            {
-                SortAcending(SortMethod.Name);
             }
         }
     }

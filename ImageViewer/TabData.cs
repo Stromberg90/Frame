@@ -3,6 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using Optional.Unsafe;
 using System.Windows;
+using Optional;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Frame
 {
@@ -15,17 +18,25 @@ namespace Frame
     class TabData
     {
         public Action<TabData> CloseTabAction;
-        public System.Drawing.Point Pan { get; set; } = new System.Drawing.Point(0, 0);
-        public int Scale { get; set; } = 100;
         public TabItem tabItem = TabItem();
-        public ImageSet Images { get; set; } = new ImageSet();
         public ImageSettings ImageSettings { get; set; } = new ImageSettings();
         // INotifyPropertyChanged so I can update the header without having to call UpdateTitle() explicitly.
         public ApplicationMode Mode { get; set; } = ApplicationMode.Normal;
         public int CurrentSlideshowTime { get; set; }
         public string InitialImagePath { get; set; }
         public int Index { get; set; }
-        public string Path { get { return Images.Paths.ValueOrFailure()[Index]; } }
+        public Option<List<string>> Paths { get; set; } = Option.Some(new List<string>());
+
+        public bool IsValid()
+        {
+            if (!Paths.HasValue)
+            {
+                return false;
+            }
+            return Paths.ValueOrFailure().Any();
+        }
+
+        public string Path { get { return Paths.ValueOrFailure()[Index]; } }
         public string Title
         {
             set
@@ -42,7 +53,8 @@ namespace Frame
         {
             get
             {
-                return new System.IO.FileInfo(Images.Paths.ValueOrFailure()[Index]).Name;
+                // Should there be a check here, to see if paths has a value?
+                return new System.IO.FileInfo(Paths.ValueOrFailure()[Index]).Name;
             }
         }
 
@@ -56,8 +68,8 @@ namespace Frame
             return new TabItem { Header = tabInternalControl, IsTabStop = false, FocusVisualStyle = null, Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)) };
         }
 
-        public object Width { get; internal set; }
-        public object Height { get; internal set; }
+        public int Width { get; internal set; }
+        public int Height { get; internal set; }
         public long Size { get; internal set; }
 
         public TabData(string tabPath)
