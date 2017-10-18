@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using Optional;
 
 namespace Frame
 {
@@ -19,15 +20,15 @@ namespace Frame
         public void SortDecending(SortMethod method)
         {
             SortAcending(method);
-            ImageViewerVM.CurrentTab.Paths.ValueOrFailure().Reverse();
-            ImageViewerVM.CurrentTab.Index = ImageViewerVM.CurrentTab.Paths.ValueOrFailure().ToList().IndexOf(ImageViewerVM.CurrentTab.Path);
+            ImageViewerVM.CurrentTab.Paths.Reverse();
+            ImageViewerVM.CurrentTab.Index = ImageViewerVM.CurrentTab.Paths.IndexOf(ImageViewerVM.CurrentTab.Path);
         }
 
         public void SortAcending(SortMethod method)
         {
             var id = 0;
             string initialImage;
-            if (ImageViewerVM.CurrentTab.Paths.ValueOrFailure().Count < ImageViewerVM.CurrentTab.Index)
+            if (ImageViewerVM.CurrentTab.Paths.Count < ImageViewerVM.CurrentTab.Index)
             {
                 initialImage = ImageViewerVM.CurrentTab.InitialImagePath;
             }
@@ -40,16 +41,16 @@ namespace Frame
             {
                 case SortMethod.Name:
                     {
-                        sortedPaths = ImageViewerVM.CurrentTab.Paths.ValueOrFailure().ToList();
+                        sortedPaths = ImageViewerVM.CurrentTab.Paths.ToList();
                         sortedPaths.Sort();
                         break;
                     }
 
                 case SortMethod.Date:
                     {
-                        var keys = ImageViewerVM.CurrentTab.Paths.ValueOrFailure().ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
+                        var keys = ImageViewerVM.CurrentTab.Paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
 
-                        var dateTimeLookup = keys.Zip(ImageViewerVM.CurrentTab.Paths.ValueOrFailure().ToList(), (k, v) => new { k, v })
+                        var dateTimeLookup = keys.Zip(ImageViewerVM.CurrentTab.Paths.ToList(), (k, v) => new { k, v })
                                                    .ToLookup(x => x.k, x => x.v);
 
                         var idList = dateTimeLookup.SelectMany(pair => pair,
@@ -62,8 +63,8 @@ namespace Frame
                     }
                 case SortMethod.Size:
                     {
-                        var keys = ImageViewerVM.CurrentTab.Paths.ValueOrFailure().ToList().Select(s => new FileInfo(s).Length).ToList();
-                        var size_lookup = keys.Zip(ImageViewerVM.CurrentTab.Paths.ValueOrFailure().ToList(), (k, v) => new { k, v })
+                        var keys = ImageViewerVM.CurrentTab.Paths.ToList().Select(s => new FileInfo(s).Length).ToList();
+                        var size_lookup = keys.Zip(ImageViewerVM.CurrentTab.Paths.ToList(), (k, v) => new { k, v })
                                               .ToLookup(x => x.k, x => x.v);
 
                         var id_list = size_lookup.SelectMany(pair => pair,
@@ -83,8 +84,8 @@ namespace Frame
 
         public void FindImageAfterSort(List<string> sorted_paths, string initial_image)
         {
-            ImageViewerVM.CurrentTab.Paths.Map(x => x = sorted_paths);
-            ImageViewerVM.CurrentTab.Index = sorted_paths.IndexOf(initial_image);
+            ImageViewerVM.CurrentTab.Paths = sorted_paths;
+            ImageViewerVM.CurrentTab.Index = sorted_paths.FindIndex(x => Path.GetFileName(x) == Path.GetFileName(initial_image));
         }
 
         public static List<string> TypeSort<T>(IEnumerable<FileId<T>> id_list, Dictionary<T, int> dictionary)
@@ -125,7 +126,7 @@ namespace Frame
                     return;
                 }
 
-                ImageViewerVM.CurrentTab.Paths.ValueOr(new List<string>()).Clear();
+                ImageViewerVM.CurrentTab.Paths.Clear();
 
                 foreach (var file in Directory.EnumerateFiles(folderpath, "*.*", SearchOption.TopDirectoryOnly))
                 {
@@ -135,12 +136,12 @@ namespace Frame
                         // Should find a way to check without upper case characters and that crap.
                         if (Properties.Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
                         {
-                            ImageViewerVM.CurrentTab.Paths.ValueOr(new List<string>()).Add(file);
+                            ImageViewerVM.CurrentTab.Paths.Add(file);
                             continue;
                         }
                         if (Properties.Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
                         {
-                            ImageViewerVM.CurrentTab.Paths.ValueOr(new List<string>()).Add(file);
+                            ImageViewerVM.CurrentTab.Paths.Add(file);
                         }
                     }
                 }

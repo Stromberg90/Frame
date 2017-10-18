@@ -48,11 +48,11 @@ namespace Frame
             {
                 return false;
             }
-            if (CurrentTab.Index == -1)
+            if (Tabs.Count == 0)
             {
                 return false;
             }
-            if (!Tabs.Any())
+            if (CurrentTab.Index == -1)
             {
                 return false;
             }

@@ -1,20 +1,17 @@
 ﻿// TODOS
+// Show hotkey next to menuitem
+// Data bindings
+// Single instance window, where it opens files in the current instance of the program.
 // GIF Support
 // Loading images without lag
 // Split into more files
 // Progress bar when loading large images
-// Layout tabs side by side?
 // Options window, maybe I can add the hotkeys in there as well
-// Font size settings
-// Pick color under mouse, copy value to clipboard?
 // Can I make a thumbnail using the render size first, then I can load in the real image in the background and replace.
-// Data bindings
-// Tiling image toggle
-// Mip toggle
 // Make a option where dragging the image creates a new tab instead of replacing it.
-// Show hotkey next to menuitem
-// Single instance window, where it opens files in the current instance of the program.
 // Can I read sort setting from file explorer?
+// Mip toggle
+// Tiling image toggle
 
 // BUGS:
 // There is sometimes a bug, where when changing between tabs it will change the image.
@@ -22,15 +19,14 @@
 using ImageMagick;
 using Microsoft.VisualBasic.FileIO;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+using Optional;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
+using System.Diagnostics;
 using System.Windows.Input;
-using Optional;
-using Optional.Unsafe;
+using System.Windows.Controls;
+using System.Collections.Generic;
 
 namespace Frame
 {
@@ -49,6 +45,8 @@ namespace Frame
 
         TabControlManager tabControlManager;
         SortingManager sortingManager;
+        FileSystemWatcher imageDirectoryWatcher;
+        FileSystemWatcher parentDirectoryWatcher;
 
         public MainWindow()
         {
@@ -183,7 +181,6 @@ namespace Frame
                     }
                 case System.Windows.Forms.Keys.Right:
                     {
-                        /*
                         if (Keyboard.IsKeyDown(Key.LeftCtrl))
                         {
                             if (ImageTabControl.SelectedIndex != ImageTabControl.Items.Count - 1)
@@ -194,13 +191,11 @@ namespace Frame
                         else
                         {
                             SwitchImage(SwitchDirection.Next);
-                        }*/
-                        SwitchImage(SwitchDirection.Next);
+                        }
                         break;
                     }
                 case System.Windows.Forms.Keys.Left:
                     {
-                        /*
                         if (Keyboard.IsKeyDown(Key.LeftCtrl))
                         {
                             if (ImageTabControl.SelectedIndex > 0)
@@ -211,8 +206,7 @@ namespace Frame
                         else
                         {
                             SwitchImage(SwitchDirection.Previous);
-                        }*/
-                        SwitchImage(SwitchDirection.Previous);
+                        }
                         break;
                     }
                 case System.Windows.Forms.Keys.Space:
@@ -247,8 +241,8 @@ namespace Frame
                 slideshowTimer.Stop();
             }
             ImageViewerWM.CurrentTab.UpdateTitle();
+            ImageViewerWM.CurrentTab.CurrentSlideshowTime = 1;
             UpdateFooter();
-            ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
         }
 
         void DeleteImage()
@@ -259,7 +253,8 @@ namespace Frame
             {
                 FileSystem.DeleteFile(ImageViewerWM.CurrentTab.Path, UIOption.OnlyErrorDialogs,
                     RecycleOption.SendToRecycleBin);
-                if (ImageViewerWM.CurrentTab.Paths.ValueOrFailure().Count > 0)
+
+                if (ImageViewerWM.CurrentTab.Paths.Count > 0)
                 {
                     sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.CurrentTab.Path));
 
@@ -302,7 +297,8 @@ namespace Frame
                 var file_dialog = ImageViewerWM.ShowOpenFileDialog();
                 filepath = file_dialog.FileName;
             }
-            else if (string.IsNullOrEmpty(Path.GetFileName(filepath)))
+
+            if (string.IsNullOrEmpty(filepath))
             {
                 return;
             }
@@ -312,7 +308,8 @@ namespace Frame
             var folderPath = Path.GetDirectoryName(filepath);
             sortingManager.SupportedFiles(folderPath);
 
-            var filenameIndex = ImageViewerWM.CurrentTab.Paths.ValueOrFailure().IndexOf(filepath);
+            var filenameIndex = ImageViewerWM.CurrentTab.Paths.FindIndex(x => Path.GetFileName(x) == Path.GetFileName(filepath));
+
             if (filenameIndex == -1)
             {
                 ImageViewerWM.CurrentTab.Index = 0;
@@ -338,7 +335,7 @@ namespace Frame
             if (ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode == SortMode.Descending)
             {
                 var inital_image = ImageViewerWM.CurrentTab.Path;
-                var file_paths_list = ImageViewerWM.CurrentTab.Paths.ValueOrFailure();
+                var file_paths_list = ImageViewerWM.CurrentTab.Paths;
                 file_paths_list.Reverse();
                 sortingManager.FindImageAfterSort(file_paths_list, inital_image);
             }
@@ -381,7 +378,7 @@ namespace Frame
             if (ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode == SortMode.Ascending)
             {
                 var inital_image = ImageViewerWM.CurrentTab.Path;
-                var file_paths_list = ImageViewerWM.CurrentTab.Paths.ValueOrFailure();
+                var file_paths_list = ImageViewerWM.CurrentTab.Paths;
                 file_paths_list.Reverse();
                 sortingManager.FindImageAfterSort(file_paths_list, inital_image);
             }
@@ -442,13 +439,14 @@ namespace Frame
 
         void UpdateFooter()
         {
-            if (ImageViewerWM.CurrentTabIndex == -1)
+            if (ImageViewerWM.CurrentTabIndex == -1 || !ImageViewerWM.CanExcectute())
             {
                 FooterModeText.Text = "Mode: ";
                 FooterSizeText.Text = "Size: ";
                 FooterChannelsText.Text = "Channels: ";
                 FooterFilesizeText.Text = "Filesize: ";
                 FooterZoomText.Text = "Zoom: ";
+                FooterIndexText.Text = "Index: ";
             }
             else
             {
@@ -511,6 +509,7 @@ namespace Frame
                     }
                 }
                 FooterZoomText.Text = $"Zoom: {ImageArea.Zoom}%";
+                FooterIndexText.Text = $"Index: {ImageViewerWM.CurrentTab.Index + 1}/{ImageViewerWM.CurrentTab.Paths.Count}";
             }
         }
 
@@ -528,6 +527,8 @@ namespace Frame
                 Paths = ImageViewerWM.CurrentTab.Paths,
                 CloseTabAction = CloseTabIndex
             };
+
+            var init_path = ImageViewerWM.CurrentTab.Path;
 
             tab.ImageSettings = new ImageSettings { displayChannel = ImageViewerWM.CurrentTab.ImageSettings.displayChannel, CurrentSortMode = ImageViewerWM.CurrentTab.ImageSettings.CurrentSortMode };
 
@@ -567,6 +568,7 @@ namespace Frame
         void ImageTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             ImageViewerWM.CurrentTabIndex = ImageTabControl.SelectedIndex;
+
             if (!ImageViewerWM.CanExcectute())
             {
                 return;
@@ -578,7 +580,10 @@ namespace Frame
             }
 
             var folder_path = Path.GetDirectoryName(ImageViewerWM.Tabs[ImageTabControl.SelectedIndex].InitialImagePath);
+            var init_path = ImageViewerWM.CurrentTab.Paths[(ImageViewerWM.CurrentTab.Index)];
             sortingManager.SupportedFiles(folder_path);
+            sortingManager.FindImageAfterSort(ImageViewerWM.CurrentTab.Paths, init_path);
+
 
             UpdateView();
         }
@@ -700,14 +705,14 @@ namespace Frame
         void ReplaceImageInTab(string filename)
         {
             var folderPath = Path.GetDirectoryName(filename);
-            if (ImageViewerWM.CurrentTabIndex < 0)
+            if (ImageViewerWM.CurrentTabIndex <= 0)
             {
                 AddNewTab(filename);
             }
             ImageViewerWM.CurrentTab.InitialImagePath = filename;
             sortingManager.SupportedFiles(folderPath);
 
-            var filenameIndex = ImageViewerWM.CurrentTab.Paths.ValueOrFailure().IndexOf(filename);
+            var filenameIndex = ImageViewerWM.CurrentTab.Paths.IndexOf(filename);
             if (filenameIndex == -1)
             {
                 ImageViewerWM.CurrentTab.Index = 0;
@@ -781,7 +786,7 @@ namespace Frame
                     }
             }
         }
-        
+
         void ToggleDisplayChannel(Channels channel)
         {
             if (!ImageViewerWM.CanExcectute())
@@ -821,21 +826,89 @@ namespace Frame
 
         void SetupDirectoryWatcher()
         {
-            var index = ImageTabControl != null ? ImageTabControl.SelectedIndex : 0;
-            var watcher = new FileSystemWatcher
+            if (imageDirectoryWatcher != null)
             {
-                Path = Path.GetDirectoryName(ImageViewerWM.Tabs[index].InitialImagePath),
+                parentDirectoryWatcher.EnableRaisingEvents = true;
+                imageDirectoryWatcher.Dispose();
+                imageDirectoryWatcher = null;
+            }
+
+            imageDirectoryWatcher = new FileSystemWatcher
+            {
+                Path = Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath),
                 NotifyFilter =
                     NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName |
                     NotifyFilters.DirectoryName
             };
 
-            watcher.Changed += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.Tabs[index].InitialImagePath));
-            watcher.Created += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.Tabs[index].InitialImagePath));
-            watcher.Deleted += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.Tabs[index].InitialImagePath));
-            watcher.Renamed += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.Tabs[index].InitialImagePath));
+            if (parentDirectoryWatcher != null)
+            {
+                parentDirectoryWatcher.EnableRaisingEvents = false;
+                parentDirectoryWatcher.Dispose();
+                parentDirectoryWatcher = null;
+            }
 
-            watcher.EnableRaisingEvents = true;
+            parentDirectoryWatcher = new FileSystemWatcher
+            {
+                Path = Directory.GetParent(Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath)).FullName,
+                NotifyFilter =
+                    NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName |
+                    NotifyFilters.DirectoryName
+            };
+
+            parentDirectoryWatcher.Changed += ParentDirectoryChanged;
+            parentDirectoryWatcher.Created += ParentDirectoryChanged;
+            parentDirectoryWatcher.Deleted += ParentDirectoryChanged;
+            parentDirectoryWatcher.Renamed += ParentDirectoryChanged;
+
+            parentDirectoryWatcher.EnableRaisingEvents = true;
+
+            imageDirectoryWatcher.Changed += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath));
+            imageDirectoryWatcher.Created += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath));
+            imageDirectoryWatcher.Deleted += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath));
+            imageDirectoryWatcher.Renamed += (sender, args) => sortingManager.SupportedFiles(Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath));
+
+            imageDirectoryWatcher.EnableRaisingEvents = true;
+        }
+
+        void ParentDirectoryChanged(object sender, FileSystemEventArgs args)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                // Need to check all tabs
+                switch (args.ChangeType)
+                {
+                    case WatcherChangeTypes.Deleted:
+                        {
+                            if (Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath) == args.FullPath)
+                            {
+                                CloseTab();
+                            }
+                            break;
+                        }
+                    case WatcherChangeTypes.Changed:
+                        break;
+                    case WatcherChangeTypes.Renamed:
+                        {
+                            var renamed_args = (RenamedEventArgs)args;
+                            if (Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath) == renamed_args.OldFullPath)
+                            {
+                                ImageViewerWM.CurrentTab.InitialImagePath = renamed_args.FullPath;
+                                CloseTab();
+                            }
+                            //Hangs the program
+                            break;
+                            if (Path.GetDirectoryName(ImageViewerWM.CurrentTab.InitialImagePath) == renamed_args.OldFullPath)
+                            {
+                                var newFile = Path.Combine(renamed_args.FullPath, Path.GetFileName(ImageViewerWM.CurrentTab.Path));
+                                ReplaceImageInTab(newFile);
+                            }
+                            break;
+                        }
+                    case WatcherChangeTypes.All:
+                        break;
+                }
+            });
         }
 
         void SetupSlideshow()
@@ -860,7 +933,7 @@ namespace Frame
             }
             else
             {
-                ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
+                ImageViewerWM.CurrentTab.CurrentSlideshowTime = 1;
                 slideshowTimer.Stop();
                 SwitchImage(SwitchDirection.Next);
                 slideshowTimer.Start();
@@ -871,7 +944,7 @@ namespace Frame
                 slideshowTimer.Stop();
                 ImageViewerWM.CurrentTab.UpdateTitle();
                 UpdateFooter();
-                ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
+                ImageViewerWM.CurrentTab.CurrentSlideshowTime = 1;
             }
         }
 
@@ -1003,7 +1076,7 @@ namespace Frame
 
             ImageViewerWM.CurrentTab.Mode = ApplicationMode.Slideshow;
             ImageViewerWM.CurrentTab.UpdateTitle();
-            ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
+            ImageViewerWM.CurrentTab.CurrentSlideshowTime = 1;
             slideshowTimer.Start();
             StartSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
             StopSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
@@ -1018,7 +1091,7 @@ namespace Frame
 
             ImageViewerWM.CurrentTab.Mode = ApplicationMode.Normal;
             ImageViewerWM.CurrentTab.UpdateTitle();
-            ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
+            ImageViewerWM.CurrentTab.CurrentSlideshowTime = 1;
             slideshowTimer.Stop();
             StartSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
             StopSlideshowUI.IsEnabled = !StartSlideshowUI.IsEnabled;
@@ -1028,13 +1101,13 @@ namespace Frame
         {
             if (ImageViewerWM.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
-                ImageViewerWM.CurrentTab.CurrentSlideshowTime = 0;
+                ImageViewerWM.CurrentTab.CurrentSlideshowTime = 1;
             }
 
             switch (switchDirection)
             {
                 case SwitchDirection.Next:
-                    if (ImageViewerWM.CurrentTab.Index < ImageViewerWM.CurrentTab.Paths.ValueOrFailure()?.Count - 1)
+                    if (ImageViewerWM.CurrentTab.Index < ImageViewerWM.CurrentTab.Paths.Count - 1)
                     {
                         SetCurrentImage(ImageViewerWM.CurrentTab.Index += 1);
                     }
@@ -1045,7 +1118,7 @@ namespace Frame
                     break;
 
                 case SwitchDirection.Previous:
-                    if (ImageViewerWM.CurrentTab.Paths.HasValue)
+                    if (ImageViewerWM.CurrentTab.Paths.Any())
                     {
                         if (ImageViewerWM.CurrentTab.Index > 0)
                         {
@@ -1053,7 +1126,7 @@ namespace Frame
                         }
                         else
                         {
-                            SetCurrentImage(ImageViewerWM.CurrentTab.Index = ImageViewerWM.CurrentTab.Paths.ValueOrFailure().Count - 1);
+                            SetCurrentImage(ImageViewerWM.CurrentTab.Index = ImageViewerWM.CurrentTab.Paths.Count - 1);
                         }
                     }
                     break;
@@ -1115,6 +1188,8 @@ namespace Frame
             Height = Properties.Settings.Default.WindowSize.Height;
 
             WindowState = (WindowState)Properties.Settings.Default.WindowState;
+
+            e.Handled = true;
         }
 
         void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -1134,6 +1209,7 @@ namespace Frame
             }
 
             Properties.Settings.Default.Save();
+
         }
 
         void About_Click(object sender, RoutedEventArgs e)
@@ -1159,6 +1235,7 @@ namespace Frame
         {
             RawKeyHandling(e);
             ValidatedKeyHandling(e);
+            e.Handled = true;
         }
 
         void ImageArea_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -1192,17 +1269,22 @@ namespace Frame
             }
 
             var convertedKeyEventArgs = new System.Windows.Forms.KeyEventArgs(key);
-
             ImageArea_KeyDown(sender, convertedKeyEventArgs);
+            e.Handled = true;
         }
 
-        void winFormsHost_Loaded(object sender, RoutedEventArgs e)
+        void WinFormsHost_Loaded(object sender, RoutedEventArgs e)
         {
             if (Environment.GetCommandLineArgs().Length > 1)
             {
                 var filePath = Environment.GetCommandLineArgs()[1];
                 AddNewTab(filePath);
             }
+        }
+
+        void ImageArea_ZoomChanged(object sender, EventArgs e)
+        {
+            UpdateFooter();
         }
     }
 }

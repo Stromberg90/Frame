@@ -22,21 +22,17 @@ namespace Frame
         public ImageSettings ImageSettings { get; set; } = new ImageSettings();
         // INotifyPropertyChanged so I can update the header without having to call UpdateTitle() explicitly.
         public ApplicationMode Mode { get; set; } = ApplicationMode.Normal;
-        public int CurrentSlideshowTime { get; set; }
+        public uint CurrentSlideshowTime { get; set; }
         public string InitialImagePath { get; set; }
         public int Index { get; set; }
-        public Option<List<string>> Paths { get; set; } = Option.Some(new List<string>());
+        public List<string> Paths { get; set; } = new List<string>();
 
         public bool IsValid()
         {
-            if (!Paths.HasValue)
-            {
-                return false;
-            }
-            return Paths.ValueOrFailure().Any();
+            return Paths.Any();
         }
 
-        public string Path { get { return Paths.ValueOrFailure()[Index]; } }
+        public string Path { get { return Paths[Index]; } }
         public string Title
         {
             set
@@ -54,7 +50,7 @@ namespace Frame
             get
             {
                 // Should there be a check here, to see if paths has a value?
-                return new System.IO.FileInfo(Paths.ValueOrFailure()[Index]).Name;
+                return new System.IO.FileInfo(Paths[Index]).Name;
             }
         }
 

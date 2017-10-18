@@ -11,7 +11,7 @@
     Height="350" Width="525" 
     MinHeight="250" MinWidth="250" 
     Background="#FF2E2E2E" 
-    Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed">
+    Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed" KeyDown="Window_KeyDown">
     <Window.Resources>
         <Style TargetType="{x:Type TabItem}">
             <Setter Property="Template">
@@ -60,6 +60,8 @@
             <TextBlock x:Name="FooterFilesizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
             <Separator/>
             <TextBlock x:Name="FooterZoomText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <Separator/>
+            <TextBlock x:Name="FooterIndexText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
         </StatusBar>
         <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0" KeyDown="Window_KeyDown">
             <StackPanel Orientation="Horizontal" AllowDrop="True" Drop="ImageTabControl_Drop" Width="Auto">
@@ -97,12 +99,12 @@
                 </xctk:DropDownButton>
             </StackPanel>
         </Grid>
-        <WindowsFormsHost x:Name="winFormsHost" AllowDrop="True" Drop="ImageTabControl_Drop" Background="#FF202020" Margin="0,0,0,15" Loaded="winFormsHost_Loaded">
+        <WindowsFormsHost x:Name="winFormsHost" AllowDrop="True" Drop="ImageTabControl_Drop" Background="#FF202020" Margin="0,0,0,15" Loaded="WinFormsHost_Loaded">
             <ct:ImageBox x:Name="ImageArea" MouseClick="ImageArea_MouseClick" AllowDoubleClick="True" 
                          MouseDoubleClick="ImageArea_MouseDoubleClick" KeyDown="ImageArea_KeyDown" 
                          ShowPixelGrid="False" GridScale="None" GridColor="#FF202020" AllowDrop="True" 
                          DragDrop="ImageArea_DragDrop" BorderStyle="None" ShortcutsEnabled="False" 
-                         TabStop="False" BackColor="#FF202020"/>
+                         TabStop="False" BackColor="#FF202020" ZoomChanged="ImageArea_ZoomChanged"/>
             <WindowsFormsHost.ContextMenu>
                 <ContextMenu>
                     <MenuItem x:Name="AlwaysOnTopUI" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
