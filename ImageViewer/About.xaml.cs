@@ -15,7 +15,7 @@ namespace Frame
 
         void Grid_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            Close();
+            Hide();
         }
 
         void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)

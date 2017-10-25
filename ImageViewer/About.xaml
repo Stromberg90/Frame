@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Frame"
         mc:Ignorable="d"
-        Title="About" Height="250" Width="350" Background="#FF2E2E2E">
-    <StackPanel MouseDown="Grid_MouseDown" Margin="2" VerticalAlignment="Center">
+        Title="About" Height="300" Width="350" Background="#FF2E2E2E">
+    <StackPanel MouseDown="Grid_MouseDown" Margin="2" VerticalAlignment="Top">
         <TextBlock Text="Frame" FontSize="18" Foreground="#FFF0F0F0"/>
         <TextBlock Name="VersionText" Text="Version: 0.0.0" Foreground="#FFF0F0F0"/>
         <TextBlock Name="CopyrightText" Text="© 2016 - {} Andreas Strømberg. All rights reserved." Foreground="#FFF0F0F0"/>
