@@ -108,5 +108,17 @@ namespace Frame.Properties {
                 return ((global::System.Collections.Specialized.StringCollection)(this["SupportedExtensions"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ReplaceImageOnDrop {
+            get {
+                return ((bool)(this["ReplaceImageOnDrop"]));
+            }
+            set {
+                this["ReplaceImageOnDrop"] = value;
+            }
+        }
     }
 }

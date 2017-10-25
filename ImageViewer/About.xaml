@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Frame"
         mc:Ignorable="d"
-        Title="About" Height="300" Width="350" Background="#FF2E2E2E">
+        Title="About" Height="250" Width="350" Background="#FF2E2E2E">
     <StackPanel MouseDown="Grid_MouseDown" Margin="2" VerticalAlignment="Center">
         <TextBlock Text="Frame" FontSize="18" Foreground="#FFF0F0F0"/>
         <TextBlock Name="VersionText" Text="Version: 0.0.0" Foreground="#FFF0F0F0"/>
@@ -23,12 +23,10 @@
         </TextBlock>
         <Separator/>
         <TextBlock Text="References:" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="Extended.Wpf.Toolkit(3.1.0) by Xceed" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="Extended.Wpf.Toolkit(3.2.0) by Xceed" Foreground="#FFF0F0F0"/>
         <TextBlock Text="   License: Ms-PL" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="Magick.NET(7.0.7.300) by Dirk Lemstra" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="Magick.NET(7.0.7.700) by Dirk Lemstra" Foreground="#FFF0F0F0"/>
         <TextBlock Text="   License: Apache License 2.0" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="Optional(3.2.0) by Nils Lück" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="   License: MIT" Foreground="#FFF0F0F0"/>
         <TextBlock Text="CyotekImageBox(1.2.1) by Cyotek" Foreground="#FFF0F0F0"/>
         <TextBlock Text="   License: MIT" Foreground="#FFF0F0F0"/>
     </StackPanel>

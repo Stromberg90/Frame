@@ -1,72 +1,66 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Cyotek.Windows.Forms;
+using System;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
-using Optional;
-using Optional.Unsafe;
-using Cyotek.Windows.Forms;
 
 namespace Frame
 {
     class TabControlManager
     {
         readonly TabControl tabControl;
-        readonly ImageViewerWM ImageViewerWM;
+        readonly ImageViewerWm imageViewerWm;
         readonly ImageBox imageBox;
 
-        public TabControlManager(TabControl tabControl, ImageViewerWM imageViewerWM, ImageBox imageBox)
+        public TabControlManager(TabControl tabControl, ImageViewerWm imageViewerWm, ImageBox imageBox)
         {
             this.imageBox = imageBox;
-            ImageViewerWM = imageViewerWM;
+            this.imageViewerWm = imageViewerWm;
             this.tabControl = tabControl;
         }
 
         public void AddTab(string filepath)
         {
             var folderPath = Path.GetDirectoryName(filepath);
-            TabData item = new TabData(folderPath) { CloseTabAction = CloseTab };
-            ImageViewerWM.Tabs.Add(item);
+            var item = new TabData(folderPath) {CloseTabAction = CloseTab};
+            imageViewerWm.Tabs.Add(item);
 
             tabControl.Items.Add(item.tabItem);
 
-            if (ImageViewerWM.CurrentTabIndex == -1)
+            if (imageViewerWm.CurrentTabIndex == -1)
             {
-                ImageViewerWM.CurrentTabIndex = 0;
-                tabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex;
+                imageViewerWm.CurrentTabIndex = 0;
+                tabControl.SelectedIndex = imageViewerWm.CurrentTabIndex;
             }
             else
             {
-                tabControl.SelectedIndex = ImageViewerWM.CurrentTabIndex + 1;
+                tabControl.SelectedIndex = imageViewerWm.CurrentTabIndex + 1;
             }
         }
 
         public void CloseTab(TabData data)
         {
-            var currently_selected_item = tabControl.SelectedItem;
-            var currently_selected_index = tabControl.SelectedIndex;
-            int newIndex = tabControl.Items.IndexOf(data.tabItem);
+            var currentlySelectedItem = tabControl.SelectedItem;
+            var currentlySelectedIndex = tabControl.SelectedIndex;
+            var newIndex = tabControl.Items.IndexOf(data.tabItem);
             if (newIndex < 0)
             {
                 CloseSelectedTab();
             }
             else
             {
-                ImageViewerWM.CurrentTabIndex = newIndex;
+                imageViewerWm.CurrentTabIndex = newIndex;
                 tabControl.SelectedIndex = newIndex;
                 CloseSelectedTab();
-                if (currently_selected_index != newIndex)
+                if (currentlySelectedIndex != newIndex)
                 {
-                    tabControl.SelectedItem = currently_selected_item;
+                    tabControl.SelectedItem = currentlySelectedItem;
                 }
             }
         }
 
         public void CloseSelectedTab()
         {
-            if (!ImageViewerWM.CanExcectute())
+            if (!imageViewerWm.CanExcectute())
             {
                 return;
             }
@@ -77,7 +71,7 @@ namespace Frame
                 GC.Collect();
             }
 
-            ImageViewerWM.Tabs.RemoveAt(tabControl.SelectedIndex);
+            imageViewerWm.Tabs.RemoveAt(tabControl.SelectedIndex);
             tabControl.Items.RemoveAt(tabControl.SelectedIndex);
         }
     }

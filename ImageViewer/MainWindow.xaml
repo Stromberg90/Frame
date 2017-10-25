@@ -49,7 +49,7 @@
             </Setter>
         </Style>
     </Window.Resources>
-    <Grid x:Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0">
+    <Grid x:Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0" Background="Transparent" AllowDrop="True" Drop="ImageArea_DragDrop">
         <StatusBar Panel.ZIndex="2" Height="15" VerticalAlignment="Bottom"  Background="#FF555555">
             <TextBlock x:Name="FooterModeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
             <Separator/>
@@ -63,26 +63,26 @@
             <Separator/>
             <TextBlock x:Name="FooterIndexText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
         </StatusBar>
-        <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0" KeyDown="Window_KeyDown">
-            <StackPanel Orientation="Horizontal" AllowDrop="True" Drop="ImageTabControl_Drop" Width="Auto">
+        <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0" KeyDown="Window_KeyDown" AllowDrop="True" Drop="ImageTabControl_Drop" >
+            <StackPanel Orientation="Horizontal" Width="Auto">
                 <TabControl x:Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
-                <Button x:Name="UIAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Focusable="False"/>
+                <Button x:Name="UiAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Focusable="False"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Focusable="False">
                 <xctk:DropDownButton Content="Slideshow" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
                     <xctk:DropDownButton.DropDownContent>
                         <Menu Focusable="False">
-                            <MenuItem x:Name="StartSlideshowUI" Header="Start Slideshow" IsEnabled="True" Click="StartSlideshowUI_Click"/>
-                            <MenuItem x:Name="StopSlideshowUI" Header="Stop Slideshow" IsEnabled="False" Click="StopSlideshowUI_Click"/>
+                            <MenuItem x:Name="StartSlideshowUi" Header="Start Slideshow" IsEnabled="True" Click="StartSlideshowUI_Click"/>
+                            <MenuItem x:Name="StopSlideshowUi" Header="Stop Slideshow" IsEnabled="False" Click="StopSlideshowUI_Click"/>
                             <Separator/>
-                            <MenuItem x:Name="Slideshow1SecUI" Header="1 Second" IsCheckable="True" Click="Slideshow1SecUI_Click"/>
-                            <MenuItem x:Name="Slideshow2SecUI" Header="2 Seconds" IsCheckable="True" Click="Slideshow2SecUI_Click"/>
-                            <MenuItem x:Name="Slideshow3SecUI" Header="3 Seconds" IsCheckable="True" Click="Slideshow3SecUI_Click"/>
-                            <MenuItem x:Name="Slideshow4SecUI" Header="4 Seconds" IsCheckable="True" Click="Slideshow4SecUI_Click"/>
-                            <MenuItem x:Name="Slideshow5SecUI" Header="5 Seconds" IsCheckable="True" IsChecked="True" Click="Slideshow5SecUI_Click"/>
-                            <MenuItem x:Name="Slideshow10SecUI" Header="10 Seconds" IsCheckable="True" Click="Slideshow10SecUI_Click"/>
-                            <MenuItem x:Name="Slideshow20SecUI" Header="20 Seconds" IsCheckable="True" Click="Slideshow20SecUI_Click"/>
-                            <MenuItem x:Name="Slideshow30SecUI" Header="30 Seconds" IsCheckable="True" Click="Slideshow30SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow1SecUi" Header="1 Second" IsCheckable="True" Click="Slideshow1SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow2SecUi" Header="2 Seconds" IsCheckable="True" Click="Slideshow2SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow3SecUi" Header="3 Seconds" IsCheckable="True" Click="Slideshow3SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow4SecUi" Header="4 Seconds" IsCheckable="True" Click="Slideshow4SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow5SecUi" Header="5 Seconds" IsCheckable="True" IsChecked="True" Click="Slideshow5SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow10SecUi" Header="10 Seconds" IsCheckable="True" Click="Slideshow10SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow20SecUi" Header="20 Seconds" IsCheckable="True" Click="Slideshow20SecUI_Click"/>
+                            <MenuItem x:Name="Slideshow30SecUi" Header="30 Seconds" IsCheckable="True" Click="Slideshow30SecUI_Click"/>
                         </Menu>
                     </xctk:DropDownButton.DropDownContent>
                 </xctk:DropDownButton>
@@ -99,15 +99,15 @@
                 </xctk:DropDownButton>
             </StackPanel>
         </Grid>
-        <WindowsFormsHost x:Name="winFormsHost" AllowDrop="True" Drop="ImageTabControl_Drop" Background="#FF202020" Margin="0,0,0,15" Loaded="WinFormsHost_Loaded">
+        <WindowsFormsHost x:Name="WinFormsHost" Background="#FF202020" Margin="0,0,0,15" Loaded="WinFormsHost_Loaded">
             <ct:ImageBox x:Name="ImageArea" MouseClick="ImageArea_MouseClick" AllowDoubleClick="True" 
                          MouseDoubleClick="ImageArea_MouseDoubleClick" KeyDown="ImageArea_KeyDown" 
-                         ShowPixelGrid="False" GridScale="None" GridColor="#FF202020" AllowDrop="True" 
-                         DragDrop="ImageArea_DragDrop" BorderStyle="None" ShortcutsEnabled="False" 
+                         ShowPixelGrid="False" GridScale="None" GridColor="#FF202020"
+                         BorderStyle="None" ShortcutsEnabled="False" 
                          TabStop="False" BackColor="#FF202020" ZoomChanged="ImageArea_ZoomChanged"/>
             <WindowsFormsHost.ContextMenu>
                 <ContextMenu>
-                    <MenuItem x:Name="AlwaysOnTopUI" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
+                    <MenuItem x:Name="AlwaysOnTopUi" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
                     <Separator/>
                     <MenuItem Header="Open In Image Editor" Click="OpenInImageEditor"/>
                     <MenuItem Header="Copy">
@@ -122,9 +122,9 @@
                         <MenuItem x:Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
                         <MenuItem x:Name="SortDecending" Header="Decending" Click="Decending_sort_mode" IsCheckable="True"/>
                         <Separator/>
-                        <MenuItem x:Name="SortName" Header="Name" Click="Sort_by_name" IsChecked="True"/>
-                        <MenuItem x:Name="SortDate" Header="Date Modified" Click="Sort_by_date_modified"/>
-                        <MenuItem x:Name="SortSize" Header="Size" Click="Sort_by_size"/>
+                        <MenuItem x:Name="SortName" Header="Name" Click="SortByName" IsChecked="True"/>
+                        <MenuItem x:Name="SortDate" Header="Date Modified" Click="SortByDateModified"/>
+                        <MenuItem x:Name="SortSize" Header="Size" Click="SortBySize"/>
                     </MenuItem>
                     <Separator/>
                     <MenuItem Header="Reset Settings" Click="ResetSettings_Click"/>

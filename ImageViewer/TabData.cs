@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Windows.Controls;
-using System.Windows.Media;
-using Optional.Unsafe;
-using System.Windows;
-using Optional;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Frame
 {
@@ -15,7 +13,7 @@ namespace Frame
         Slideshow
     }
 
-    class TabData
+    public class TabData
     {
         public Action<TabData> CloseTabAction;
         public TabItem tabItem = TabItem();
@@ -27,32 +25,17 @@ namespace Frame
         public int Index { get; set; }
         public List<string> Paths { get; set; } = new List<string>();
 
-        public bool IsValid()
-        {
-            return Paths.Any();
-        }
+        public bool IsValid => Paths.Any();
 
-        public string Path { get { return Paths[Index]; } }
+        public string Path => Index < Paths.Count ? Paths[Index] : Paths[0];
+
         public string Title
         {
-            set
-            {
-                ((TextBlock)((StackPanel)tabItem.Header).Children[0]).Text = value;
-            }
-            get
-            {
-                return ((TextBlock)((StackPanel)tabItem.Header).Children[0]).Text;
-            }
+            set => ((TextBlock)((StackPanel)tabItem.Header).Children[0]).Text = value;
+            get => ((TextBlock)((StackPanel)tabItem.Header).Children[0]).Text;
         }
 
-        public string Filename
-        {
-            get
-            {
-                // Should there be a check here, to see if paths has a value?
-                return new System.IO.FileInfo(Paths[Index]).Name;
-            }
-        }
+        public string Filename => new System.IO.FileInfo(Paths[Index]).Name;
 
         static TabItem TabItem()
         {
@@ -72,7 +55,7 @@ namespace Frame
         {
             InitialImagePath = tabPath;
             ((Button)((StackPanel)tabItem.Header).Children[1]).Click += TabData_Click;
-            (((StackPanel)tabItem.Header)).MouseDown += TabData_MouseDown;
+            ((StackPanel)tabItem.Header).MouseDown += TabData_MouseDown;
         }
 
         void TabData_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

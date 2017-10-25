@@ -1,6 +1,6 @@
 ﻿namespace Frame
 {
-    class FileId<T>
+    public class FileId<T>
     {
         public FileId(string path, T item, int id)
         {

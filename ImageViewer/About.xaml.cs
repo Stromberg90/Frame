@@ -9,7 +9,7 @@ namespace Frame
         public About()
         {
             InitializeComponent();
-            VersionText.Text = VersionText.Text.Replace("0.0.0", ImageViewerWM.VERSION);
+            VersionText.Text = VersionText.Text.Replace("0.0.0", ImageViewerWm.VERSION);
             CopyrightText.Text = CopyrightText.Text.Replace("{}", System.DateTime.Now.Year.ToString());
         }
 

@@ -6,7 +6,7 @@ namespace Frame
         Descending
     }
 
-    enum SortMethod
+    public enum SortMethod
     {
         Name,
         Date,
