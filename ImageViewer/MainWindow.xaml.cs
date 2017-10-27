@@ -2,7 +2,6 @@
 //TODO Option to always 100% Zoom
 //TODO Better close icon
 //TODO Show hotkey next to menuitem
-//TODO Single instance window, where it opens files in the current instance of the program.
 //TODO GIF Support
 //TODO Loading images without lag
 //TODO Split into more files
@@ -14,10 +13,9 @@
 //TODO Tiling image toggle
 //TODO Auto Update
 
-//BUG: There is sometimes a bug, where when changing between tabs it will change the image.
-
 //CHANGLOG
     //Multiselect Files in Explorer
+    //Single Instance
 
 using System;
 using System.ComponentModel;
@@ -61,7 +59,7 @@ namespace Frame
             }
         }
 
-        readonly TabControlManager tabControlManager;
+        public readonly TabControlManager tabControlManager;
         readonly SortingManager sortingManager;
         readonly FilesManager filesManager;
         FileSystemWatcher imageDirectoryWatcher;
@@ -306,7 +304,7 @@ namespace Frame
             }
         }
 
-        void AddNewTab(string filepath)
+        public void AddNewTab(string filepath)
         {
             if (string.IsNullOrEmpty(filepath))
             {
@@ -317,6 +315,8 @@ namespace Frame
             {
                 return;
             }
+
+            if (!FilesManager.ValidFile(filepath)) return;
 
             tabControlManager.AddTab(filepath);
 
@@ -671,6 +671,8 @@ namespace Frame
 
         void ReplaceImageInTab(string filename)
         {
+            if (!FilesManager.ValidFile(filename)) return;
+
             if (ImageViewerWm.CurrentTabIndex <= 0)
             {
                 AddNewTab(filename);

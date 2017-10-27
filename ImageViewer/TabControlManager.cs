@@ -5,7 +5,7 @@ using System.Windows.Controls;
 
 namespace Frame
 {
-    class TabControlManager
+    public class TabControlManager
     {
         readonly TabControl tabControl;
         readonly ImageViewerWm imageViewerWm;

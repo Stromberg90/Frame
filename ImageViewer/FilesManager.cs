@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Windows;
+using Frame.Properties;
 
 namespace Frame
 {
@@ -18,7 +20,7 @@ namespace Frame
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                if (string.IsNullOrEmpty(folderpath))
+                if (String.IsNullOrEmpty(folderpath))
                 {
                     return;
                 }
@@ -28,15 +30,15 @@ namespace Frame
                 foreach (var file in Directory.EnumerateFiles(folderpath, "*.*", SearchOption.TopDirectoryOnly))
                 {
                     var extension = Path.GetExtension(Path.GetFileName(file));
-                    if (!string.IsNullOrEmpty(extension))
+                    if (!String.IsNullOrEmpty(extension))
                     {
                         // Should find a way to check without upper case characters and that crap.
-                        if (Properties.Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
+                        if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
                         {
                             ImageViewerVm.CurrentTab.Paths.Add(file);
                             continue;
                         }
-                        if (Properties.Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+                        if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
                         {
                             ImageViewerVm.CurrentTab.Paths.Add(file);
                         }
@@ -48,6 +50,24 @@ namespace Frame
                     Manager.SortAcending(SortMethod.Name);
                 }
             });
+        }
+
+        public static bool ValidFile(string file)
+        {
+            var extension = Path.GetExtension(Path.GetFileName(file));
+            if (!string.IsNullOrEmpty(extension))
+            {
+                // Should find a way to check without upper case characters and that crap.
+                if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
+                {
+                    return true;
+                }
+                if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
