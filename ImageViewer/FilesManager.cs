@@ -6,11 +6,11 @@ namespace Frame
     public class FilesManager
     {
         ImageViewerWm ImageViewerVm { get; }
-        public readonly SortingManager SortingManager;
+        public SortingManager Manager { get; }
 
         public FilesManager(SortingManager sortingManager, ImageViewerWm imageViewerVm)
         {
-            SortingManager = sortingManager;
+            Manager = sortingManager;
             ImageViewerVm = imageViewerVm;
         }
 
@@ -45,7 +45,7 @@ namespace Frame
 
                 if (ImageViewerVm.CurrentTab.IsValid)
                 {
-                    SortingManager.SortAcending(SortMethod.Name);
+                    Manager.SortAcending(SortMethod.Name);
                 }
             });
         }

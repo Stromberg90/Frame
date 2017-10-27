@@ -24,8 +24,8 @@ namespace Frame
 
     public class ImageViewerWm
     {
-        public static readonly string VERSION = "1.0.2";
-        public List<TabData> Tabs { get; set; } = new List<TabData>();
+        public static readonly string VERSION = "1.0.3";
+        public List<TabData> Tabs { get; } = new List<TabData>();
         public int BeforeCompareModeIndex { get; set; }
         public int SlideshowInterval { get; set; } = 5;
         public int CurrentTabIndex { get; set; } = -1;
@@ -50,7 +50,7 @@ namespace Frame
         {
             var fileDialog = new OpenFileDialog
             {
-                Multiselect = false,
+                Multiselect = true,
                 AddExtension = true,
                 Filter = FileFormats.FilterString
             };

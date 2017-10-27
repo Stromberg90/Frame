@@ -120,5 +120,17 @@ namespace Frame.Properties {
                 this["ReplaceImageOnDrop"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ImageFullZoom {
+            get {
+                return ((bool)(this["ImageFullZoom"]));
+            }
+            set {
+                this["ImageFullZoom"] = value;
+            }
+        }
     }
 }
