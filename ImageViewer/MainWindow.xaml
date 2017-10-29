@@ -11,7 +11,7 @@
     Height="350" Width="525" 
     MinHeight="250" MinWidth="250" 
     Background="#FF2E2E2E" 
-    Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed" KeyDown="Window_KeyDown">
+    Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed" KeyDown="Window_KeyDown" >
     <Window.Resources>
         <Style TargetType="{x:Type TabItem}">
             <Setter Property="Template">
@@ -117,6 +117,10 @@
                     <MenuItem  Header="View In Explorer" Click="ViewInExplorer"/>
                     <Separator/>
                     <MenuItem  Header="Reset View" Click="Reset_Click"/>
+                    <Separator/>
+                    <Separator/>
+                    <MenuItem  Header="Tile Image" Click="TileImage_OnClick"/>
+                    <MenuItem  Header="View Channels Montage" Click="ChannelsMontage_OnClick"/>
                     <Separator/>
                     <MenuItem  Header="Sort">
                         <MenuItem x:Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>

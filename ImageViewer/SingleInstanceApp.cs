@@ -41,7 +41,6 @@ namespace Frame
 
             foreach (var arg in args)
             {
-                // Need to check if this files are correct file types.
                 mainWindow?.AddNewTab(arg);
             }
             return false;
@@ -55,7 +54,6 @@ namespace Frame
 
             foreach (var arg in args)
             {
-                // Need to check if this files are correct file types.
                 mainWindow?.AddNewTab(arg);
             }
             app.Poke();

@@ -10,12 +10,13 @@
 //TODO Thumbnail using the render size first, then I can load in the real image in the background and replace.
 //TODO Read sort setting from file explorer?
 //TODO Mip toggle
-//TODO Tiling image toggle
 //TODO Auto Update
 
 //CHANGLOG
     //Multiselect Files in Explorer
     //Single Instance
+    //Channels Montage
+    //Image Tiling
 
 using System;
 using System.ComponentModel;
@@ -39,7 +40,6 @@ using Image = System.Drawing.Image;
 using KeyEventArgs = System.Windows.Forms.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
-using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 using TextAlignment = ImageMagick.TextAlignment;
@@ -71,38 +71,15 @@ namespace Frame
             tabControlManager = new TabControlManager(ImageTabControl, ImageViewerWm, ImageArea);
             sortingManager = new SortingManager(ImageViewerWm);
             filesManager = new FilesManager(sortingManager, ImageViewerWm);
-            /*
-            if (procs.Length > 1)
-            {
-                var sinfo = new ProcessStartInfo
-                {
-                    RedirectStandardInput = true
-                };
-                Process.GetCurrentProcess().StartInfo = sinfo;
-                Application.Current.Shutdown();
-                var inp = procs[procs.Length - 1].StandardInput;
-                // procs[procs.Length - 1].Start();
-                inp.WriteLine(true);
-            }
-            else
-            {
-                var sinfo = new ProcessStartInfo
-                {
-                    RedirectStandardInput = true
-                };
-                Process.GetCurrentProcess().StartInfo = sinfo;
-            }*/
 
             RefreshUi();
             SetupSlideshow();
             UpdateFooter();
         }
 
-        static DispatcherTimer _slideshowTimer;
+        static DispatcherTimer slideshowTimer;
 
         readonly About aboutDialog = new About();
-
-        Process[] procs = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName);
 
         ImageViewerWm ImageViewerWm { get; } = new ImageViewerWm();
         static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
@@ -192,7 +169,19 @@ namespace Frame
                 }
                 case Keys.S:
                 {
-                    ToggleSlideshow();
+                    if (Keyboard.IsKeyDown(Key.LeftCtrl))
+                    {
+                        ChannelsMontage();
+                    }
+                    else
+                    {
+                        ToggleSlideshow();
+                    }
+                    break;
+                }
+                case Keys.T:
+                {
+                    TileImage();
                     break;
                 }
                 case Keys.Right:
@@ -250,11 +239,11 @@ namespace Frame
             }
             if (ImageViewerWm.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
-                _slideshowTimer.Start();
+                slideshowTimer.Start();
             }
             else
             {
-                _slideshowTimer.Stop();
+                slideshowTimer.Stop();
             }
             ImageViewerWm.CurrentTab.UpdateTitle();
             ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
@@ -550,7 +539,7 @@ namespace Frame
 
             if (ImageViewerWm.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
-                _slideshowTimer.Start();
+                slideshowTimer.Start();
             }
 
             var folderPath = Path.GetDirectoryName(ImageViewerWm.Tabs[ImageTabControl.SelectedIndex].InitialImagePath);
@@ -558,6 +547,40 @@ namespace Frame
             filesManager.SupportedFiles(folderPath);
             sortingManager.FindImageAfterSort(ImageViewerWm.CurrentTab.Paths, initPath);
             UpdateView();
+        }
+
+        Image LoadImage(IMagickImage result)
+        {
+            var image = (MagickImage)result;
+
+            ImageViewerWm.CurrentTab.Size = image.FileSize;
+            ImageViewerWm.CurrentTab.Width = image.Width;
+            ImageViewerWm.CurrentTab.Height = image.Height;
+
+            switch (DisplayChannel)
+            {
+                case Channels.Red:
+                {
+                    return image.Separate(Channels.Red).ElementAt(0)?.ToBitmap();
+                }
+                case Channels.Green:
+                {
+                    return image.Separate(Channels.Green).ElementAt(0)?.ToBitmap();
+                }
+                case Channels.Blue:
+                {
+                    return image.Separate(Channels.Blue).ElementAt(0)?.ToBitmap();
+                }
+                case Channels.Alpha:
+                {
+                    return image.Separate(Channels.Alpha).ElementAt(0)?.ToBitmap();
+                }
+                default:
+                {
+                    image.Alpha(AlphaOption.Opaque);
+                    return image.ToBitmap();
+                }
+            }
         }
 
         Image LoadImage(string filepath)
@@ -882,9 +905,9 @@ namespace Frame
 
         void SetupSlideshow()
         {
-            _slideshowTimer = new DispatcherTimer();
-            _slideshowTimer.Tick += Slideshow;
-            _slideshowTimer.Interval = new TimeSpan(0, 0, 1);
+            slideshowTimer = new DispatcherTimer();
+            slideshowTimer.Tick += Slideshow;
+            slideshowTimer.Interval = new TimeSpan(0, 0, 1);
         }
 
         void Slideshow(object source, EventArgs e)
@@ -904,14 +927,14 @@ namespace Frame
             else
             {
                 ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
-                _slideshowTimer.Stop();
+                slideshowTimer.Stop();
                 SwitchImage(SwitchDirection.Next);
-                _slideshowTimer.Start();
+                slideshowTimer.Start();
             }
 
             if (ImageViewerWm.CurrentTab.Mode == ApplicationMode.Slideshow) return;
 
-            _slideshowTimer.Stop();
+            slideshowTimer.Stop();
             ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
             ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
@@ -1049,7 +1072,7 @@ namespace Frame
             ImageViewerWm.CurrentTab.Mode = ApplicationMode.Slideshow;
             ImageViewerWm.CurrentTab.UpdateTitle();
             ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
-            _slideshowTimer.Start();
+            slideshowTimer.Start();
             StartSlideshowUi.IsEnabled = !StartSlideshowUi.IsEnabled;
             StopSlideshowUi.IsEnabled = !StartSlideshowUi.IsEnabled;
         }
@@ -1064,7 +1087,7 @@ namespace Frame
             ImageViewerWm.CurrentTab.Mode = ApplicationMode.Normal;
             ImageViewerWm.CurrentTab.UpdateTitle();
             ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
-            _slideshowTimer.Stop();
+            slideshowTimer.Stop();
             StartSlideshowUi.IsEnabled = !StartSlideshowUi.IsEnabled;
             StopSlideshowUi.IsEnabled = !StartSlideshowUi.IsEnabled;
         }
@@ -1249,6 +1272,96 @@ namespace Frame
 
         void ImageArea_ZoomChanged(object sender, EventArgs e)
         {
+            UpdateFooter();
+        }
+
+        void TileImage_OnClick(object sender, RoutedEventArgs e)
+        {
+            TileImage();
+        }
+        
+        void TileImage()
+        {
+            if (!ImageViewerWm.CanExcectute()) return;
+
+            if (!ImageViewerWm.CurrentTab.Tiled)
+            {                
+                using (var images = new MagickImageCollection())
+                {
+                    var tileCount = 4;
+                    for (var i = 0; i < tileCount; i++)
+                    {
+                        var image = new MagickImage((Bitmap) ImageArea.Image);
+                        images.Add(image);
+                    }
+                    var montageSettings =
+                        new MontageSettings
+                        {
+                            Geometry = new MagickGeometry(ImageViewerWm.CurrentTab.Width, ImageViewerWm.CurrentTab.Height)
+                        };
+                    using (var result = images.Montage(montageSettings))
+                    {
+                        ImageArea.Image = LoadImage(result);
+                        ImageViewerWm.CurrentTab.Tiled = true;
+                    }
+                }
+            }
+            else
+            {
+                ImageArea.Image = LoadImage(ImageViewerWm.CurrentTab.Path);
+                if (ImageViewerWm.CurrentTab.ChannelsMontage)
+                {
+                    ImageViewerWm.CurrentTab.ChannelsMontage  = false;
+                    ChannelsMontage();
+                }
+                ImageViewerWm.CurrentTab.Tiled = false;
+            }
+            ResetView();
+            ImageViewerWm.CurrentTab.UpdateTitle();
+            UpdateFooter();
+        }
+
+        void ChannelsMontage_OnClick(object sender, RoutedEventArgs e)
+        {
+            ChannelsMontage();
+        }
+
+        void ChannelsMontage()
+        {
+            if (!ImageViewerWm.CanExcectute()) return;
+
+            if (!ImageViewerWm.CurrentTab.ChannelsMontage)
+            {                
+                using (var images = new MagickImageCollection())
+                {
+                    foreach (var img in new MagickImage((Bitmap) ImageArea.Image).Separate())
+                    {
+                        images.Add(img);
+                    }
+                    var montageSettings =
+                        new MontageSettings
+                        {
+                            Geometry = new MagickGeometry(ImageViewerWm.CurrentTab.Width, ImageViewerWm.CurrentTab.Height)
+                        };
+                    using (var result = images.Montage(montageSettings))
+                    {
+                        ImageArea.Image = LoadImage(result);
+                        ImageViewerWm.CurrentTab.ChannelsMontage = true;
+                    }
+                }
+            }
+            else
+            {
+                ImageArea.Image = LoadImage(ImageViewerWm.CurrentTab.Path);
+                if (ImageViewerWm.CurrentTab.Tiled)
+                {
+                    ImageViewerWm.CurrentTab.Tiled = false;
+                    TileImage();
+                }
+                ImageViewerWm.CurrentTab.ChannelsMontage = false;
+            }
+            ResetView();
+            ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
         }
     }

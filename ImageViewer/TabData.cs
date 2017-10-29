@@ -89,6 +89,8 @@ namespace Frame
         }
 
         public string FooterIndex => $"Index: {Index + 1}/{Paths.Count}";
+        public bool Tiled { get; set; }
+        public bool ChannelsMontage { get; set; }
 
         public TabData(string tabPath)
         {
