@@ -62,6 +62,8 @@
             <TextBlock x:Name="FooterZoomText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
             <Separator/>
             <TextBlock x:Name="FooterIndexText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <Separator/>
+            <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
         </StatusBar>
         <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0" KeyDown="Window_KeyDown" AllowDrop="True" Drop="ImageTabControl_Drop" >
             <StackPanel Orientation="Horizontal" Width="Auto">
@@ -117,7 +119,6 @@
                     <MenuItem  Header="View In Explorer" Click="ViewInExplorer"/>
                     <Separator/>
                     <MenuItem  Header="Reset View" Click="Reset_Click"/>
-                    <Separator/>
                     <Separator/>
                     <MenuItem  Header="Tile Image" Click="TileImage_OnClick"/>
                     <MenuItem  Header="View Channels Montage" Click="ChannelsMontage_OnClick"/>

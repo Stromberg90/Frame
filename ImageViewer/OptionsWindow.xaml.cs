@@ -1,8 +1,4 @@
-﻿using System;
-using System.ComponentModel;
-using System.Windows;
-
-namespace Frame
+﻿namespace Frame
 {
     /// <summary>
     /// Interaction logic for OptionsWindow.xaml

@@ -1,5 +1,4 @@
-﻿//TODO Mips Support
-//TODO Data bindings
+﻿//TODO Data bindings
 //TODO Option to always 100% Zoom
 //TODO Better (close) icon(s)
 //TODO Thumbnail using the render size, then I can load in the real image in the background, like when I open a folder make thumbnails for "all" the images in the folder.
@@ -13,11 +12,14 @@
 //TODO Read sort setting from file explorer?
 //TODO Auto Update
 
+//BUG Pressing a none existent hotkey, takes all the ram.
+
 //CHANGLOG
-    //Multiselect Files in Explorer
-    //Single Instance
-    //Channels Montage
-    //Image Tiling
+//Multiselect Files in Explorer
+//Single Instance
+//Channels Montage
+//Image Tiling
+//Mip Viewing
 
 using System;
 using System.ComponentModel;
@@ -37,13 +39,11 @@ using Application = System.Windows.Application;
 using Clipboard = System.Windows.Clipboard;
 using DataFormats = System.Windows.DataFormats;
 using DragEventArgs = System.Windows.DragEventArgs;
-using Image = System.Drawing.Image;
 using KeyEventArgs = System.Windows.Forms.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
-using TextAlignment = ImageMagick.TextAlignment;
 
 namespace Frame
 {
@@ -86,20 +86,6 @@ namespace Frame
         ImageViewerWm ImageViewerWm { get; } = new ImageViewerWm();
         static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
 
-        static MagickImage ErrorImage(string filepath)
-        {
-            var image = new MagickImage(MagickColors.White, 512, 512);
-            new Drawables()
-                .FontPointSize(18)
-                .Font("Arial")
-                .FillColor(MagickColors.Red)
-                .TextAlignment(TextAlignment.Center)
-                .Text(256, 256, $"Could not load\n{Path.GetFileName(filepath)}")
-                .Draw(image);
-
-            return image;
-        }
-
         void CloseTabIndex(TabData data)
         {
             var newIndex = ImageTabControl.Items.IndexOf(data.tabItem);
@@ -130,26 +116,51 @@ namespace Frame
             {
                 case Keys.A:
                 {
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
+
                     ToggleDisplayChannel(Channels.Alpha);
                     break;
                 }
                 case Keys.R:
                 {
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
+
                     ToggleDisplayChannel(Channels.Red);
                     break;
                 }
                 case Keys.G:
                 {
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
+
                     ToggleDisplayChannel(Channels.Green);
                     break;
                 }
                 case Keys.B:
                 {
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
+
                     ToggleDisplayChannel(Channels.Blue);
                     break;
                 }
                 case Keys.F:
                 {
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
+
                     ResetView();
                     break;
                 }
@@ -173,7 +184,9 @@ namespace Frame
                 {
                     if (Keyboard.IsKeyDown(Key.LeftCtrl))
                     {
-                        ChannelsMontage();
+                        ImageViewerWm.CurrentTab.ChannelsMontage = !ImageViewerWm.CurrentTab.ChannelsMontage;
+                        ImageArea.Image = ImageViewerWm.CurrentTab.Image;
+                        ResetView();
                     }
                     else
                     {
@@ -183,7 +196,14 @@ namespace Frame
                 }
                 case Keys.T:
                 {
-                    TileImage();
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
+
+                    ImageViewerWm.CurrentTab.Tiled = !ImageViewerWm.CurrentTab.Tiled;
+                    ImageArea.Image = ImageViewerWm.CurrentTab.Image;
+                    ResetView();
                     break;
                 }
                 case Keys.Right:
@@ -218,15 +238,44 @@ namespace Frame
                 }
                 case Keys.Space:
                 {
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
                     SwitchImage(SwitchDirection.Next);
                     break;
                 }
                 case Keys.Delete:
                 {
+                    if (ModifierKeyDown())
+                    {
+                        return;
+                    }
                     DeleteImage();
                     break;
                 }
+                case Keys.Add:
+                {
+                    ImageViewerWm.CurrentTab.ImageSettings.MipValue -= 1;
+                    ImageArea.Image = ImageViewerWm.CurrentTab.Image;
+                    UpdateFooter();
+                    break;
+                }
+                case Keys.Subtract:
+                {
+                    ImageViewerWm.CurrentTab.ImageSettings.MipValue += 1;
+                    ImageArea.Image = ImageViewerWm.CurrentTab.Image;
+                    UpdateFooter();
+                    break;
+                }
             }
+        }
+
+        static bool ModifierKeyDown()
+        {
+            return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl) ||
+                   Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt) ||
+                   Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
         }
 
         void ToggleSlideshow()
@@ -422,7 +471,7 @@ namespace Frame
 
             if (ImageArea == null || !ImageViewerWm.CurrentTab.IsValid) return;
 
-            ImageArea.Image = LoadImage(ImageViewerWm.CurrentTab.Path);
+            ImageArea.Image = ImageViewerWm.CurrentTab.Image;
 
             ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
@@ -438,6 +487,7 @@ namespace Frame
                 FooterFilesizeText.Text = "Filesize: ";
                 FooterZoomText.Text = "Zoom: ";
                 FooterIndexText.Text = "Index: ";
+                FooterMipIndexText.Text = "Mip: ";
             }
             else
             {
@@ -447,6 +497,7 @@ namespace Frame
                 FooterSizeText.Text = ImageViewerWm.CurrentTab.FooterSize;
                 FooterFilesizeText.Text = ImageViewerWm.CurrentTab.FooterFilesize;
                 FooterIndexText.Text = ImageViewerWm.CurrentTab.FooterIndex;
+                FooterMipIndexText.Text = ImageViewerWm.CurrentTab.FooterMipIndex;
                 {
                     switch (DisplayChannel)
                     {
@@ -478,7 +529,7 @@ namespace Frame
                     }
                     FooterChannelsText.Text = $"Channels: {channel}";
                 }
-                FooterZoomText.Text = $"Zoom: {ImageArea.Zoom}%";                  
+                FooterZoomText.Text = $"Zoom: {ImageArea.Zoom}%";
             }
         }
 
@@ -548,106 +599,8 @@ namespace Frame
             var initPath = ImageViewerWm.CurrentTab.Paths[(ImageViewerWm.CurrentTab.Index)];
             filesManager.SupportedFiles(folderPath);
             sortingManager.FindImageAfterSort(ImageViewerWm.CurrentTab.Paths, initPath);
-            UpdateView();
-        }
-
-        Image LoadImage(IMagickImage result)
-        {
-            var image = (MagickImage)result;
-
-            ImageViewerWm.CurrentTab.Size = image.FileSize;
-            ImageViewerWm.CurrentTab.Width = image.Width;
-            ImageViewerWm.CurrentTab.Height = image.Height;
-
-            switch (DisplayChannel)
-            {
-                case Channels.Red:
-                {
-                    return image.Separate(Channels.Red).ElementAt(0)?.ToBitmap();
-                }
-                case Channels.Green:
-                {
-                    return image.Separate(Channels.Green).ElementAt(0)?.ToBitmap();
-                }
-                case Channels.Blue:
-                {
-                    return image.Separate(Channels.Blue).ElementAt(0)?.ToBitmap();
-                }
-                case Channels.Alpha:
-                {
-                    return image.Separate(Channels.Alpha).ElementAt(0)?.ToBitmap();
-                }
-                default:
-                {
-                    image.Alpha(AlphaOption.Opaque);
-                    return image.ToBitmap();
-                }
-            }
-        }
-
-        Image LoadImage(string filepath)
-        {
-            MagickImage image;
-            try
-            {
-                if (Path.GetExtension(filepath) == ".gif")
-                {
-                    var imageCollection = new MagickImageCollection(filepath);
-                    image = (MagickImage) imageCollection[0];
-                }
-                else if (Path.GetExtension(filepath) == ".dds")
-                {
-                    var defines = new DdsReadDefines {SkipMipmaps = false};
-                    var readSettings = new MagickReadSettings(defines);
-                    var imageCollection = new MagickImageCollection(filepath, readSettings);
-                    image = (MagickImage)imageCollection[0];
-                }
-                else
-                {
-                    image = new MagickImage(filepath);
-                }
-            }
-            catch (MagickCoderErrorException)
-            {
-                image = ErrorImage(filepath);
-            }
-            catch (MagickMissingDelegateErrorException)
-            {
-                image = ErrorImage(filepath);
-            }
-            finally
-            {
-                GC.Collect();
-            }
-
-            ImageViewerWm.CurrentTab.Size = image.FileSize;
-            ImageViewerWm.CurrentTab.Width = image.Width;
-            ImageViewerWm.CurrentTab.Height = image.Height;
-
-            switch (DisplayChannel)
-            {
-                case Channels.Red:
-                {
-                    return image.Separate(Channels.Red).ElementAt(0)?.ToBitmap();
-                }
-                case Channels.Green:
-                {
-                    return image.Separate(Channels.Green).ElementAt(0)?.ToBitmap();
-                }
-                case Channels.Blue:
-                {
-                    return image.Separate(Channels.Blue).ElementAt(0)?.ToBitmap();
-                }
-                case Channels.Alpha:
-                {
-                    return image.Separate(Channels.Alpha).ElementAt(0)?.ToBitmap();
-                }
-                default:
-                {
-                    image.Alpha(AlphaOption.Opaque);
-                    return image.ToBitmap();
-                }
-            }
+            ImageArea.Image = ImageViewerWm.CurrentTab.Image;
+            ResetView();
         }
 
         void OpenInImageEditor(object sender, RoutedEventArgs e)
@@ -684,7 +637,7 @@ namespace Frame
         {
             if (!ImageViewerWm.CurrentTab.IsValid) return;
 
-            ImageArea.Image = LoadImage(ImageViewerWm.CurrentTab.Path);
+            ImageArea.Image = ImageViewerWm.CurrentTab.Image;
             ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
         }
@@ -819,7 +772,6 @@ namespace Frame
 
         void SetupDirectoryWatcher()
         {
-
             var directoryName = Path.GetDirectoryName(ImageViewerWm.CurrentTab.InitialImagePath);
             imageDirectoryWatcher = null;
             imageDirectoryWatcher = new FileSystemWatcher
@@ -879,7 +831,8 @@ namespace Frame
                     {
                         var renamedArgs = (RenamedEventArgs) args;
                         var newFile = Path.Combine(renamedArgs.FullPath,
-                            Path.GetFileName(ImageViewerWm.CurrentTab.Path) ?? throw new InvalidOperationException("It was the null"));
+                            Path.GetFileName(ImageViewerWm.CurrentTab.Path) ??
+                            throw new InvalidOperationException("It was the null"));
                         if (Path.GetDirectoryName(ImageViewerWm.CurrentTab.InitialImagePath) ==
                             renamedArgs.OldFullPath)
                         {
@@ -1084,6 +1037,7 @@ namespace Frame
 
         void SwitchImage(SwitchDirection switchDirection)
         {
+            ImageViewerWm.CurrentTab.ImageSettings.MipValue = 0;
             if (ImageViewerWm.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
                 ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
@@ -1176,8 +1130,17 @@ namespace Frame
 
         void About_Click(object sender, RoutedEventArgs e)
         {
-            aboutDialog.Top = Top + (Height / 2.0) - (aboutDialog.Height / 2.0);
-            aboutDialog.Left = Left + (Width / 2.0) - (aboutDialog.Width / 2.0);
+            if (WindowState == WindowState.Maximized)
+            {
+                var rect = Screen.GetWorkingArea(new Point((int) Left, (int) Top));
+                aboutDialog.Top = rect.Top + (ActualHeight / 2.0) - (aboutDialog.Height / 2.0);
+                aboutDialog.Left = rect.Left + (ActualWidth / 2.0) - (aboutDialog.Width / 2.0);
+            }
+            else
+            {
+                aboutDialog.Top = Top + (ActualHeight / 2.0) - (aboutDialog.Height / 2.0);
+                aboutDialog.Left = Left + (ActualWidth / 2.0) - (aboutDialog.Width / 2.0);
+            }
             aboutDialog.ShowDialog();
         }
 
@@ -1255,7 +1218,7 @@ namespace Frame
             if (Environment.GetCommandLineArgs().Length <= 1) return;
 
             foreach (var filePath in Environment.GetCommandLineArgs().Skip(1))
-            {                    
+            {
                 AddNewTab(filePath);
             }
         }
@@ -1267,98 +1230,31 @@ namespace Frame
 
         void TileImage_OnClick(object sender, RoutedEventArgs e)
         {
-            TileImage();
-        }
-        
-        void TileImage()
-        {
-            if (!ImageViewerWm.CanExcectute()) return;
-
-            if (!ImageViewerWm.CurrentTab.Tiled)
-            {                
-                using (var images = new MagickImageCollection())
-                {
-                    var tileCount = 4;
-                    for (var i = 0; i < tileCount; i++)
-                    {
-                        var image = new MagickImage((Bitmap) ImageArea.Image);
-                        images.Add(image);
-                    }
-                    var montageSettings =
-                        new MontageSettings
-                        {
-                            Geometry = new MagickGeometry(ImageViewerWm.CurrentTab.Width, ImageViewerWm.CurrentTab.Height)
-                        };
-                    using (var result = images.Montage(montageSettings))
-                    {
-                        ImageArea.Image = LoadImage(result);
-                        ImageViewerWm.CurrentTab.Tiled = true;
-                    }
-                }
-            }
-            else
-            {
-                ImageArea.Image = LoadImage(ImageViewerWm.CurrentTab.Path);
-                if (ImageViewerWm.CurrentTab.ChannelsMontage)
-                {
-                    ImageViewerWm.CurrentTab.ChannelsMontage  = false;
-                    ChannelsMontage();
-                }
-                ImageViewerWm.CurrentTab.Tiled = false;
-            }
+            ImageViewerWm.CurrentTab.Tiled = true;
+            ImageArea.Image = ImageViewerWm.CurrentTab.Image;
             ResetView();
-            ImageViewerWm.CurrentTab.UpdateTitle();
-            UpdateFooter();
         }
 
         void ChannelsMontage_OnClick(object sender, RoutedEventArgs e)
         {
-            ChannelsMontage();
-        }
-
-        void ChannelsMontage()
-        {
-            if (!ImageViewerWm.CanExcectute()) return;
-
-            if (!ImageViewerWm.CurrentTab.ChannelsMontage)
-            {                
-                using (var images = new MagickImageCollection())
-                {
-                    foreach (var img in new MagickImage((Bitmap) ImageArea.Image).Separate())
-                    {
-                        images.Add(img);
-                    }
-                    var montageSettings =
-                        new MontageSettings
-                        {
-                            Geometry = new MagickGeometry(ImageViewerWm.CurrentTab.Width, ImageViewerWm.CurrentTab.Height)
-                        };
-                    using (var result = images.Montage(montageSettings))
-                    {
-                        ImageArea.Image = LoadImage(result);
-                        ImageViewerWm.CurrentTab.ChannelsMontage = true;
-                    }
-                }
-            }
-            else
-            {
-                ImageArea.Image = LoadImage(ImageViewerWm.CurrentTab.Path);
-                if (ImageViewerWm.CurrentTab.Tiled)
-                {
-                    ImageViewerWm.CurrentTab.Tiled = false;
-                    TileImage();
-                }
-                ImageViewerWm.CurrentTab.ChannelsMontage = false;
-            }
+            ImageViewerWm.CurrentTab.ChannelsMontage = true;
+            ImageArea.Image = ImageViewerWm.CurrentTab.Image;
             ResetView();
-            ImageViewerWm.CurrentTab.UpdateTitle();
-            UpdateFooter();
         }
 
         void Options_OnClick(object sender, RoutedEventArgs e)
         {
-            optionsDialog.Top = Top + (Height / 2.0) - (optionsDialog.Height / 2.0);
-            optionsDialog.Left = Left + (Width / 2.0) - (optionsDialog.Width / 2.0);
+            if (WindowState == WindowState.Maximized)
+            {
+                var rect = Screen.GetWorkingArea(new Point((int) Left, (int) Top));
+                optionsDialog.Top = rect.Top + (ActualHeight / 2.0) - (optionsDialog.Height / 2.0);
+                optionsDialog.Left = rect.Left + (ActualWidth / 2.0) - (optionsDialog.Width / 2.0);
+            }
+            else
+            {
+                optionsDialog.Top = Top + (ActualHeight / 2.0) - (optionsDialog.Height / 2.0);
+                optionsDialog.Left = Left + (ActualWidth / 2.0) - (optionsDialog.Width / 2.0);
+            }
             optionsDialog.ShowDialog();
         }
     }

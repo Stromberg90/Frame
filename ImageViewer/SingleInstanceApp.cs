@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.IO;
 using System.Windows;
 using Microsoft.VisualBasic.ApplicationServices;
 using StartupEventArgs = System.Windows.StartupEventArgs;
