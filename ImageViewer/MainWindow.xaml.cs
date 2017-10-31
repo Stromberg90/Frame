@@ -1,15 +1,16 @@
-﻿//TODO Data bindings
+﻿//TODO Mips Support
+//TODO Data bindings
 //TODO Option to always 100% Zoom
-//TODO Better close icon
+//TODO Better (close) icon(s)
+//TODO Thumbnail using the render size, then I can load in the real image in the background, like when I open a folder make thumbnails for "all" the images in the folder.
+//TODO Save Image Instead of path and then loading the image each time, especially for tab switching.
 //TODO Show hotkey next to menuitem
 //TODO GIF Support
 //TODO Loading images without lag
 //TODO Split into more files
 //TODO Progress bar when loading large images
 //TODO Options window, maybe I can add the hotkeys in there as well
-//TODO Thumbnail using the render size first, then I can load in the real image in the background and replace.
 //TODO Read sort setting from file explorer?
-//TODO Mip toggle
 //TODO Auto Update
 
 //CHANGLOG
@@ -80,6 +81,7 @@ namespace Frame
         static DispatcherTimer slideshowTimer;
 
         readonly About aboutDialog = new About();
+        readonly OptionsWindow optionsDialog = new OptionsWindow();
 
         ImageViewerWm ImageViewerWm { get; } = new ImageViewerWm();
         static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
@@ -593,6 +595,13 @@ namespace Frame
                     var imageCollection = new MagickImageCollection(filepath);
                     image = (MagickImage) imageCollection[0];
                 }
+                else if (Path.GetExtension(filepath) == ".dds")
+                {
+                    var defines = new DdsReadDefines {SkipMipmaps = false};
+                    var readSettings = new MagickReadSettings(defines);
+                    var imageCollection = new MagickImageCollection(filepath, readSettings);
+                    image = (MagickImage)imageCollection[0];
+                }
                 else
                 {
                     image = new MagickImage(filepath);
@@ -696,7 +705,7 @@ namespace Frame
         {
             if (!FilesManager.ValidFile(filename)) return;
 
-            if (ImageViewerWm.CurrentTabIndex <= 0)
+            if (ImageViewerWm.CurrentTabIndex < 0)
             {
                 AddNewTab(filename);
             }
@@ -810,14 +819,9 @@ namespace Frame
 
         void SetupDirectoryWatcher()
         {
-            if (imageDirectoryWatcher != null)
-            {
-                parentDirectoryWatcher.EnableRaisingEvents = true;
-                imageDirectoryWatcher.Dispose();
-                imageDirectoryWatcher = null;
-            }
 
             var directoryName = Path.GetDirectoryName(ImageViewerWm.CurrentTab.InitialImagePath);
+            imageDirectoryWatcher = null;
             imageDirectoryWatcher = new FileSystemWatcher
             {
                 Path = directoryName,
@@ -826,13 +830,7 @@ namespace Frame
                     NotifyFilters.DirectoryName
             };
 
-            if (parentDirectoryWatcher != null)
-            {
-                parentDirectoryWatcher.EnableRaisingEvents = false;
-                parentDirectoryWatcher.Dispose();
-                parentDirectoryWatcher = null;
-            }
-
+            parentDirectoryWatcher = null;
             parentDirectoryWatcher = new FileSystemWatcher
             {
                 Path = Directory.GetParent(directoryName).FullName,
@@ -880,19 +878,11 @@ namespace Frame
                     case WatcherChangeTypes.Renamed:
                     {
                         var renamedArgs = (RenamedEventArgs) args;
+                        var newFile = Path.Combine(renamedArgs.FullPath,
+                            Path.GetFileName(ImageViewerWm.CurrentTab.Path) ?? throw new InvalidOperationException("It was the null"));
                         if (Path.GetDirectoryName(ImageViewerWm.CurrentTab.InitialImagePath) ==
                             renamedArgs.OldFullPath)
                         {
-                            ImageViewerWm.CurrentTab.InitialImagePath = renamedArgs.FullPath;
-                            CloseTab();
-                        }
-                        //BUG Hangs the program
-                        break;
-                        if (Path.GetDirectoryName(ImageViewerWm.CurrentTab.InitialImagePath) ==
-                            renamedArgs.OldFullPath)
-                        {
-                            var newFile = Path.Combine(renamedArgs.FullPath,
-                                Path.GetFileName(ImageViewerWm.CurrentTab.Path));
                             ReplaceImageInTab(newFile);
                         }
                         break;
@@ -1363,6 +1353,13 @@ namespace Frame
             ResetView();
             ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
+        }
+
+        void Options_OnClick(object sender, RoutedEventArgs e)
+        {
+            optionsDialog.Top = Top + (Height / 2.0) - (optionsDialog.Height / 2.0);
+            optionsDialog.Left = Left + (Width / 2.0) - (optionsDialog.Width / 2.0);
+            optionsDialog.ShowDialog();
         }
     }
 }

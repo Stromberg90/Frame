@@ -7,6 +7,5 @@
         mc:Ignorable="d"
         Title="OptionsWindow" Height="300" Width="300" Background="#FF2E2E2E">
     <Grid>
-        <TextBlock Text="Background Color"/>
     </Grid>
 </Window>

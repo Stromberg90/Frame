@@ -134,6 +134,7 @@
                     <MenuItem Header="Reset Settings" Click="ResetSettings_Click"/>
                     <Separator/>
                     <MenuItem Header="About" Click="About_Click"/>
+                    <MenuItem Header="Options" Click="Options_OnClick" IsEnabled="False"/>
                 </ContextMenu>
             </WindowsFormsHost.ContextMenu>
         </WindowsFormsHost>
