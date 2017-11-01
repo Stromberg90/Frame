@@ -43,6 +43,7 @@ using MessageBox = System.Windows.MessageBox;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
+using TabControl = System.Windows.Controls.TabControl;
 
 namespace Frame
 {
@@ -582,6 +583,10 @@ namespace Frame
 
         void ImageTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (((TabControl) sender).Items.Count > 1)
+            {
+                ImageViewerWm.CurrentTab.Hibernate = true;
+            }
             ImageViewerWm.CurrentTabIndex = ImageTabControl.SelectedIndex;
 
             if (!ImageViewerWm.CanExcectute())

@@ -43,7 +43,12 @@ namespace Frame
             get
             {
                 //TODO Make it so I don't have to reload the image, when doing tiling and channels montage, or switching channels.
-                LoadImage();
+                if (!Hibernate)
+                {
+                    LoadImage();
+                }
+                Hibernate = false;
+
 
                 if (SplitChannels)
                 {
@@ -70,8 +75,11 @@ namespace Frame
                     const int tileCount = 4;
                     for (var i = 0; i < tileCount; i++)
                     {
-                        var image = new MagickImage(imageCollection[ImageSettings.MipValue]);
-                        image.Alpha(AlphaOption.Opaque);
+                        var image = imageCollection[ImageSettings.MipValue].Clone();
+                        if (ImageSettings.DisplayChannel != Channels.Alpha)
+                        {
+                            image.Alpha(AlphaOption.Opaque);
+                        }
                         images.Add(image);
                     }
                     var montageSettings =
@@ -79,11 +87,9 @@ namespace Frame
                         {
                             Geometry = new MagickGeometry(Width, Height)                            
                         };
-                    var img = images;
 
-                    var result = img.Montage(montageSettings);
                     imageCollection.Clear();
-                    imageCollection.Add(result);
+                    imageCollection.Add(images.Montage(montageSettings));
                     ImageSettings.HasMips = false;
                 }
 
@@ -91,33 +97,35 @@ namespace Frame
                 {
                     case Channels.Red:
                     {
-                        return new MagickImage(imageCollection[ImageSettings.MipValue]).Separate(Channels.Red)
+                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Red)
                             .ElementAt(0)?.ToBitmap();
                     }
                     case Channels.Green:
                     {
-                        return new MagickImage(imageCollection[ImageSettings.MipValue]).Separate(Channels.Green)
+                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Green)
                             .ElementAt(0)?.ToBitmap();
                     }
                     case Channels.Blue:
                     {
-                        return new MagickImage(imageCollection[ImageSettings.MipValue]).Separate(Channels.Blue)
+                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Blue)
                             .ElementAt(0)?.ToBitmap();
                     }
                     case Channels.Alpha:
                     {
-                        return new MagickImage(imageCollection[ImageSettings.MipValue]).Separate(Channels.Alpha)
+                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Alpha)
                             .ElementAt(0)?.ToBitmap();
                     }
                     default:
                     {
-                        var image = new MagickImage(imageCollection[ImageSettings.MipValue]);
+                        var image = imageCollection[ImageSettings.MipValue].Clone();
                         image.Alpha(AlphaOption.Opaque);
                         return image.ToBitmap();
                     }
                 }
             }
         }
+
+        public bool Hibernate { get; set; }
 
         public string Path => Index < Paths.Count ? Paths[Index] : Paths[0];
 
