@@ -45,7 +45,7 @@ namespace Frame
                 //TODO Make it so I don't have to reload the image, when doing tiling and channels montage, or switching channels.
                 LoadImage();
 
-                if (ChannelsMontage)
+                if (SplitChannels)
                 {
                     using (var images = new MagickImageCollection())
                     {
@@ -71,12 +71,13 @@ namespace Frame
                     for (var i = 0; i < tileCount; i++)
                     {
                         var image = new MagickImage(imageCollection[ImageSettings.MipValue]);
+                        image.Alpha(AlphaOption.Opaque);
                         images.Add(image);
                     }
                     var montageSettings =
                         new MontageSettings
                         {
-                            Geometry = new MagickGeometry(Width, Height)
+                            Geometry = new MagickGeometry(Width, Height)                            
                         };
                     var img = images;
 
@@ -168,13 +169,13 @@ namespace Frame
             {
                 if (Mode == ApplicationMode.Slideshow)
                 {
-                    return $"Mode: {Mode} " + CurrentSlideshowTime;
+                    return $"MODE: {Mode} " + CurrentSlideshowTime;
                 }
-                return $"Mode: {Mode}";
+                return $"MODE: {Mode}";
             }
         }
 
-        public string FooterSize => $"Size: {Width}x{Height}";
+        public string FooterSize => $"SIZE: {Width}x{Height}";
 
 
         public string FooterFilesize
@@ -183,24 +184,24 @@ namespace Frame
             {
                 if (Size < 1024)
                 {
-                    return $"Filesize: {Size}Bytes";
+                    return $"FILESIZE: {Size}Bytes";
                 }
                 if (Size < 1048576)
                 {
                     var filesize = (double) (Size / 1024f);
-                    return $"Filesize: {filesize:N2}KB";
+                    return $"FILESIZE: {filesize:N2}KB";
                 }
                 else
                 {
                     var filesize = (double) (Size / 1024f) / 1024f;
-                    return $"Filesize: {filesize:N2}MB";
+                    return $"FILESIZE: {filesize:N2}MB";
                 }
             }
         }
 
-        public string FooterIndex => $"Index: {Index + 1}/{Paths.Count}";
+        public string FooterIndex => $"INDEX: {Index + 1}/{Paths.Count}";
         public bool Tiled { get; set; }
-        public bool ChannelsMontage { get; set; }
+        public bool SplitChannels { get; set; }
 
         public string FooterMipIndex
         {
@@ -208,9 +209,9 @@ namespace Frame
             {
                 if (ImageSettings.HasMips)
                 {
-                    return $"Mip: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
+                    return $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
                 }
-                return "Mip: None";
+                return "MIP: None";
             }
         }
 
@@ -268,7 +269,8 @@ namespace Frame
                     {
                         ImageSettings.HasMips = false;
                         ImageSettings.MipValue = 0;
-                        imageCollection = new MagickImageCollection(Path);
+                        imageCollection.Clear();
+                        imageCollection.Add(Path);
                         break;
                     }
                     case ".dds":
@@ -298,6 +300,11 @@ namespace Frame
                 imageCollection.Add(ErrorImage(Path));
             }
             catch (MagickMissingDelegateErrorException)
+            {
+                imageCollection.Clear();
+                imageCollection.Add(ErrorImage(Path));
+            }
+            catch (MagickCorruptImageErrorException)
             {
                 imageCollection.Clear();
                 imageCollection.Add(ErrorImage(Path));

@@ -12,9 +12,8 @@
 //TODO Read sort setting from file explorer?
 //TODO Auto Update
 
-//BUG Pressing a none existent hotkey, takes all the ram.
-
 //CHANGLOG
+//New Icon
 //Multiselect Files in Explorer
 //Single Instance
 //Channels Montage
@@ -184,7 +183,7 @@ namespace Frame
                 {
                     if (Keyboard.IsKeyDown(Key.LeftCtrl))
                     {
-                        ImageViewerWm.CurrentTab.ChannelsMontage = !ImageViewerWm.CurrentTab.ChannelsMontage;
+                        ImageViewerWm.CurrentTab.SplitChannels = !ImageViewerWm.CurrentTab.SplitChannels;
                         ImageArea.Image = ImageViewerWm.CurrentTab.Image;
                         ResetView();
                     }
@@ -481,13 +480,13 @@ namespace Frame
         {
             if (ImageViewerWm.CurrentTabIndex == -1 || !ImageViewerWm.CanExcectute())
             {
-                FooterModeText.Text = "Mode: ";
-                FooterSizeText.Text = "Size: ";
-                FooterChannelsText.Text = "Channels: ";
-                FooterFilesizeText.Text = "Filesize: ";
-                FooterZoomText.Text = "Zoom: ";
-                FooterIndexText.Text = "Index: ";
-                FooterMipIndexText.Text = "Mip: ";
+                FooterModeText.Text = "MODE: ";
+                FooterSizeText.Text = "SIZE: ";
+                FooterChannelsText.Text = "CHANNELS: ";
+                FooterFilesizeText.Text = "FILESIZE: ";
+                FooterZoomText.Text = "ZOOM: ";
+                FooterIndexText.Text = "INDEX: ";
+                FooterMipIndexText.Text = "MIP: ";
             }
             else
             {
@@ -552,12 +551,12 @@ namespace Frame
                 }
             };
 
-
             ImageViewerWm.Tabs.Insert(ImageViewerWm.CurrentTabIndex + 1, tab);
 
             ImageTabControl.Items.Insert(ImageViewerWm.CurrentTabIndex + 1, tab.tabItem);
 
             ImageTabControl.SelectedIndex = ImageViewerWm.CurrentTabIndex + 1;
+            DisplayImage();
         }
 
         void FileBrowser()
@@ -1038,6 +1037,8 @@ namespace Frame
         void SwitchImage(SwitchDirection switchDirection)
         {
             ImageViewerWm.CurrentTab.ImageSettings.MipValue = 0;
+            ImageViewerWm.CurrentTab.Tiled = false;
+            ImageViewerWm.CurrentTab.SplitChannels = false;
             if (ImageViewerWm.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
                 ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
@@ -1237,7 +1238,7 @@ namespace Frame
 
         void ChannelsMontage_OnClick(object sender, RoutedEventArgs e)
         {
-            ImageViewerWm.CurrentTab.ChannelsMontage = true;
+            ImageViewerWm.CurrentTab.SplitChannels = true;
             ImageArea.Image = ImageViewerWm.CurrentTab.Image;
             ResetView();
         }
