@@ -1,7 +1,21 @@
 # Frame
+![](https://i.imgur.com/9X0i98M.jpg)
 
 Features
 * Tabs
 * Channel Viewing: Useful for artist, where several textures are packed into one.
+* Channel Splitting: Combines all channels into one image and displays it.
+* Image Tiling: Makes a 4x4 Tiling image, handy for previewing seamless textures.
+* Mipmaps Viewing: Look at each mip map individually.
 
-![](https://i.imgur.com/A12rSD1.png)
+Hotkeys
+* Ctrl-N  - Adds New Tab
+* Ctrl-D  - Duplicates Tab
+* Ctrl-W  - Closes Tab
+* Ctrl-S  - Splits Channels Into Single Image
+* T       - Tiles Image 4x4
+* S       - Starts Slideshow
+* R       - Toggles Red Channel
+* G       - Toggles Green Channel
+* B       - Toggles Blue Channel
+* A       - Toggles Alpha Channel
