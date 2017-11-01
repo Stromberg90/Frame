@@ -19,3 +19,5 @@ Hotkeys
 * G       - Toggles Green Channel
 * B       - Toggles Blue Channel
 * A       - Toggles Alpha Channel
+* -       - Goes Down A Mip Level
+* +       - Goes Up A Mip Level
