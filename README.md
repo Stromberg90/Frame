@@ -1,6 +1,6 @@
 # Frame
 ![](https://i.imgur.com/9X0i98M.jpg)
-
+![](https://i.imgur.com/EAgP2tv.gif)
 Features
 * Tabs
 * Channel Viewing: Useful for artist, where several textures are packed into one.
