@@ -1,6 +1,6 @@
 # Frame
 ![](https://i.imgur.com/9X0i98M.jpg)
-
+![](https://i.imgur.com/EAgP2tv.gif)
 Features
 * Tabs
 * Channel Viewing: Useful for artist, where several textures are packed into one.
@@ -9,13 +9,15 @@ Features
 * Mipmaps Viewing: Look at each mip map individually.
 
 Hotkeys
-* Ctrl-N  - Adds New Tab
-* Ctrl-D  - Duplicates Tab
-* Ctrl-W  - Closes Tab
-* Ctrl-S  - Splits Channels Into Single Image
-* T       - Tiles Image 4x4
-* S       - Starts Slideshow
-* R       - Toggles Red Channel
-* G       - Toggles Green Channel
-* B       - Toggles Blue Channel
-* A       - Toggles Alpha Channel
+* "Ctrl-N"  - Adds New Tab
+* "Ctrl-D"  - Duplicates Tab
+* "Ctrl-W"  - Closes Tab
+* "Ctrl-S"  - Splits Channels Into Single Image
+* "T"       - Tiles Image 4x4
+* "S"       - Starts Slideshow
+* "R"       - Toggles Red Channel
+* "G"       - Toggles Green Channel
+* "B"       - Toggles Blue Channel
+* "A"       - Toggles Alpha Channel
+* "-"       - Goes Down A Mip Level
+* "+"       - Goes Up A Mip Level
