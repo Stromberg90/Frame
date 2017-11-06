@@ -50,30 +50,34 @@
         </Style>
     </Window.Resources>
     <Grid x:Name="ImageGrid" Width="Auto" Height="Auto" Margin="0,19,0,0" Background="Transparent" AllowDrop="True" Drop="ImageArea_DragDrop">
-        <StatusBar Panel.ZIndex="2" Height="15" VerticalAlignment="Bottom"  Background="#FF555555">
-            <TextBlock x:Name="FooterModeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+        <StatusBar Panel.ZIndex="2" Height="20" VerticalAlignment="Bottom"  Background="#FF555555">
+            <TextBlock x:Name="FooterModeText" VerticalAlignment="Top" Foreground="#FFF0F0F0"/>
             <Separator/>
-            <TextBlock x:Name="FooterSizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <TextBlock x:Name="FooterSizeText" VerticalAlignment="Top" Foreground="#FFF0F0F0"/>
             <Separator/>
-            <TextBlock x:Name="FooterChannelsText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <TextBlock x:Name="FooterChannelsText" VerticalAlignment="Top" Foreground="#FFF0F0F0"/>
             <Separator/>
-            <TextBlock x:Name="FooterFilesizeText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <TextBlock x:Name="FooterFilesizeText" VerticalAlignment="Top" Foreground="#FFF0F0F0"/>
             <Separator/>
-            <TextBlock x:Name="FooterZoomText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <TextBlock x:Name="FooterZoomText" VerticalAlignment="Top" Foreground="#FFF0F0F0"/>
             <Separator/>
-            <TextBlock x:Name="FooterIndexText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <TextBlock x:Name="FooterIndexText" VerticalAlignment="Top" Foreground="#FFF0F0F0"/>
             <Separator/>
-            <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Center" Foreground="#FFF0F0F0"/>
+            <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="#FFF0F0F0"/>
         </StatusBar>
         <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0" KeyDown="Window_KeyDown" AllowDrop="True" Drop="ImageTabControl_Drop" >
             <StackPanel Orientation="Horizontal" Width="Auto">
-                <TabControl x:Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1"/>
-                <Button x:Name="UiAddNewTab" Content="+" Click="UIAddNewTab_Click" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Focusable="False"/>
+                <TabControl x:Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Visibility="Collapsed"/>
+                <Button x:Name="UiAddNewTab" Width="20" Click="UIAddNewTab_Click" Margin="0,3,0,0" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Focusable="False">
+                    <StackPanel >
+                        <Image Source="Resources/Add.png" Margin="3" ></Image>
+                    </StackPanel>
+                </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Focusable="False">
-                <xctk:DropDownButton Content="Slideshow" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
+                <xctk:DropDownButton Content="Slideshow" Background="#FF555555" BorderThickness="0" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
                     <xctk:DropDownButton.DropDownContent>
-                        <Menu Focusable="False">
+                        <Menu Focusable="False" Background="#FF555555" BorderThickness="0" Foreground="#FFD1D1D1" >
                             <MenuItem x:Name="StartSlideshowUi" Header="Start Slideshow" IsEnabled="True" Click="StartSlideshowUI_Click"/>
                             <MenuItem x:Name="StopSlideshowUi" Header="Stop Slideshow" IsEnabled="False" Click="StopSlideshowUI_Click"/>
                             <Separator/>
@@ -88,10 +92,10 @@
                         </Menu>
                     </xctk:DropDownButton.DropDownContent>
                 </xctk:DropDownButton>
-                <xctk:DropDownButton Content="Channels" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
+                <xctk:DropDownButton Content="Channels" Background="#FF555555" BorderThickness="0" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
                     <xctk:DropDownButton.DropDownContent>
-                        <Menu Focusable="False">
-                            <MenuItem x:Name="AllChannels" Header="RGB" Click="Display_all_channels"/>
+                        <Menu Focusable="False" Background="#FF555555" BorderThickness="0" Foreground="#FFD1D1D1" >
+                            <MenuItem x:Name="AllChannels" Header="RGB" Click="Display_all_channels" />
                             <MenuItem x:Name="RedChannel" Header="Red" Click="Display_red_channel"/>
                             <MenuItem x:Name="GreenChannel" Header="Green" Click="Display_green_channel"/>
                             <MenuItem x:Name="BlueChannel" Header="Blue" Click="Display_blue_channel"/>
@@ -106,7 +110,7 @@
                          MouseDoubleClick="ImageArea_MouseDoubleClick" KeyDown="ImageArea_KeyDown" 
                          ShowPixelGrid="False" GridScale="None" GridColor="#FF202020"
                          BorderStyle="None" ShortcutsEnabled="False" 
-                         TabStop="False" BackColor="#FF202020" ZoomChanged="ImageArea_ZoomChanged"/>
+                         TabStop="False" BackColor="#FF202020" ZoomChanged="ImageArea_ZoomChanged" />
             <WindowsFormsHost.ContextMenu>
                 <ContextMenu>
                     <MenuItem x:Name="AlwaysOnTopUi" Header="Always On Top" IsCheckable="True" Click="AlwaysOnTop_Click"/>
@@ -135,7 +139,8 @@
                     <MenuItem Header="Reset Settings" Click="ResetSettings_Click"/>
                     <Separator/>
                     <MenuItem Header="About" Click="About_Click"/>
-                    <MenuItem Header="Options" Click="Options_OnClick" IsEnabled="False"/>
+                    <MenuItem Header="Options" Click="Options_OnClick" />
+                    <MenuItem Header="Check For Update" Click="CheckForUpdate_OnClick" />
                 </ContextMenu>
             </WindowsFormsHost.ContextMenu>
         </WindowsFormsHost>

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using ImageMagick;
 using static System.IO.Path;
 using Color = System.Windows.Media.Color;
@@ -18,7 +19,7 @@ namespace Frame
         Slideshow
     }
 
-    public class TabData
+    public class TabData : IDisposable
     {
         public Action<TabData> CloseTabAction;
         public TabItem tabItem = TabItem();
@@ -37,6 +38,7 @@ namespace Frame
         public bool IsValid => Paths.Any();
 
         MagickImageCollection imageCollection = new MagickImageCollection();
+        static readonly Color AlmostWhite = Color.FromRgb(240, 240, 240);
 
         public Image Image
         {
@@ -46,83 +48,137 @@ namespace Frame
                 if (!Hibernate)
                 {
                     LoadImage();
-                }
-                Hibernate = false;
-
-
-                if (SplitChannels)
-                {
-                    using (var images = new MagickImageCollection())
+                    if (SplitChannels)
                     {
-                        foreach (var img in imageCollection[ImageSettings.MipValue].Separate())
+                        using (var images = new MagickImageCollection())
                         {
-                            images.Add(img);
+                            var channelNum = 1;
+                            //TODO Add showing colors as a option
+                            var orginalImage = imageCollection[0];
+                            foreach (var img in imageCollection[ImageSettings.MipValue].Separate())
+                            {
+                                var width = (Width * Height) / 150000;
+                                switch (channelNum)
+                                {
+                                    case 1:
+                                        {
+                                            img.BorderColor = MagickColor.FromRgb(255, 0, 0);
+                                            img.Border(width);
+                                            break;
+                                        }
+                                    case 2:
+                                        {
+                                            img.BorderColor = MagickColor.FromRgb(0, 255, 0);
+                                            img.Border(width);
+                                            break;
+                                        }
+                                    case 3:
+                                        {
+                                            img.BorderColor = MagickColor.FromRgb(0, 0, 255);
+                                            img.Border(width);
+                                            break;
+                                        }
+                                }
+                                if (ImageSettings.MipValue > 0)
+                                {
+                                    img.Resize(orginalImage.Width, orginalImage.Height);
+                                }
+                                images.Add(img);
+                                channelNum += 1;
+                            }
+                            var montageSettings =
+                                new MontageSettings
+                                {
+                                    Geometry = new MagickGeometry(Width, Height)
+                                };
+                            var result = images.Montage(montageSettings);
+                            imageCollection.Clear();
+                            imageCollection.Add(result);
+                        }
+                        ImageSettings.HasMips = false;
+                    }
+                    if (Tiled)
+                    {
+                        var images = new MagickImageCollection();
+                        const int tileCount = 8;
+                        var orginalImage = imageCollection[0];
+                        for (var i = 0; i <= tileCount; i++)
+                        {
+                            var image = imageCollection[ImageSettings.MipValue].Clone();
+                            if (ImageSettings.MipValue > 0)
+                            {
+                                image.Resize(orginalImage.Width, orginalImage.Height);
+                            }
+                            if (ImageSettings.DisplayChannel != Channels.Alpha)
+                            {
+                                image.Alpha(AlphaOption.Opaque);
+                            }
+                            images.Add(image);
                         }
                         var montageSettings =
                             new MontageSettings
                             {
                                 Geometry = new MagickGeometry(Width, Height)
                             };
-                        var result = images.Montage(montageSettings);
-                        imageCollection.Clear();
-                        imageCollection.Add(result);
-                    }
-                    ImageSettings.HasMips = false;
-                }
-                if (Tiled)
-                {
-                    var images = new MagickImageCollection();
-                    const int tileCount = 4;
-                    for (var i = 0; i < tileCount; i++)
-                    {
-                        var image = imageCollection[ImageSettings.MipValue].Clone();
-                        if (ImageSettings.DisplayChannel != Channels.Alpha)
-                        {
-                            image.Alpha(AlphaOption.Opaque);
-                        }
-                        images.Add(image);
-                    }
-                    var montageSettings =
-                        new MontageSettings
-                        {
-                            Geometry = new MagickGeometry(Width, Height)                            
-                        };
 
-                    imageCollection.Clear();
-                    imageCollection.Add(images.Montage(montageSettings));
-                    ImageSettings.HasMips = false;
+                        imageCollection.Clear();
+                        imageCollection.Add(images.Montage(montageSettings));
+                        ImageSettings.HasMips = false;
+                    }
                 }
+                Hibernate = false;
 
                 switch (ImageSettings.DisplayChannel)
                 {
                     case Channels.Red:
                     {
-                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Red)
+                        var magickImage = ResizeCurrentMip();
+                        return magickImage.Separate(Channels.Red)
                             .ElementAt(0)?.ToBitmap();
                     }
                     case Channels.Green:
-                    {
-                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Green)
+                        {
+                            var magickImage = imageCollection[ImageSettings.MipValue];
+                            if (ImageSettings.MipValue > 0)
+                            {
+                                magickImage.Resize(imageCollection[0].Width, imageCollection[0].Height);
+                            }
+                            return magickImage.Separate(Channels.Green)
                             .ElementAt(0)?.ToBitmap();
-                    }
+                        }
                     case Channels.Blue:
-                    {
-                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Blue)
+                        {
+                            var magickImage = ResizeCurrentMip();
+
+                            return magickImage.Separate(Channels.Blue)
                             .ElementAt(0)?.ToBitmap();
-                    }
+                        }
                     case Channels.Alpha:
-                    {
-                        return imageCollection[ImageSettings.MipValue].Separate(Channels.Alpha)
+                        {
+                            var magickImage = ResizeCurrentMip();
+
+                            return magickImage.Separate(Channels.Alpha)
                             .ElementAt(0)?.ToBitmap();
-                    }
+                        }
                     default:
-                    {
-                        var image = imageCollection[ImageSettings.MipValue].Clone();
-                        image.Alpha(AlphaOption.Opaque);
-                        return image.ToBitmap();
-                    }
+                        {
+                            var magickImage = ResizeCurrentMip();
+
+                            magickImage.Alpha(AlphaOption.Opaque);
+                            return magickImage.ToBitmap();
+                        }
                 }
             }
+        }
+
+        IMagickImage ResizeCurrentMip()
+        {
+            var magickImage = imageCollection[ImageSettings.MipValue];
+            if (ImageSettings.MipValue > 0)
+            {
+                magickImage.Resize(imageCollection[0].Width, imageCollection[0].Height);
+            }
+            return magickImage;
         }
 
         public bool Hibernate { get; set; }
@@ -141,17 +197,24 @@ namespace Frame
         {
             var closeTabButton = new Button
             {
-                Content = "-",
                 IsTabStop = false,
                 Margin = new Thickness(Margin),
                 FocusVisualStyle = null,
                 Background = new SolidColorBrush(Color.FromArgb(0, 240, 240, 240)),
-                Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Top,
+                Foreground = new SolidColorBrush(AlmostWhite),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
                 BorderThickness = new Thickness(0)
             };
-            var tabInternalControl = new StackPanel {Orientation = Orientation.Horizontal};
+
+            var sp = new StackPanel { Orientation = Orientation.Horizontal };
+            var bms = new BitmapImage(new Uri("pack://application:,,,/Resources/Close.png"));
+            var img = new System.Windows.Controls.Image { Source = bms, Width = 10, VerticalAlignment = VerticalAlignment.Center};
+
+            sp.Children.Add(img);
+            closeTabButton.Content = sp;
+
+            var tabInternalControl = new StackPanel {Orientation = Orientation.Horizontal };
             tabInternalControl.Children.Add(new TextBlock());
             tabInternalControl.Children.Add(closeTabButton);
 
@@ -161,13 +224,33 @@ namespace Frame
                 IsTabStop = false,
                 FocusVisualStyle = null,
                 Margin = new Thickness(Margin),
-                Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240))
+                Foreground = new SolidColorBrush(AlmostWhite),
             };
         }
 
-        public int Width => imageCollection[ImageSettings.MipValue].Width;
+        public int Width
+        {
+            get
+            {
+                if (ImageSettings.MipValue > 0)
+                {
+                    return imageCollection[0].Width;
+                }
+                return imageCollection[ImageSettings.MipValue].Width;
+            }
+        }
 
-        public int Height => imageCollection[ImageSettings.MipValue].Height;
+        public int Height
+        {
+            get
+            {
+                if (ImageSettings.MipValue > 0)
+                {
+                    return imageCollection[0].Height;
+                }
+                return imageCollection[ImageSettings.MipValue].Height;
+            }
+        }
 
         public long Size => imageCollection[ImageSettings.MipValue].FileSize;
 
@@ -223,7 +306,7 @@ namespace Frame
             }
         }
 
-        public TabData(string tabPath)
+        TabData(string tabPath)
         {
             InitialImagePath = tabPath;
             ((Button) ((StackPanel) tabItem.Header).Children[1]).Click += TabData_Click;
@@ -238,9 +321,32 @@ namespace Frame
             }
         }
 
-        public TabData(string tabPath, int currentIndex) : this(tabPath)
+        TabData(string tabPath, int currentIndex) : this(tabPath)
         {
             Index = currentIndex;
+        }
+
+        public static TabData CreateTabData(TabData tb, Action<TabData> closeTabAction)
+        {
+            return new TabData(GetDirectoryName(tb.Path), tb.Index)
+            {
+                InitialImagePath = tb.InitialImagePath,
+                Paths = tb.Paths,
+                CloseTabAction = closeTabAction,
+                ImageSettings = new ImageSettings
+                {
+                    DisplayChannel = tb.ImageSettings.DisplayChannel,
+                    CurrentSortMode = tb.ImageSettings.CurrentSortMode
+                }
+            };
+        }
+
+        public static TabData CreateTabData(string path, Action<TabData> closeTabAction)
+        {
+            return new TabData(path)
+            {
+                CloseTabAction = closeTabAction
+            };
         }
 
         void TabData_Click(object sender, RoutedEventArgs e)
@@ -321,6 +427,11 @@ namespace Frame
             {
                 GC.Collect();
             }
+        }
+
+        public void Dispose()
+        {
+            imageCollection?.Dispose();
         }
     }
 }

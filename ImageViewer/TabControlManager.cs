@@ -20,7 +20,7 @@ namespace Frame
 
         public void AddTab(string filepath)
         {
-            var item = new TabData(Path.GetDirectoryName(filepath)) {CloseTabAction = CloseTab};
+            var item = TabData.CreateTabData(Path.GetDirectoryName(filepath), CloseTab);
             imageViewerWm.Tabs.Add(item);
 
             tabControl.Items.Add(item.tabItem);
@@ -55,6 +55,7 @@ namespace Frame
                     tabControl.SelectedItem = currentlySelectedItem;
                 }
             }
+            GC.Collect();
         }
 
         public void CloseSelectedTab()
@@ -67,11 +68,11 @@ namespace Frame
             if (tabControl.SelectedIndex == 0)
             {
                 imageBox.Image = null;
-                GC.Collect();
             }
 
             imageViewerWm.Tabs.RemoveAt(tabControl.SelectedIndex);
             tabControl.Items.RemoveAt(tabControl.SelectedIndex);
+            GC.Collect();
         }
     }
 }

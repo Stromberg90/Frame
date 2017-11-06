@@ -1,24 +1,25 @@
-﻿//TODO Data bindings
-//TODO Option to always 100% Zoom
-//TODO Better (close) icon(s)
+﻿//TODO GIF Support
+//TODO Recent Files
+//TODO Data bindings
+//TODO Dragable Tabs, and tiling tabs.
 //TODO Thumbnail using the render size, then I can load in the real image in the background, like when I open a folder make thumbnails for "all" the images in the folder.
-//TODO Save Image Instead of path and then loading the image each time, especially for tab switching.
+//TODO Bar at the buttom with thumbnails of the images in the folder
 //TODO Show hotkey next to menuitem
-//TODO GIF Support
-//TODO Loading images without lag
 //TODO Split into more files
 //TODO Progress bar when loading large images
-//TODO Options window, maybe I can add the hotkeys in there as well
 //TODO Read sort setting from file explorer?
-//TODO Auto Update
+//TODO Slideshow Random Image Option, And Loop option
+//TODO Thumbnail on tab
+
+//BUG Doesn't reload if the current image changes.
 
 //CHANGLOG
-//New Icon
-//Multiselect Files in Explorer
-//Single Instance
-//Channels Montage
-//Image Tiling
-//Mip Viewing
+//1.0.4
+//Channel Borders
+//Mipmaps are displayed in the orginal size.
+//Now Tiles From Center
+//Options Menu
+//Auto update
 
 using System;
 using System.ComponentModel;
@@ -33,6 +34,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using Frame.Properties;
 using ImageMagick;
+using AutoUpdaterDotNET;
 using Microsoft.VisualBasic.FileIO;
 using Application = System.Windows.Application;
 using Clipboard = System.Windows.Clipboard;
@@ -43,7 +45,6 @@ using MessageBox = System.Windows.MessageBox;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
-using TabControl = System.Windows.Controls.TabControl;
 
 namespace Frame
 {
@@ -68,14 +69,19 @@ namespace Frame
 
         public MainWindow()
         {
+            AutoUpdater.ShowSkipButton = false;
+
+            Settings.Default.PropertyChanged += (sender, args) => RefreshUi();
+            Settings.Default.SettingsLoaded += (sender, args) => RefreshUi();
+
             InitializeComponent();
             tabControlManager = new TabControlManager(ImageTabControl, ImageViewerWm, ImageArea);
             sortingManager = new SortingManager(ImageViewerWm);
             filesManager = new FilesManager(sortingManager, ImageViewerWm);
 
-            RefreshUi();
             SetupSlideshow();
             UpdateFooter();
+            CheckForUpdate();
         }
 
         static DispatcherTimer slideshowTimer;
@@ -102,6 +108,10 @@ namespace Frame
                 {
                     ImageTabControl.SelectedItem = ImageTabControl.SelectedItem;
                 }
+            }
+            if (ImageViewerWm.Tabs.Count == 0)
+            {
+                ImageTabControl.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -203,7 +213,7 @@ namespace Frame
 
                     ImageViewerWm.CurrentTab.Tiled = !ImageViewerWm.CurrentTab.Tiled;
                     ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-                    ResetView();
+                    UpdateFooter();
                     break;
                 }
                 case Keys.Right:
@@ -360,6 +370,11 @@ namespace Frame
 
             tabControlManager.AddTab(filepath);
 
+            if (ImageTabControl.Visibility == Visibility.Collapsed)
+            {
+                ImageTabControl.Visibility = Visibility.Visible;
+            }
+
             filesManager.SupportedFiles(Path.GetDirectoryName(filepath));
 
             var filenameIndex =
@@ -392,6 +407,10 @@ namespace Frame
         void CloseTab()
         {
             tabControlManager.CloseSelectedTab();
+            if (ImageViewerWm.Tabs.Count == 0)
+            {
+                ImageTabControl.Visibility = Visibility.Collapsed;
+            }
             UpdateFooter();
         }
 
@@ -540,17 +559,7 @@ namespace Frame
                 return;
             }
 
-            var tab = new TabData(Path.GetDirectoryName(ImageViewerWm.CurrentTab.Path), ImageViewerWm.CurrentTab.Index)
-            {
-                InitialImagePath = ImageViewerWm.CurrentTab.InitialImagePath,
-                Paths = ImageViewerWm.CurrentTab.Paths,
-                CloseTabAction = CloseTabIndex,
-                ImageSettings = new ImageSettings
-                {
-                    DisplayChannel = ImageViewerWm.CurrentTab.ImageSettings.DisplayChannel,
-                    CurrentSortMode = ImageViewerWm.CurrentTab.ImageSettings.CurrentSortMode
-                }
-            };
+            var tab = TabData.CreateTabData(ImageViewerWm.CurrentTab, CloseTabIndex);
 
             ImageViewerWm.Tabs.Insert(ImageViewerWm.CurrentTabIndex + 1, tab);
 
@@ -583,10 +592,19 @@ namespace Frame
 
         void ImageTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (((TabControl) sender).Items.Count > 1)
+
+            foreach (TabItem removedItem in e.RemovedItems)
             {
-                ImageViewerWm.CurrentTab.Hibernate = true;
+                foreach (var tabData in ImageViewerWm.Tabs)
+                {
+                    if (Equals(tabData.tabItem, removedItem))
+                    {
+                        tabData.Hibernate = true;
+                    }
+                }
+                
             }
+
             ImageViewerWm.CurrentTabIndex = ImageTabControl.SelectedIndex;
 
             if (!ImageViewerWm.CanExcectute())
@@ -683,6 +701,11 @@ namespace Frame
 
         void ResetView()
         {
+            if (Settings.Default.ImageFullZoom)
+            {
+                ImageArea.Zoom = 100;
+                return;
+            }
             if (ImageArea.Size.Width < ImageViewerWm.CurrentTab.Width ||
                 ImageArea.Size.Height < ImageViewerWm.CurrentTab.Height)
             {
@@ -978,9 +1001,9 @@ namespace Frame
             }
 
             sortingManager.Sort(SortMethod.Date);
-            SortDate.IsChecked = true;
             SortName.IsChecked = false;
             SortSize.IsChecked = false;
+            SortDate.IsChecked = true;
         }
 
         void SortByName(object sender, RoutedEventArgs e)
@@ -1004,8 +1027,8 @@ namespace Frame
             }
 
             sortingManager.Sort(SortMethod.Size);
-            SortSize.IsChecked = true;
             SortName.IsChecked = false;
+            SortSize.IsChecked = true;
             SortDate.IsChecked = false;
         }
 
@@ -1081,7 +1104,7 @@ namespace Frame
 
         void UIAddNewTab_Click(object sender, RoutedEventArgs e)
         {
-            AddNewTab(string.Empty);
+            FileBrowser();
         }
 
         void ViewInExplorer(object sender, RoutedEventArgs e)
@@ -1160,6 +1183,7 @@ namespace Frame
             var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
             if (filenames != null)
             {
+                MessageBox.Show(filenames.Length.ToString());
                 if (filenames.Length > 1)
                 {
                     foreach (var filename in filenames)
@@ -1238,7 +1262,7 @@ namespace Frame
         {
             ImageViewerWm.CurrentTab.Tiled = true;
             ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-            ResetView();
+            UpdateFooter();
         }
 
         void ChannelsMontage_OnClick(object sender, RoutedEventArgs e)
@@ -1262,6 +1286,16 @@ namespace Frame
                 optionsDialog.Left = Left + (ActualWidth / 2.0) - (optionsDialog.Width / 2.0);
             }
             optionsDialog.ShowDialog();
+        }
+
+        void CheckForUpdate_OnClick(object sender, RoutedEventArgs e)
+        {
+            CheckForUpdate();
+        }
+
+        static void CheckForUpdate()
+        {
+            AutoUpdater.Start("http://www.dropbox.com/s/2b0gna7rz889b5u/Update.xml?dl=1");
         }
     }
 }

@@ -3,9 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:Frame"
         mc:Ignorable="d"
-        Title="OptionsWindow" Height="300" Width="300" Background="#FF2E2E2E">
+        Title="Options" Height="300" Width="300" Background="#FF2E2E2E"
+        WindowStyle="ToolWindow">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="12*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <xctk:PropertyGrid Grid.Row="0" Name="OptionsProperyGrid" Width="Auto" Height="Auto" />
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right" >
+            <Button Content="Save" Click="Save_OnClick"/>
+            <Button Content="Cancel" Click="Cancel_OnClick"/>
+        </StackPanel>
     </Grid>
 </Window>
