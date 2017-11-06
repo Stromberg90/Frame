@@ -1,4 +1,5 @@
-﻿//TODO GIF Support
+﻿//TODO Add website links in about tab.
+//TODO GIF Support
 //TODO Recent Files
 //TODO Data bindings
 //TODO Dragable Tabs, and tiling tabs.
