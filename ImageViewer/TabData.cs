@@ -24,7 +24,6 @@ namespace Frame
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public Action<TabData> CloseTabAction;
         public TabItem tabItem = TabItem();
         const double Margin = 0.5;
 
@@ -224,33 +223,10 @@ namespace Frame
 
         static TabItem TabItem()
         {
-            var closeTabButton = new Button
-            {
-                IsTabStop = false,
-                Margin = new Thickness(Margin),
-                FocusVisualStyle = null,
-                Background = new SolidColorBrush(Color.FromArgb(0, 240, 240, 240)),
-                Foreground = new SolidColorBrush(AlmostWhite),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                BorderThickness = new Thickness(0)
-            };
 
-            var sp = new StackPanel {Orientation = Orientation.Horizontal};
-            var bms = new BitmapImage(new Uri("pack://application:,,,/Resources/Close.png"));
-            var img = new System.Windows.Controls.Image
-            {
-                Source = bms,
-                Width = 10,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            sp.Children.Add(img);
-            closeTabButton.Content = sp;
 
             var tabInternalControl = new StackPanel {Orientation = Orientation.Horizontal};
             tabInternalControl.Children.Add(new TextBlock());
-            tabInternalControl.Children.Add(closeTabButton);
 
             return new TabItem
             {
@@ -317,30 +293,20 @@ namespace Frame
         TabData(string tabPath)
         {
             InitialImagePath = tabPath;
-            ((Button) ((StackPanel) tabItem.Header).Children[1]).Click += TabData_Click;
-            ((StackPanel) tabItem.Header).MouseDown += TabData_MouseDown;
         }
 
-        void TabData_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (e.MiddleButton == System.Windows.Input.MouseButtonState.Pressed)
-            {
-                CloseTabAction?.Invoke(this);
-            }
-        }
 
         TabData(string tabPath, int currentIndex) : this(tabPath)
         {
             Index = currentIndex;
         }
 
-        public static TabData CreateTabData(TabData tb, Action<TabData> closeTabAction)
+        public static TabData CreateTabData(TabData tb)
         {
             return new TabData(GetDirectoryName(tb.Path), tb.Index)
             {
                 InitialImagePath = tb.InitialImagePath,
                 Paths = tb.Paths,
-                CloseTabAction = closeTabAction,
                 ImageSettings = new ImageSettings
                 {
                     DisplayChannel = tb.ImageSettings.DisplayChannel,
@@ -349,17 +315,9 @@ namespace Frame
             };
         }
 
-        public static TabData CreateTabData(string path, Action<TabData> closeTabAction)
+        public static TabData CreateTabData(string path)
         {
-            return new TabData(path)
-            {
-                CloseTabAction = closeTabAction
-            };
-        }
-
-        void TabData_Click(object sender, RoutedEventArgs e)
-        {
-            CloseTabAction?.Invoke(this);
+            return new TabData(path);
         }
 
         public void UpdateTitle()

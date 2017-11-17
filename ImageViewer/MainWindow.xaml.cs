@@ -93,29 +93,6 @@ namespace Frame
         ImageViewerWm ImageViewerWm { get; } = new ImageViewerWm();
         static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
 
-        void CloseTabIndex(TabData data)
-        {
-            var newIndex = ImageTabControl.Items.IndexOf(data.tabItem);
-            if (newIndex < 0)
-            {
-                CloseTab();
-            }
-            else
-            {
-                ImageViewerWm.CurrentTabIndex = newIndex;
-                ImageTabControl.SelectedIndex = newIndex;
-                CloseTab();
-                if (ImageTabControl.SelectedIndex != newIndex)
-                {
-                    ImageTabControl.SelectedItem = ImageTabControl.SelectedItem;
-                }
-            }
-            if (ImageViewerWm.Tabs.Count == 0)
-            {
-                ImageTabControl.Visibility = Visibility.Collapsed;
-            }
-        }
-
         void ValidatedKeyHandling(KeyEventArgs e)
         {
             if (!ImageViewerWm.CanExcectute())
@@ -562,7 +539,7 @@ namespace Frame
                 return;
             }
 
-            var tab = TabData.CreateTabData(ImageViewerWm.CurrentTab, CloseTabIndex);
+            var tab = TabData.CreateTabData(ImageViewerWm.CurrentTab);
 
             ImageViewerWm.Tabs.Insert(ImageViewerWm.CurrentTabIndex + 1, tab);
 
@@ -1108,11 +1085,6 @@ namespace Frame
             ResetView();
         }
 
-        void UIAddNewTab_Click(object sender, RoutedEventArgs e)
-        {
-            FileBrowser();
-        }
-
         void ViewInExplorer(object sender, RoutedEventArgs e)
         {
             if (!ImageViewerWm.CanExcectute())
@@ -1189,7 +1161,6 @@ namespace Frame
             var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
             if (filenames != null)
             {
-                MessageBox.Show(filenames.Length.ToString());
                 if (filenames.Length > 1)
                 {
                     foreach (var filename in filenames)

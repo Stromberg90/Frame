@@ -20,7 +20,7 @@ namespace Frame
 
         public void AddTab(string filepath)
         {
-            var item = TabData.CreateTabData(Path.GetDirectoryName(filepath), CloseTab);
+            var item = TabData.CreateTabData(Path.GetDirectoryName(filepath));
             imageViewerWm.Tabs.Add(item);
 
             tabControl.Items.Add(item.tabItem);

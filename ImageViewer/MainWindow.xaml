@@ -68,11 +68,6 @@
         <Grid Width="Auto" Height="20" VerticalAlignment="Top" Margin="0,-20,0,0" KeyDown="Window_KeyDown" AllowDrop="True" Drop="ImageTabControl_Drop" >
             <StackPanel Orientation="Horizontal" Width="Auto">
                 <TabControl x:Name="ImageTabControl" Width="Auto" SelectionChanged="ImageTabControl_SelectionChanged" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Visibility="Collapsed"/>
-                <Button x:Name="UiAddNewTab" Width="20" Click="UIAddNewTab_Click" Margin="0,3,0,0" Background="#FF555555" BorderBrush="#FF404040" Foreground="#FFD1D1D1" Focusable="False">
-                    <StackPanel >
-                        <Image Source="Resources/Add.png" Margin="3" ></Image>
-                    </StackPanel>
-                </Button>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Focusable="False">
                 <xctk:DropDownButton Content="Slideshow" Background="#FF555555" BorderThickness="0" Foreground="#FFD1D1D1" VerticalAlignment="Bottom" Focusable="False" IsTabStop="False">
