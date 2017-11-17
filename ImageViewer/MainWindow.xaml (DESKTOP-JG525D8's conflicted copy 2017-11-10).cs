@@ -1,4 +1,4 @@
-﻿//TODO Sort event, so I can update footer.
+﻿//TODO Add website links in about tab.
 //TODO GIF Support
 //TODO Recent Files
 //TODO Data bindings
@@ -6,14 +6,13 @@
 //TODO Thumbnail using the render size, then I can load in the real image in the background, like when I open a folder make thumbnails for "all" the images in the folder.
 //TODO Bar at the buttom with thumbnails of the images in the folder
 //TODO Show hotkey next to menuitem
+//TODO Split into more files
 //TODO Progress bar when loading large images
 //TODO Read sort setting from file explorer?
 //TODO Slideshow Random Image Option, And Loop option
 //TODO Thumbnail on tab
-//TODO Folder browser
 
 //BUG Doesn't reload if the current image changes.
-//BUG Tab close button on the last tab doesn't clear the footer.
 
 //CHANGLOG
 //1.0.4
@@ -26,6 +25,7 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -82,7 +82,7 @@ namespace Frame
 
             SetupSlideshow();
             UpdateFooter();
-            CheckForUpdates();
+            UpdateManager.CheckForUpdate();
         }
 
         static DispatcherTimer slideshowTimer;
@@ -307,7 +307,6 @@ namespace Frame
             {
                 slideshowTimer.Stop();
             }
-            ImageViewerWm.CurrentTab.UpdateTitle();
             ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
             UpdateFooter();
         }
@@ -389,19 +388,18 @@ namespace Frame
             SetupDirectoryWatcher();
         }
 
-        void AscendingSort(object sender, RoutedEventArgs e)
+        void Ascending_sort_mode(object sender, RoutedEventArgs e)
         {
             if (!ImageViewerWm.CanExcectute())
             {
                 return;
             }
 
-            if (ImageViewerWm.CurrentTab.ImageSettings.SortMode == SortMode.Descending)
+            if (ImageViewerWm.CurrentTab.ImageSettings.CurrentSortMode == SortMode.Descending)
             {
                 ReversePaths();
             }
-            ImageViewerWm.CurrentTab.ImageSettings.SortMode = SortMode.Ascending;
-            UpdateFooter();
+            ImageViewerWm.CurrentTab.ImageSettings.CurrentSortMode = SortMode.Ascending;
             SortDecending.IsChecked = false;
             SortAscending.IsChecked = true;
         }
@@ -434,19 +432,18 @@ namespace Frame
             Clipboard.SetText($"\"{BackwardToForwardSlash(Path.GetFileName(ImageViewerWm.CurrentTab.Path))}\"");
         }
 
-        void DecendingSort(object sender, RoutedEventArgs e)
+        void Decending_sort_mode(object sender, RoutedEventArgs e)
         {
             if (!ImageViewerWm.CanExcectute())
             {
                 return;
             }
 
-            if (ImageViewerWm.CurrentTab.ImageSettings.SortMode == SortMode.Ascending)
+            if (ImageViewerWm.CurrentTab.ImageSettings.CurrentSortMode == SortMode.Ascending)
             {
                 ReversePaths();
             }
-            ImageViewerWm.CurrentTab.ImageSettings.SortMode = SortMode.Descending;
-            UpdateFooter();
+            ImageViewerWm.CurrentTab.ImageSettings.CurrentSortMode = SortMode.Descending;
             SortDecending.IsChecked = true;
             SortAscending.IsChecked = false;
         }
@@ -495,7 +492,6 @@ namespace Frame
 
             ImageArea.Image = ImageViewerWm.CurrentTab.Image;
 
-            ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
         }
 
@@ -663,7 +659,6 @@ namespace Frame
             if (!ImageViewerWm.CurrentTab.IsValid) return;
 
             ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-            ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
         }
 
@@ -675,7 +670,8 @@ namespace Frame
 
         void RefreshUi()
         {
-            ImageArea.GridColor = Settings.Default.BackgroundColor;
+            ImageArea.GridColor = Color.FromArgb(255, Settings.Default.BackgroundColor.R,
+                Settings.Default.BackgroundColor.G, Settings.Default.BackgroundColor.B);
         }
 
         void ReplaceImageInTab(string filename)
@@ -708,8 +704,8 @@ namespace Frame
                 ImageArea.Zoom = 100;
                 return;
             }
-            if (ImageArea.Size.Width < ImageViewerWm.CurrentTab.ImageSettings.Width ||
-                ImageArea.Size.Height < ImageViewerWm.CurrentTab.ImageSettings.Height)
+            if (ImageArea.Size.Width < ImageViewerWm.CurrentTab.Width ||
+                ImageArea.Size.Height < ImageViewerWm.CurrentTab.Height)
             {
                 ImageArea.ZoomToFit();
             }
@@ -894,7 +890,6 @@ namespace Frame
             {
                 ImageViewerWm.CurrentTab.CurrentSlideshowTime += 1;
                 UpdateFooter();
-                ImageViewerWm.CurrentTab.UpdateTitle();
             }
             else
             {
@@ -907,7 +902,6 @@ namespace Frame
             if (ImageViewerWm.CurrentTab.Mode == ApplicationMode.Slideshow) return;
 
             slideshowTimer.Stop();
-            ImageViewerWm.CurrentTab.UpdateTitle();
             UpdateFooter();
             ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
         }
@@ -1001,13 +995,11 @@ namespace Frame
             {
                 return;
             }
-            
-            ImageViewerWm.CurrentTab.ImageSettings.SortMethod = SortMethod.Date;
-            sortingManager.Sort();
-            UpdateFooter();
-            SortDate.IsChecked = true;
+
+            sortingManager.Sort(SortMethod.Date);
             SortName.IsChecked = false;
             SortSize.IsChecked = false;
+            SortDate.IsChecked = true;
         }
 
         void SortByName(object sender, RoutedEventArgs e)
@@ -1017,12 +1009,10 @@ namespace Frame
                 return;
             }
 
-            ImageViewerWm.CurrentTab.ImageSettings.SortMethod = SortMethod.Name;
-            sortingManager.Sort();
-            UpdateFooter();
-            SortDate.IsChecked = false;
+            sortingManager.Sort(SortMethod.Name);
             SortName.IsChecked = true;
             SortSize.IsChecked = false;
+            SortDate.IsChecked = false;
         }
 
         void SortBySize(object sender, RoutedEventArgs e)
@@ -1032,12 +1022,10 @@ namespace Frame
                 return;
             }
 
-            ImageViewerWm.CurrentTab.ImageSettings.SortMethod = SortMethod.Size;
-            sortingManager.Sort();
-            UpdateFooter();
+            sortingManager.Sort(SortMethod.Size);
             SortName.IsChecked = false;
-            SortDate.IsChecked = false;
             SortSize.IsChecked = true;
+            SortDate.IsChecked = false;
         }
 
         void StartSlideshowUI_Click(object sender, RoutedEventArgs e)
@@ -1292,16 +1280,6 @@ namespace Frame
                 optionsDialog.Left = Left + (ActualWidth / 2.0) - (optionsDialog.Width / 2.0);
             }
             optionsDialog.ShowDialog();
-        }
-
-        void CheckForUpdate_OnClick(object sender, RoutedEventArgs e)
-        {
-            CheckForUpdates();
-        }
-
-        static void CheckForUpdates()
-        {
-            AutoUpdater.Start("http://www.dropbox.com/s/2b0gna7rz889b5u/Update.xml?dl=1");
         }
     }
 }

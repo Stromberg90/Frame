@@ -14,14 +14,14 @@ namespace Frame
             ImageViewerVm = imageViewerVm;
         }
 
-        public void SortDecending(SortMethod method)
+        public void SortDecending()
         {
-            SortAcending(method);
+            SortAcending();
             ImageViewerVm.CurrentTab.Paths.Reverse();
             ImageViewerVm.CurrentTab.Index = ImageViewerVm.CurrentTab.Paths.IndexOf(ImageViewerVm.CurrentTab.Path);
         }
 
-        public void SortAcending(SortMethod method)
+        public void SortAcending()
         {
             var id = 0;
             string initialImage;
@@ -34,7 +34,7 @@ namespace Frame
                 initialImage = ImageViewerVm.CurrentTab.Path;
             }
             List<string> sortedPaths;
-            switch (method)
+            switch (ImageViewerVm.CurrentTab.ImageSettings.SortMethod)
             {
                 case SortMethod.Name:
                     {
@@ -95,18 +95,18 @@ namespace Frame
             return keys.Select(l => dictionary[l]).ToList().Select(l => idFileDictionary[l]).ToList();
         }
 
-        public void Sort(SortMethod sortMethod)
+        public void Sort()
         {
-            switch (ImageViewerVm.CurrentTab.ImageSettings.CurrentSortMode)
+            switch (ImageViewerVm.CurrentTab.ImageSettings.SortMode)
             {
                 case SortMode.Ascending:
                     {
-                        SortAcending(sortMethod);
+                        SortAcending();
                         break;
                     }
                 case SortMode.Descending:
                     {
-                        SortDecending(sortMethod);
+                        SortDecending();
                         break;
                     }
             }

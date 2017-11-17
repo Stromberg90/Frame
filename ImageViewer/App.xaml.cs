@@ -8,7 +8,7 @@ namespace Frame
         {
             base.OnStartup(e);
 
-            var window = new MainWindow();
+            var unused = new MainWindow();
         }
 
         public void Poke()

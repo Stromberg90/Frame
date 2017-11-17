@@ -67,12 +67,12 @@ namespace Frame
 
             if (tabControl.SelectedIndex == 0)
             {
+                imageBox.Image.Dispose();
                 imageBox.Image = null;
             }
 
             imageViewerWm.Tabs.RemoveAt(tabControl.SelectedIndex);
             tabControl.Items.RemoveAt(tabControl.SelectedIndex);
-            GC.Collect();
         }
     }
 }

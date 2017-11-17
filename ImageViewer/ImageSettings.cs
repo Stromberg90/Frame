@@ -1,13 +1,23 @@
-﻿namespace Frame
+﻿using ImageMagick;
+
+namespace Frame
 {
     public class ImageSettings
     {
-        public ImageMagick.Channels DisplayChannel = ImageMagick.Channels.RGB;
+        public Channels DisplayChannel = Channels.RGB;
 
         int mipValue;
 
-        // Weird to have sort mode here?
-        public SortMode CurrentSortMode { get; set; }
+        public MagickImageCollection ImageCollection = new MagickImageCollection();
+
+        public int Width => MipValue > 0 ? ImageCollection[0].Width : ImageCollection[MipValue].Width;
+
+        public int Height => MipValue > 0 ? ImageCollection[0].Height : ImageCollection[MipValue].Height;
+
+        public long Size => ImageCollection[MipValue].FileSize;
+
+        public SortMode SortMode { get; set; }
+        public SortMethod SortMethod { get; set; }
 
         public bool HasMips { get; set; }
         public int MipCount { get; set; }

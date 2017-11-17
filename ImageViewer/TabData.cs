@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,14 +15,15 @@ using TextAlignment = ImageMagick.TextAlignment;
 
 namespace Frame
 {
-    public enum ApplicationMode
+    public class TabData : IDisposable, INotifyPropertyChanged
     {
-        Normal,
-        Slideshow
-    }
+        public event PropertyChangedEventHandler PropertyChanged;
 
-    public class TabData : IDisposable
-    {
+        void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         public Action<TabData> CloseTabAction;
         public TabItem tabItem = TabItem();
         const double Margin = 0.5;
@@ -28,16 +31,37 @@ namespace Frame
         public ImageSettings ImageSettings { get; set; } = new ImageSettings();
 
         // INotifyPropertyChanged so I can update the header without having to call UpdateTitle() explicitly.
-        public ApplicationMode Mode { get; set; } = ApplicationMode.Normal;
+        public ApplicationMode Mode
+        {
+            get => mode;
+            set
+            {
+                if (value == mode) return;
+                mode = value;
+                NotifyPropertyChanged();
+            }
+        }
 
         public uint CurrentSlideshowTime { get; set; }
         public string InitialImagePath { get; set; }
-        public int Index { get; set; }
+
+        public int Index
+        {
+            get => index;
+            set
+            {
+                if (value == index) return;
+                index = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         public List<string> Paths { get; set; } = new List<string>();
 
         public bool IsValid => Paths.Any();
 
-        MagickImageCollection imageCollection = new MagickImageCollection();
+        ApplicationMode mode = ApplicationMode.Normal;
+        int index;
         static readonly Color AlmostWhite = Color.FromRgb(240, 240, 240);
 
         public Image Image
@@ -48,52 +72,58 @@ namespace Frame
                 if (!Hibernate)
                 {
                     LoadImage();
+
+                    var borderWidth = (int)Math.Max(2.0, (ImageSettings.Width * ImageSettings.Height) / 200000.0);
+                    int channelNum = 0;
                     if (SplitChannels)
                     {
-                        using (var images = new MagickImageCollection())
+                        using (var orginalImage = ImageSettings.ImageCollection[0])
                         {
-                            var channelNum = 1;
-                            //TODO Add showing colors as a option
-                            var orginalImage = imageCollection[0];
-                            foreach (var img in imageCollection[ImageSettings.MipValue].Separate())
+                            using (var images = new MagickImageCollection())
                             {
-                                var width = (Width * Height) / 150000;
-                                switch (channelNum)
+                                foreach (var img in ImageSettings.ImageCollection[ImageSettings.MipValue].Separate())
                                 {
-                                    case 1:
+                                    if (Properties.Settings.Default.SplitChannelsBorder)
+                                    {
+                                        switch (channelNum)
                                         {
-                                            img.BorderColor = MagickColor.FromRgb(255, 0, 0);
-                                            img.Border(width);
-                                            break;
+                                            case 0:
+                                            {
+                                                img.BorderColor = MagickColor.FromRgb(255, 0, 0);
+                                                img.Border(borderWidth);
+                                                break;
+                                            }
+                                            case 1:
+                                            {
+                                                img.BorderColor = MagickColor.FromRgb(0, 255, 0);
+                                                img.Border(borderWidth);
+                                                break;
+                                            }
+                                            case 2:
+                                            {
+                                                img.BorderColor = MagickColor.FromRgb(0, 0, 255);
+                                                img.Border(borderWidth);
+                                                break;
+                                            }
                                         }
-                                    case 2:
-                                        {
-                                            img.BorderColor = MagickColor.FromRgb(0, 255, 0);
-                                            img.Border(width);
-                                            break;
-                                        }
-                                    case 3:
-                                        {
-                                            img.BorderColor = MagickColor.FromRgb(0, 0, 255);
-                                            img.Border(width);
-                                            break;
-                                        }
+                                        channelNum += 1;
+                                    }
+
+                                    if (ImageSettings.MipValue > 0)
+                                    {
+                                        img.Resize(orginalImage.Width, orginalImage.Height);
+                                    }
+                                    images.Add(img);
                                 }
-                                if (ImageSettings.MipValue > 0)
-                                {
-                                    img.Resize(orginalImage.Width, orginalImage.Height);
-                                }
-                                images.Add(img);
-                                channelNum += 1;
+                                var montageSettings =
+                                    new MontageSettings
+                                    {
+                                        Geometry = new MagickGeometry(ImageSettings.Width, ImageSettings.Height)
+                                    };
+                                var result = images.Montage(montageSettings);
+                                ImageSettings.ImageCollection.Clear();
+                                ImageSettings.ImageCollection.Add(result);
                             }
-                            var montageSettings =
-                                new MontageSettings
-                                {
-                                    Geometry = new MagickGeometry(Width, Height)
-                                };
-                            var result = images.Montage(montageSettings);
-                            imageCollection.Clear();
-                            imageCollection.Add(result);
                         }
                         ImageSettings.HasMips = false;
                     }
@@ -101,10 +131,10 @@ namespace Frame
                     {
                         var images = new MagickImageCollection();
                         const int tileCount = 8;
-                        var orginalImage = imageCollection[0];
+                        var orginalImage = ImageSettings.ImageCollection[0];
                         for (var i = 0; i <= tileCount; i++)
                         {
-                            var image = imageCollection[ImageSettings.MipValue].Clone();
+                            var image = ImageSettings.ImageCollection[ImageSettings.MipValue].Clone();
                             if (ImageSettings.MipValue > 0)
                             {
                                 image.Resize(orginalImage.Width, orginalImage.Height);
@@ -118,11 +148,10 @@ namespace Frame
                         var montageSettings =
                             new MontageSettings
                             {
-                                Geometry = new MagickGeometry(Width, Height)
+                                Geometry = new MagickGeometry(ImageSettings.Width, ImageSettings.Height)
                             };
-
-                        imageCollection.Clear();
-                        imageCollection.Add(images.Montage(montageSettings));
+                        ImageSettings.ImageCollection.Clear();
+                        ImageSettings.ImageCollection.Add(images.Montage(montageSettings));
                         ImageSettings.HasMips = false;
                     }
                 }
@@ -137,46 +166,46 @@ namespace Frame
                             .ElementAt(0)?.ToBitmap();
                     }
                     case Channels.Green:
+                    {
+                        var magickImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
+                        if (ImageSettings.MipValue > 0)
                         {
-                            var magickImage = imageCollection[ImageSettings.MipValue];
-                            if (ImageSettings.MipValue > 0)
-                            {
-                                magickImage.Resize(imageCollection[0].Width, imageCollection[0].Height);
-                            }
-                            return magickImage.Separate(Channels.Green)
-                            .ElementAt(0)?.ToBitmap();
+                            magickImage.Resize(ImageSettings.ImageCollection[0].Width, ImageSettings.ImageCollection[0].Height);
                         }
+                        return magickImage.Separate(Channels.Green)
+                            .ElementAt(0)?.ToBitmap();
+                    }
                     case Channels.Blue:
-                        {
-                            var magickImage = ResizeCurrentMip();
+                    {
+                        var magickImage = ResizeCurrentMip();
 
-                            return magickImage.Separate(Channels.Blue)
+                        return magickImage.Separate(Channels.Blue)
                             .ElementAt(0)?.ToBitmap();
-                        }
+                    }
                     case Channels.Alpha:
-                        {
-                            var magickImage = ResizeCurrentMip();
+                    {
+                        var magickImage = ResizeCurrentMip();
 
-                            return magickImage.Separate(Channels.Alpha)
+                        return magickImage.Separate(Channels.Alpha)
                             .ElementAt(0)?.ToBitmap();
-                        }
+                    }
                     default:
-                        {
-                            var magickImage = ResizeCurrentMip();
+                    {
+                        var magickImage = ResizeCurrentMip();
 
-                            magickImage.Alpha(AlphaOption.Opaque);
-                            return magickImage.ToBitmap();
-                        }
+                        magickImage.Alpha(AlphaOption.Opaque);
+                        return magickImage.ToBitmap();
+                    }
                 }
             }
         }
 
         IMagickImage ResizeCurrentMip()
         {
-            var magickImage = imageCollection[ImageSettings.MipValue];
+            var magickImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
             if (ImageSettings.MipValue > 0)
             {
-                magickImage.Resize(imageCollection[0].Width, imageCollection[0].Height);
+                magickImage.Resize(ImageSettings.ImageCollection[0].Width, ImageSettings.ImageCollection[0].Height);
             }
             return magickImage;
         }
@@ -207,14 +236,19 @@ namespace Frame
                 BorderThickness = new Thickness(0)
             };
 
-            var sp = new StackPanel { Orientation = Orientation.Horizontal };
+            var sp = new StackPanel {Orientation = Orientation.Horizontal};
             var bms = new BitmapImage(new Uri("pack://application:,,,/Resources/Close.png"));
-            var img = new System.Windows.Controls.Image { Source = bms, Width = 10, VerticalAlignment = VerticalAlignment.Center};
+            var img = new System.Windows.Controls.Image
+            {
+                Source = bms,
+                Width = 10,
+                VerticalAlignment = VerticalAlignment.Center
+            };
 
             sp.Children.Add(img);
             closeTabButton.Content = sp;
 
-            var tabInternalControl = new StackPanel {Orientation = Orientation.Horizontal };
+            var tabInternalControl = new StackPanel {Orientation = Orientation.Horizontal};
             tabInternalControl.Children.Add(new TextBlock());
             tabInternalControl.Children.Add(closeTabButton);
 
@@ -228,32 +262,6 @@ namespace Frame
             };
         }
 
-        public int Width
-        {
-            get
-            {
-                if (ImageSettings.MipValue > 0)
-                {
-                    return imageCollection[0].Width;
-                }
-                return imageCollection[ImageSettings.MipValue].Width;
-            }
-        }
-
-        public int Height
-        {
-            get
-            {
-                if (ImageSettings.MipValue > 0)
-                {
-                    return imageCollection[0].Height;
-                }
-                return imageCollection[ImageSettings.MipValue].Height;
-            }
-        }
-
-        public long Size => imageCollection[ImageSettings.MipValue].FileSize;
-
         public string FooterMode
         {
             get
@@ -266,25 +274,25 @@ namespace Frame
             }
         }
 
-        public string FooterSize => $"SIZE: {Width}x{Height}";
+        public string FooterSize => $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
 
 
         public string FooterFilesize
         {
             get
             {
-                if (Size < 1024)
+                if (ImageSettings.Size < 1024)
                 {
-                    return $"FILESIZE: {Size}Bytes";
+                    return $"FILESIZE: {ImageSettings.Size}Bytes";
                 }
-                if (Size < 1048576)
+                if (ImageSettings.Size < 1048576)
                 {
-                    var filesize = (double) (Size / 1024f);
+                    var filesize = (double) (ImageSettings.Size / 1024f);
                     return $"FILESIZE: {filesize:N2}KB";
                 }
                 else
                 {
-                    var filesize = (double) (Size / 1024f) / 1024f;
+                    var filesize = (double) (ImageSettings.Size / 1024f) / 1024f;
                     return $"FILESIZE: {filesize:N2}MB";
                 }
             }
@@ -336,7 +344,7 @@ namespace Frame
                 ImageSettings = new ImageSettings
                 {
                     DisplayChannel = tb.ImageSettings.DisplayChannel,
-                    CurrentSortMode = tb.ImageSettings.CurrentSortMode
+                    SortMode = tb.ImageSettings.SortMode
                 }
             };
         }
@@ -383,19 +391,19 @@ namespace Frame
                     {
                         ImageSettings.HasMips = false;
                         ImageSettings.MipValue = 0;
-                        imageCollection.Clear();
-                        imageCollection.Add(Path);
+                        ImageSettings.ImageCollection.Clear();
+                        ImageSettings.ImageCollection.Add(Path);
                         break;
                     }
                     case ".dds":
                     {
                         var defines = new DdsReadDefines {SkipMipmaps = false};
                         var readSettings = new MagickReadSettings(defines);
-                        imageCollection = new MagickImageCollection(Path, readSettings);
-                        ImageSettings.HasMips = imageCollection.Count > 1;
+                        ImageSettings.ImageCollection = new MagickImageCollection(Path, readSettings);
+                        ImageSettings.HasMips = ImageSettings.ImageCollection.Count > 1;
                         if (ImageSettings.HasMips)
                         {
-                            ImageSettings.MipCount = imageCollection.Count;
+                            ImageSettings.MipCount = ImageSettings.ImageCollection.Count;
                         }
                         break;
                     }
@@ -403,25 +411,25 @@ namespace Frame
                     {
                         ImageSettings.HasMips = false;
                         ImageSettings.MipValue = 0;
-                        imageCollection = new MagickImageCollection(Path);
+                        ImageSettings.ImageCollection = new MagickImageCollection(Path);
                         break;
                     }
                 }
             }
             catch (MagickCoderErrorException)
             {
-                imageCollection.Clear();
-                imageCollection.Add(ErrorImage(Path));
+                ImageSettings.ImageCollection.Clear();
+                ImageSettings.ImageCollection.Add(ErrorImage(Path));
             }
             catch (MagickMissingDelegateErrorException)
             {
-                imageCollection.Clear();
-                imageCollection.Add(ErrorImage(Path));
+                ImageSettings.ImageCollection.Clear();
+                ImageSettings.ImageCollection.Add(ErrorImage(Path));
             }
             catch (MagickCorruptImageErrorException)
             {
-                imageCollection.Clear();
-                imageCollection.Add(ErrorImage(Path));
+                ImageSettings.ImageCollection.Clear();
+                ImageSettings.ImageCollection.Add(ErrorImage(Path));
             }
             finally
             {
@@ -431,7 +439,7 @@ namespace Frame
 
         public void Dispose()
         {
-            imageCollection?.Dispose();
+            ImageSettings.ImageCollection?.Dispose();
         }
     }
 }

@@ -3,9 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Frame"
         mc:Ignorable="d"
-        Title="About" Height="300" Width="350" Background="#FF2E2E2E" WindowStyle="ToolWindow">
+        Title="About" Height="325" Width="350" Background="#FF2E2E2E" WindowStyle="ToolWindow">
     <StackPanel MouseDown="Grid_MouseDown" Margin="5" VerticalAlignment="Top">
         <TextBlock Text="Frame" FontSize="18" Foreground="#FFF0F0F0"/>
         <TextBlock Name="VersionText" Text="Version: 0.0.0" Foreground="#FFF0F0F0"/>
@@ -22,14 +21,33 @@
             </Hyperlink>
         </TextBlock>
         <Separator/>
-        <TextBlock Text="References:" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="Extended.Wpf.Toolkit(3.2.0) by Xceed" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="   License: Ms-PL" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="Magick.NET(7.0.7.900) by Dirk Lemstra" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="   License: Apache License 2.0" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="CyotekImageBox(1.2.1) by Cyotek" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="   License: MIT" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="Autoupdater.NET.Official(1.4.3) by RBSoft" Foreground="#FFF0F0F0"/>
-        <TextBlock Text="   License: MIT" Foreground="#FFF0F0F0"/>
+        <TextBlock Text="References" FontSize="18" Foreground="#FFF0F0F0"/>
+        <TextBlock>            
+        <Hyperlink NavigateUri="https://github.com/xceedsoftware/wpftoolkit" RequestNavigate="Hyperlink_RequestNavigate">
+            Extended.Wpf.Toolkit(3.2.0) by Xceed
+        </Hyperlink>
+        </TextBlock>
+        <TextBlock Text="License: Ms-PL" Foreground="#FFF0F0F0"/>
+        <Separator/>
+        <TextBlock>            
+            <Hyperlink NavigateUri="https://github.com/dlemstra/Magick.NET" RequestNavigate="Hyperlink_RequestNavigate">
+                Magick.NET(7.1.0.000) by Dirk Lemstra
+            </Hyperlink>
+        </TextBlock>
+        <TextBlock Text="License: Apache License 2.0" Foreground="#FFF0F0F0"/>
+        <Separator/>
+        <TextBlock>            
+            <Hyperlink NavigateUri="https://github.com/cyotek/Cyotek.Windows.Forms.ImageBox" RequestNavigate="Hyperlink_RequestNavigate">
+                CyotekImageBox(1.2.1) by Cyotek
+            </Hyperlink>
+        </TextBlock>
+        <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>
+        <Separator/>
+        <TextBlock>            
+            <Hyperlink NavigateUri="https://github.com/ravibpatel/AutoUpdater.NET" RequestNavigate="Hyperlink_RequestNavigate">
+                Autoupdater.NET.Official(1.4.3) by RBSoft
+            </Hyperlink>
+        </TextBlock>
+        <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>
     </StackPanel>
 </Window>

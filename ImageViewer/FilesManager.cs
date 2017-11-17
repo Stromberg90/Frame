@@ -47,7 +47,7 @@ namespace Frame
 
                 if (ImageViewerVm.CurrentTab.IsValid)
                 {
-                    Manager.SortAcending(SortMethod.Name);
+                    Manager.SortAcending();
                 }
             });
         }
@@ -57,7 +57,6 @@ namespace Frame
             var extension = Path.GetExtension(Path.GetFileName(file));
             if (!string.IsNullOrEmpty(extension))
             {
-                // Should find a way to check without upper case characters and that crap.
                 if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
                 {
                     return true;

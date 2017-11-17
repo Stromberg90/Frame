@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
-//TODO Save and cancel button
 namespace Frame
 {
     public partial class OptionsWindow
@@ -18,6 +17,14 @@ namespace Frame
                 get => Properties.Settings.Default.ImageFullZoom;
                 set => Properties.Settings.Default.ImageFullZoom = value;
             }
+
+            [DisplayName("Channels Montage Colored Borders")]
+            public bool SplitChannelsBorder
+            {
+                get => Properties.Settings.Default.SplitChannelsBorder;
+                set => Properties.Settings.Default.SplitChannelsBorder = value;
+            }
+
             [DisplayName("Replace Tab On Drop")]
             public bool ReplaceTabOnDrop
             {

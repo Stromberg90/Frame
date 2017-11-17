@@ -132,5 +132,17 @@ namespace Frame.Properties {
                 this["ImageFullZoom"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SplitChannelsBorder {
+            get {
+                return ((bool)(this["SplitChannelsBorder"]));
+            }
+            set {
+                this["SplitChannelsBorder"] = value;
+            }
+        }
     }
 }

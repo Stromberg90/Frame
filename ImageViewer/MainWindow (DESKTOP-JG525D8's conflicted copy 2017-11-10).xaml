@@ -128,8 +128,8 @@
                     <MenuItem  Header="View Channels Montage" Click="ChannelsMontage_OnClick"/>
                     <Separator/>
                     <MenuItem  Header="Sort">
-                        <MenuItem x:Name="SortAscending" Header="Ascending" Click="AscendingSort" IsCheckable="True" IsChecked="True"/>
-                        <MenuItem x:Name="SortDecending" Header="Decending" Click="DecendingSort" IsCheckable="True"/>
+                        <MenuItem x:Name="SortAscending" Header="Ascending" Click="Ascending_sort_mode" IsCheckable="True" IsChecked="True"/>
+                        <MenuItem x:Name="SortDecending" Header="Decending" Click="Decending_sort_mode" IsCheckable="True"/>
                         <Separator/>
                         <MenuItem x:Name="SortName" Header="Name" Click="SortByName" IsChecked="True"/>
                         <MenuItem x:Name="SortDate" Header="Date Modified" Click="SortByDateModified"/>
@@ -140,8 +140,6 @@
                     <Separator/>
                     <MenuItem Header="About" Click="About_Click"/>
                     <MenuItem Header="Options" Click="Options_OnClick" />
-                    <Separator/>
-                    <MenuItem Header="Check For Updates" Click="CheckForUpdate_OnClick" />
                 </ContextMenu>
             </WindowsFormsHost.ContextMenu>
         </WindowsFormsHost>
