@@ -45,7 +45,7 @@
         <Separator/>
         <TextBlock>            
             <Hyperlink NavigateUri="https://github.com/ravibpatel/AutoUpdater.NET" RequestNavigate="Hyperlink_RequestNavigate">
-                Autoupdater.NET.Official(1.4.3) by RBSoft
+                Autoupdater.NET.Official(1.4.4) by RBSoft
             </Hyperlink>
         </TextBlock>
         <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>

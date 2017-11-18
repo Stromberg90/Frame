@@ -179,8 +179,8 @@
     <Resource Include="Resources\favicon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="AutoUpdater.NET, Version=1.4.3.0, Culture=neutral, PublicKeyToken=942f95247e354701, processorArchitecture=MSIL">
-      <HintPath>..\packages\Autoupdater.NET.Official.1.4.3\lib\net452\AutoUpdater.NET.dll</HintPath>
+    <Reference Include="AutoUpdater.NET, Version=1.4.4.0, Culture=neutral, PublicKeyToken=942f95247e354701, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autoupdater.NET.Official.1.4.4\lib\net452\AutoUpdater.NET.dll</HintPath>
     </Reference>
     <Reference Include="Cyotek.Windows.Forms.ImageBox, Version=1.2.0.0, Culture=neutral, PublicKeyToken=58daa28b0b2de221, processorArchitecture=MSIL">
       <HintPath>..\packages\CyotekImageBox.1.2.1\lib\net20\Cyotek.Windows.Forms.ImageBox.dll</HintPath>

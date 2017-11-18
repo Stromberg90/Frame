@@ -10,13 +10,13 @@
         WindowStyle="ToolWindow">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="12*"/>
+            <RowDefinition Height="10*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <xctk:PropertyGrid Grid.Row="0" Name="OptionsProperyGrid" Width="Auto" Height="Auto" />
+        <xctk:PropertyGrid ShowTitle="False" Grid.Row="0" Name="OptionsProperyGrid" Width="Auto" Height="Auto" />
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right" >
-            <Button Content="Save" Click="Save_OnClick"/>
-            <Button Content="Cancel" Click="Cancel_OnClick"/>
+            <Button Content="Reset" Width="40" Click="Reset_OnClick" Margin="1, 0, 1, 0"/>
+            <Button Content="Save" Width="30" Click="Save_OnClick" Margin="1, 0, 1, 0"/>
         </StackPanel>
     </Grid>
 </Window>

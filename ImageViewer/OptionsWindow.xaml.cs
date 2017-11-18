@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
@@ -18,7 +17,7 @@ namespace Frame
                 set => Properties.Settings.Default.ImageFullZoom = value;
             }
 
-            [DisplayName("Channels Montage Colored Borders")]
+            [DisplayName("Channels Montage Borders")]
             public bool SplitChannelsBorder
             {
                 get => Properties.Settings.Default.SplitChannelsBorder;
@@ -63,7 +62,7 @@ namespace Frame
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            CancelChanges();
+            Properties.Settings.Default.Reload();
             Hide();
             e.Cancel = true;
         }
@@ -74,15 +73,16 @@ namespace Frame
             Hide();
         }
 
-        void Cancel_OnClick(object sender, RoutedEventArgs e)
+        void Reset_OnClick(object sender, RoutedEventArgs e)
         {
-            CancelChanges();
-            Hide();
-        }
+            var result = MessageBox.Show("This will reset all your options.", "Reset Options!", MessageBoxButton.OKCancel,
+                MessageBoxImage.Warning, MessageBoxResult.Cancel);
 
-        void CancelChanges()
-        {
-            Properties.Settings.Default.Reload();
+            if (result == MessageBoxResult.OK)
+            {
+                Properties.Settings.Default.Reset();
+                OptionsProperyGrid.Update();
+            }
         }
     }
 }
