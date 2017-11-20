@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows.Input;
 
 namespace Frame
@@ -16,6 +17,12 @@ namespace Frame
         void Grid_MouseDown(object sender, MouseButtonEventArgs e)
         {
             Hide();
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            Hide();
+            e.Cancel = true;
         }
 
         void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)

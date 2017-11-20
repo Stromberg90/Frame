@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using ImageMagick;
 using static System.IO.Path;
 using Color = System.Windows.Media.Color;
@@ -73,7 +74,7 @@ namespace Frame
 
                     var borderWidth = (int)Math.Max(2.0, (ImageSettings.Width * ImageSettings.Height) / 200000.0);
                     int channelNum = 0;
-                    if (ChannelsMontage)
+                    if (SplitChannels)
                     {
                         using (var orginalImage = ImageSettings.ImageCollection[0])
                         {
@@ -275,7 +276,7 @@ namespace Frame
 
         public string FooterIndex => $"INDEX: {Index + 1}/{Paths.Count}";
         public bool Tiled { get; set; }
-        public bool ChannelsMontage { get; set; }
+        public bool SplitChannels { get; set; }
 
         public string FooterMipIndex
         {
@@ -396,16 +397,7 @@ namespace Frame
 
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing && ImageSettings.ImageCollection != null)
-            {
-                ImageSettings.ImageCollection.Dispose();
-                ImageSettings.ImageCollection = null;
-            }
+            ImageSettings.ImageCollection?.Dispose();
         }
     }
 }
