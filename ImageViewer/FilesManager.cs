@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
+using System.Windows.Documents;
 using Frame.Properties;
 
 namespace Frame
@@ -50,6 +52,32 @@ namespace Frame
                     Manager.SortAcending();
                 }
             });
+        }
+
+        public string[] FilterSupportedFiles(string[] files)
+        {
+            var supportedFiles = new List<string>();
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (files == null || files.Length <= 0) return;
+                foreach (var file in files)
+                {
+                    var extension = Path.GetExtension(Path.GetFileName(file));
+                    if (!string.IsNullOrEmpty(extension))
+                    {
+                        if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
+                        {
+                            supportedFiles.Add(file);
+                            continue;
+                        }
+                        if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+                        {
+                            supportedFiles.Add(file);
+                        }
+                    }
+                }
+            });
+            return supportedFiles.ToArray();
         }
 
         public static bool ValidFile(string file)

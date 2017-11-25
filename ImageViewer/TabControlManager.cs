@@ -36,28 +36,6 @@ namespace Frame
             }
         }
 
-        public void CloseTab(TabData data)
-        {
-            var currentlySelectedItem = tabControl.SelectedItem;
-            var currentlySelectedIndex = tabControl.SelectedIndex;
-            var newIndex = tabControl.Items.IndexOf(data.tabItem);
-            if (newIndex < 0)
-            {
-                CloseSelectedTab();
-            }
-            else
-            {
-                imageViewerWm.CurrentTabIndex = newIndex;
-                tabControl.SelectedIndex = newIndex;
-                CloseSelectedTab();
-                if (currentlySelectedIndex != newIndex)
-                {
-                    tabControl.SelectedItem = currentlySelectedItem;
-                }
-            }
-            GC.Collect();
-        }
-
         public void CloseSelectedTab()
         {
             if (!imageViewerWm.CanExcectute())
@@ -71,8 +49,10 @@ namespace Frame
                 imageBox.Image = null;
             }
 
+            imageViewerWm.Tabs[tabControl.SelectedIndex].Dispose();
             imageViewerWm.Tabs.RemoveAt(tabControl.SelectedIndex);
             tabControl.Items.RemoveAt(tabControl.SelectedIndex);
+            GC.Collect();
         }
     }
 }

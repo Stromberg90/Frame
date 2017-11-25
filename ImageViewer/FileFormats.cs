@@ -12,25 +12,27 @@ namespace Frame
 
             for (var i = 0; i < Properties.Settings.Default.SupportedExtensions.Count; i++)
             {
+                var fileExt = "*." + Properties.Settings.Default.SupportedExtensions[i];
                 if (i < Properties.Settings.Default.SupportedExtensions.Count)
                 {
-                    newFilterString.Append("*." + Properties.Settings.Default.SupportedExtensions[i] + ", ");
+                    newFilterString.Append(fileExt + ", ");
                 }
                 else
                 {
-                    newFilterString.Append("*." + Properties.Settings.Default.SupportedExtensions[i] + ")");
+                    newFilterString.Append(fileExt + ")");
                 }
             }
             newFilterString.Append(" | ");
             for (var i = 0; i < Properties.Settings.Default.SupportedExtensions.Count; i++)
             {
+                var fileExt = "*." + Properties.Settings.Default.SupportedExtensions[i];
                 if (i < Properties.Settings.Default.SupportedExtensions.Count)
                 {
-                    newFilterString.Append("*." + Properties.Settings.Default.SupportedExtensions[i] + "; ");
+                    newFilterString.Append(fileExt + "; ");
                 }
                 else
                 {
-                    newFilterString.Append("*." + Properties.Settings.Default.SupportedExtensions[i]);
+                    newFilterString.Append(fileExt);
                 }
             }
             return newFilterString.ToString();

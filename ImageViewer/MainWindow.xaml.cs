@@ -1,4 +1,5 @@
-﻿//TODO Sort event, so I can update footer.
+﻿//TODO Uppgrade settings?
+//TODO Sort event, so I can update footer.
 //TODO GIF Support
 //TODO Recent Files
 //TODO Data bindings
@@ -13,15 +14,10 @@
 //TODO Folder browser
 
 //BUG Doesn't reload if the current image changes.
-//BUG Tab close button on the last tab doesn't clear the footer.
 
 //CHANGLOG
-//1.0.4
-//Channel Borders
-//Mipmaps are displayed in the orginal size.
-//Now Tiles From Center
-//Options Menu
-//Auto update
+//1.0.5
+
 
 using System;
 using System.ComponentModel;
@@ -62,7 +58,7 @@ namespace Frame
             }
         }
 
-        public readonly TabControlManager tabControlManager;
+        readonly TabControlManager tabControlManager;
         readonly SortingManager sortingManager;
         readonly FilesManager filesManager;
         FileSystemWatcher imageDirectoryWatcher;
@@ -80,9 +76,10 @@ namespace Frame
             sortingManager = new SortingManager(ImageViewerWm);
             filesManager = new FilesManager(sortingManager, ImageViewerWm);
 
+            CheckForUpdates();
+
             SetupSlideshow();
             UpdateFooter();
-            CheckForUpdates();
         }
 
         static DispatcherTimer slideshowTimer;
@@ -172,9 +169,7 @@ namespace Frame
                 {
                     if (Keyboard.IsKeyDown(Key.LeftCtrl))
                     {
-                        ImageViewerWm.CurrentTab.SplitChannels = !ImageViewerWm.CurrentTab.SplitChannels;
-                        ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-                        ResetView();
+                        ChannelsMontage();
                     }
                     else
                     {
@@ -189,19 +184,15 @@ namespace Frame
                         return;
                     }
 
-                    ImageViewerWm.CurrentTab.Tiled = !ImageViewerWm.CurrentTab.Tiled;
-                    ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-                    UpdateFooter();
+                    TileImage();
                     break;
                 }
                 case Keys.Right:
                 {
                     if (Keyboard.IsKeyDown(Key.LeftCtrl))
                     {
-                        if (ImageTabControl.SelectedIndex != ImageTabControl.Items.Count - 1)
-                        {
-                            ImageTabControl.SelectedIndex += 1;
-                        }
+                        if (ImageTabControl.SelectedIndex == ImageTabControl.Items.Count - 1) return;
+                        ImageTabControl.SelectedIndex += 1;
                     }
                     else
                     {
@@ -245,18 +236,29 @@ namespace Frame
                 case Keys.Add:
                 {
                     ImageViewerWm.CurrentTab.ImageSettings.MipValue -= 1;
-                    ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-                    UpdateFooter();
+                    RefreshImage();
                     break;
                 }
                 case Keys.Subtract:
                 {
                     ImageViewerWm.CurrentTab.ImageSettings.MipValue += 1;
-                    ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-                    UpdateFooter();
+                    RefreshImage();
                     break;
                 }
             }
+        }
+
+        void TileImage()
+        {
+            ImageViewerWm.CurrentTab.Tiled = !ImageViewerWm.CurrentTab.Tiled;
+            RefreshImage();
+        }
+
+        void ChannelsMontage()
+        {
+            ImageViewerWm.CurrentTab.ChannelsMontage = !ImageViewerWm.CurrentTab.ChannelsMontage;
+            RefreshImage();
+            ResetView();
         }
 
         static bool ModifierKeyDown()
@@ -563,16 +565,21 @@ namespace Frame
 
         void ImageTabControl_Drop(object sender, DragEventArgs e)
         {
-            //BUG I suspect the other drop event is stealing it's lunch.
-            if (e?.Data?.GetData("FileName") is string[] filenames)
+            var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
+            if (filenames != null)
             {
-                AddNewTab(Path.GetFullPath(filenames[0]));
+                var supportedFilenames = filesManager.FilterSupportedFiles(filenames);
+                foreach (var filename in supportedFilenames)
+                {
+                    AddNewTab(filename);
+                }
             }
+
+            e.Handled = true;
         }
 
         void ImageTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
             foreach (TabItem removedItem in e.RemovedItems)
             {
                 foreach (var tabData in ImageViewerWm.Tabs)
@@ -582,7 +589,6 @@ namespace Frame
                         tabData.Hibernate = true;
                     }
                 }
-                
             }
 
             ImageViewerWm.CurrentTabIndex = ImageTabControl.SelectedIndex;
@@ -779,6 +785,10 @@ namespace Frame
         void SetupDirectoryWatcher()
         {
             var directoryName = Path.GetDirectoryName(ImageViewerWm.CurrentTab.InitialImagePath);
+            if (directoryName == null)
+            {
+                return;
+            }
             imageDirectoryWatcher = null;
             imageDirectoryWatcher = new FileSystemWatcher
             {
@@ -789,20 +799,23 @@ namespace Frame
             };
 
             parentDirectoryWatcher = null;
-            parentDirectoryWatcher = new FileSystemWatcher
-            {
-                Path = Directory.GetParent(directoryName).FullName,
-                NotifyFilter =
-                    NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName |
-                    NotifyFilters.DirectoryName
-            };
+            if (directoryName != Directory.GetDirectoryRoot(directoryName))
+            {                
+                parentDirectoryWatcher = new FileSystemWatcher
+                {
+                    Path = Directory.GetParent(directoryName).FullName,
+                    NotifyFilter =
+                        NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName |
+                        NotifyFilters.DirectoryName
+                };
 
-            parentDirectoryWatcher.Changed += ParentDirectoryChanged;
-            parentDirectoryWatcher.Created += ParentDirectoryChanged;
-            parentDirectoryWatcher.Deleted += ParentDirectoryChanged;
-            parentDirectoryWatcher.Renamed += ParentDirectoryChanged;
+                parentDirectoryWatcher.Changed += ParentDirectoryChanged;
+                parentDirectoryWatcher.Created += ParentDirectoryChanged;
+                parentDirectoryWatcher.Deleted += ParentDirectoryChanged;
+                parentDirectoryWatcher.Renamed += ParentDirectoryChanged;
 
-            parentDirectoryWatcher.EnableRaisingEvents = true;
+                parentDirectoryWatcher.EnableRaisingEvents = true;
+            }
 
             imageDirectoryWatcher.Changed += (sender, args) =>
                 filesManager.SupportedFiles(directoryName);
@@ -978,7 +991,7 @@ namespace Frame
             {
                 return;
             }
-            
+
             ImageViewerWm.CurrentTab.ImageSettings.SortMethod = SortMethod.Date;
             sortingManager.Sort();
             UpdateFooter();
@@ -1049,7 +1062,7 @@ namespace Frame
         {
             ImageViewerWm.CurrentTab.ImageSettings.MipValue = 0;
             ImageViewerWm.CurrentTab.Tiled = false;
-            ImageViewerWm.CurrentTab.SplitChannels = false;
+            ImageViewerWm.CurrentTab.ChannelsMontage = false;
             if (ImageViewerWm.CurrentTab.Mode == ApplicationMode.Slideshow)
             {
                 ImageViewerWm.CurrentTab.CurrentSlideshowTime = 1;
@@ -1099,11 +1112,6 @@ namespace Frame
         {
             Topmost = !Topmost;
             AlwaysOnTopUi.IsChecked = Topmost;
-        }
-
-        void ResetSettings_Click(object sender, RoutedEventArgs e)
-        {
-            Settings.Default.Reset();
         }
 
         void Window_Loaded(object sender, RoutedEventArgs e)
@@ -1161,9 +1169,14 @@ namespace Frame
             var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
             if (filenames != null)
             {
-                if (filenames.Length > 1)
+                var supportedFilenames = filesManager.FilterSupportedFiles(filenames);
+                if (supportedFilenames.Length == 0)
                 {
-                    foreach (var filename in filenames)
+                    return;
+                }
+                if (supportedFilenames.Length > 1)
+                {
+                    foreach (var filename in supportedFilenames)
                     {
                         AddNewTab(filename);
                     }
@@ -1172,14 +1185,15 @@ namespace Frame
                 {
                     if (Settings.Default.ReplaceImageOnDrop)
                     {
-                        ReplaceImageInTab(filenames[0]);
+                        ReplaceImageInTab(supportedFilenames[0]);
                     }
                     else
                     {
-                        AddNewTab(filenames[0]);
+                        AddNewTab(supportedFilenames[0]);
                     }
                 }
             }
+            e.Handled = true;
             UpdateView();
         }
 
@@ -1237,16 +1251,12 @@ namespace Frame
 
         void TileImage_OnClick(object sender, RoutedEventArgs e)
         {
-            ImageViewerWm.CurrentTab.Tiled = true;
-            ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-            UpdateFooter();
+            TileImage();
         }
 
         void ChannelsMontage_OnClick(object sender, RoutedEventArgs e)
         {
-            ImageViewerWm.CurrentTab.SplitChannels = true;
-            ImageArea.Image = ImageViewerWm.CurrentTab.Image;
-            ResetView();
+            ChannelsMontage();
         }
 
         void Options_OnClick(object sender, RoutedEventArgs e)
