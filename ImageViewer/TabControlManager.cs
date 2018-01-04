@@ -32,7 +32,7 @@ namespace Frame
             }
             else
             {
-                tabControl.SelectedIndex = imageViewerWm.CurrentTabIndex + 1;
+                tabControl.SelectedIndex = tabControl.Items.Count - 1;
             }
         }
 

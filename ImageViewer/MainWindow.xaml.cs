@@ -1,4 +1,5 @@
-﻿//TODO Uppgrade settings?
+﻿//TODO Show file format info, like DDS(BC5), DDS(DXT1)
+//TODO Uppgrade settings?
 //TODO Sort event, so I can update footer.
 //TODO GIF Support
 //TODO Recent Files
@@ -16,7 +17,8 @@
 //BUG Doesn't reload if the current image changes.
 
 //CHANGLOG
-//1.0.5
+//1.0.4.3
+//Fixed some problems with the tabs
 
 
 using System;
@@ -193,6 +195,7 @@ namespace Frame
                     {
                         if (ImageTabControl.SelectedIndex == ImageTabControl.Items.Count - 1) return;
                         ImageTabControl.SelectedIndex += 1;
+                        UpdateFooter();
                     }
                     else
                     {
@@ -207,6 +210,7 @@ namespace Frame
                         if (ImageTabControl.SelectedIndex > 0)
                         {
                             ImageTabControl.SelectedIndex -= 1;
+                            UpdateFooter();
                         }
                     }
                     else
@@ -348,6 +352,10 @@ namespace Frame
 
             if (!FilesManager.ValidFile(filepath)) return;
 
+            if (ImageTabControl.SelectedIndex != -1)
+            {
+                ImageTabControl.SelectedIndex = ImageTabControl.Items.Count - 1;
+            }
             tabControlManager.AddTab(filepath);
 
             if (ImageTabControl.Visibility == Visibility.Collapsed)
