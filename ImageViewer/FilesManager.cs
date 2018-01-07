@@ -10,7 +10,7 @@ namespace Frame
     public class FilesManager
     {
         ImageViewerWm ImageViewerVm { get; }
-        public SortingManager Manager { get; }
+        SortingManager Manager { get; }
 
         public FilesManager(SortingManager sortingManager, ImageViewerWm imageViewerVm)
         {
@@ -22,7 +22,7 @@ namespace Frame
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                if (String.IsNullOrEmpty(folderpath))
+                if (string.IsNullOrEmpty(folderpath))
                 {
                     return;
                 }
@@ -32,18 +32,16 @@ namespace Frame
                 foreach (var file in Directory.EnumerateFiles(folderpath, "*.*", SearchOption.TopDirectoryOnly))
                 {
                     var extension = Path.GetExtension(Path.GetFileName(file));
-                    if (!String.IsNullOrEmpty(extension))
+                    if (string.IsNullOrEmpty(extension)) continue;
+                    // Should find a way to check without upper case characters and that crap.
+                    if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
                     {
-                        // Should find a way to check without upper case characters and that crap.
-                        if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
-                        {
-                            ImageViewerVm.CurrentTab.Paths.Add(file);
-                            continue;
-                        }
-                        if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
-                        {
-                            ImageViewerVm.CurrentTab.Paths.Add(file);
-                        }
+                        ImageViewerVm.CurrentTab.Paths.Add(file);
+                        continue;
+                    }
+                    if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+                    {
+                        ImageViewerVm.CurrentTab.Paths.Add(file);
                     }
                 }
 
@@ -54,7 +52,7 @@ namespace Frame
             });
         }
 
-        public string[] FilterSupportedFiles(string[] files)
+        public static string[] FilterSupportedFiles(string[] files)
         {
             var supportedFiles = new List<string>();
             Application.Current.Dispatcher.Invoke(() =>
@@ -63,17 +61,15 @@ namespace Frame
                 foreach (var file in files)
                 {
                     var extension = Path.GetExtension(Path.GetFileName(file));
-                    if (!string.IsNullOrEmpty(extension))
+                    if (string.IsNullOrEmpty(extension)) continue;
+                    if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
                     {
-                        if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
-                        {
-                            supportedFiles.Add(file);
-                            continue;
-                        }
-                        if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
-                        {
-                            supportedFiles.Add(file);
-                        }
+                        supportedFiles.Add(file);
+                        continue;
+                    }
+                    if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+                    {
+                        supportedFiles.Add(file);
                     }
                 }
             });
@@ -83,18 +79,9 @@ namespace Frame
         public static bool ValidFile(string file)
         {
             var extension = Path.GetExtension(Path.GetFileName(file));
-            if (!string.IsNullOrEmpty(extension))
-            {
-                if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
-                {
-                    return true;
-                }
-                if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
-                {
-                    return true;
-                }
-            }
-            return false;
+            if (string.IsNullOrEmpty(extension)) return false;
+            return Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)) || 
+                   Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1));
         }
     }
 }

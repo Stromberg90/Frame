@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ImageMagick;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -6,7 +7,6 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ImageMagick;
 using static System.IO.Path;
 using Color = System.Windows.Media.Color;
 using Image = System.Drawing.Image;
@@ -14,7 +14,7 @@ using TextAlignment = ImageMagick.TextAlignment;
 
 namespace Frame
 {
-    public class TabData : IDisposable, INotifyPropertyChanged
+    public sealed class TabData : IDisposable, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -23,10 +23,10 @@ namespace Frame
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public TabItem tabItem = TabItem();
+        public readonly TabItem tabItem = TabItem();
         const double Margin = 0.5;
 
-        public ImageSettings ImageSettings { get; set; } = new ImageSettings();
+        public ImageSettings ImageSettings { get; private set; } = new ImageSettings();
 
         // INotifyPropertyChanged so I can update the header without having to call UpdateTitle() explicitly.
         public ApplicationMode Mode
@@ -66,13 +66,14 @@ namespace Frame
         {
             get
             {
+                GC.Collect();
                 //TODO Make it so I don't have to reload the image, when doing tiling and channels montage, or switching channels.
                 if (!Hibernate)
                 {
                     LoadImage();
 
                     var borderWidth = (int)Math.Max(2.0, (ImageSettings.Width * ImageSettings.Height) / 200000.0);
-                    int channelNum = 0;
+                    var channelNum = 0;
                     if (ChannelsMontage)
                     {
                         using (var orginalImage = ImageSettings.ImageCollection[0])
@@ -208,17 +209,17 @@ namespace Frame
             return magickImage;
         }
 
-        public bool Hibernate { get; set; }
+        public bool Hibernate { private get; set; }
 
         public string Path => Index < Paths.Count ? Paths[Index] : Paths[0];
 
-        public string Title
+        string Title
         {
             set => ((TextBlock) ((StackPanel) tabItem.Header).Children[0]).Text = value;
             get => ((TextBlock) ((StackPanel) tabItem.Header).Children[0]).Text;
         }
 
-        public string Filename => new System.IO.FileInfo(Paths[Index]).Name;
+        string Filename => new System.IO.FileInfo(Paths[Index]).Name;
 
         static TabItem TabItem()
         {
@@ -277,17 +278,7 @@ namespace Frame
         public bool Tiled { get; set; }
         public bool ChannelsMontage { get; set; }
 
-        public string FooterMipIndex
-        {
-            get
-            {
-                if (ImageSettings.HasMips)
-                {
-                    return $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
-                }
-                return "MIP: None";
-            }
-        }
+        public string FooterMipIndex => ImageSettings.HasMips ? $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}" : "MIP: None";
 
         TabData(string tabPath)
         {
@@ -399,7 +390,7 @@ namespace Frame
             Dispose(true);
         }
 
-        protected virtual void Dispose(bool disposing)
+        void Dispose(bool disposing)
         {
             if (disposing && ImageSettings.ImageCollection != null)
             {

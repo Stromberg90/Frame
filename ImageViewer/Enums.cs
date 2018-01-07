@@ -31,15 +31,6 @@
         Previous
     }
 
-    public enum Command
-    {
-        NextImage,
-        PreviousImage,
-        DeleteImage,
-        Reset,
-        Unknown
-    }
-
     public enum ApplicationMode
     {
         Normal,

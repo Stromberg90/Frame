@@ -49,7 +49,7 @@ namespace Frame
 {
     public partial class MainWindow
     {
-        public Channels DisplayChannel
+        Channels DisplayChannel
         {
             get => ImageViewerWm.CurrentTab.ImageSettings.DisplayChannel;
 
@@ -576,7 +576,7 @@ namespace Frame
             var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
             if (filenames != null)
             {
-                var supportedFilenames = filesManager.FilterSupportedFiles(filenames);
+                var supportedFilenames = FilesManager.FilterSupportedFiles(filenames);
                 foreach (var filename in supportedFilenames)
                 {
                     AddNewTab(filename);
@@ -1177,7 +1177,7 @@ namespace Frame
             var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
             if (filenames != null)
             {
-                var supportedFilenames = filesManager.FilterSupportedFiles(filenames);
+                var supportedFilenames = FilesManager.FilterSupportedFiles(filenames);
                 if (supportedFilenames.Length == 0)
                 {
                     return;
@@ -1252,20 +1252,11 @@ namespace Frame
             }
         }
 
-        void ImageArea_ZoomChanged(object sender, EventArgs e)
-        {
-            UpdateFooter();
-        }
+        void ImageArea_ZoomChanged(object sender, EventArgs e) => UpdateFooter();
 
-        void TileImage_OnClick(object sender, RoutedEventArgs e)
-        {
-            TileImage();
-        }
+        void TileImage_OnClick(object sender, RoutedEventArgs e) => TileImage();
 
-        void ChannelsMontage_OnClick(object sender, RoutedEventArgs e)
-        {
-            ChannelsMontage();
-        }
+        void ChannelsMontage_OnClick(object sender, RoutedEventArgs e) => ChannelsMontage();
 
         void Options_OnClick(object sender, RoutedEventArgs e)
         {
@@ -1283,14 +1274,8 @@ namespace Frame
             optionsDialog.ShowDialog();
         }
 
-        void CheckForUpdate_OnClick(object sender, RoutedEventArgs e)
-        {
-            CheckForUpdates();
-        }
+        void CheckForUpdate_OnClick(object sender, RoutedEventArgs e) => CheckForUpdates();
 
-        static void CheckForUpdates()
-        {
-            AutoUpdater.Start("http://www.dropbox.com/s/2b0gna7rz889b5u/Update.xml?dl=1");
-        }
+        static void CheckForUpdates() => AutoUpdater.Start("http://www.dropbox.com/s/2b0gna7rz889b5u/Update.xml?dl=1");
     }
 }

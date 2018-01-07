@@ -4,7 +4,7 @@ namespace Frame
 {
     public static class FileFormats
     {
-        public static string FilterString = ConstructFilterString();
+        public static readonly string FilterString = ConstructFilterString();
         static string ConstructFilterString()
         {
             var newFilterString = new StringBuilder();

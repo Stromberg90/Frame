@@ -14,7 +14,7 @@ namespace Frame
             ImageViewerVm = imageViewerVm;
         }
 
-        public void SortDecending()
+        void SortDecending()
         {
             SortAcending();
             ImageViewerVm.CurrentTab.Paths.Reverse();
@@ -85,7 +85,7 @@ namespace Frame
             ImageViewerVm.CurrentTab.Index = sortedPaths.FindIndex(x => Path.GetFileName(x) == Path.GetFileName(initialImage));
         }
 
-        public static List<string> TypeSort<T>(IEnumerable<FileId<T>> idList, Dictionary<T, int> dictionary)
+        static List<string> TypeSort<T>(IEnumerable<FileId<T>> idList, Dictionary<T, int> dictionary)
         {
             var idFileDictionary = idList.ToDictionary(x => x.Id, x => x.Path);
 
