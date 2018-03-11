@@ -24,14 +24,14 @@
         <TextBlock Text="References" FontSize="18" Foreground="#FFF0F0F0"/>
         <TextBlock>            
         <Hyperlink NavigateUri="https://github.com/xceedsoftware/wpftoolkit" RequestNavigate="Hyperlink_RequestNavigate">
-            Extended.Wpf.Toolkit(3.2.0.0) by Xceed
+            Extended.Wpf.Toolkit(3.3.0.0) by Xceed
         </Hyperlink>
         </TextBlock>
         <TextBlock Text="License: Ms-PL" Foreground="#FFF0F0F0"/>
         <Separator/>
         <TextBlock>            
             <Hyperlink NavigateUri="https://github.com/dlemstra/Magick.NET" RequestNavigate="Hyperlink_RequestNavigate">
-                Magick.NET(7.2.1.0) by Dirk Lemstra
+                Magick.NET(7.4.2.0) by Dirk Lemstra
             </Hyperlink>
         </TextBlock>
         <TextBlock Text="License: Apache License 2.0" Foreground="#FFF0F0F0"/>
@@ -45,7 +45,7 @@
         <Separator/>
         <TextBlock>            
             <Hyperlink NavigateUri="https://github.com/ravibpatel/AutoUpdater.NET" RequestNavigate="Hyperlink_RequestNavigate">
-                Autoupdater.NET.Official(1.4.6.0) by RBSoft
+                Autoupdater.NET.Official(1.4.7.0) by RBSoft
             </Hyperlink>
         </TextBlock>
         <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>

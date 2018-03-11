@@ -19,7 +19,8 @@
 //CHANGLOG
 //1.0.4.3
 //Fixed some problems with the tabs
-
+//1.1
+//Copy to path now uses windows style slashes.
 
 using System;
 using System.ComponentModel;
@@ -409,7 +410,7 @@ namespace Frame
             {
                 return;
             }
-            Clipboard.SetText($"\"{BackwardToForwardSlash(ImageViewerWm.CurrentTab.Path)}\"");
+            Clipboard.SetText($"\"{ImageViewerWm.CurrentTab.Path}\"");
         }
 
         void CopyFilenameToClipboard(object sender, RoutedEventArgs e)
@@ -1277,5 +1278,29 @@ namespace Frame
         void CheckForUpdate_OnClick(object sender, RoutedEventArgs e) => CheckForUpdates();
 
         static void CheckForUpdates() => AutoUpdater.Start("http://www.dropbox.com/s/2b0gna7rz889b5u/Update.xml?dl=1");
+
+        //TODO: Using the text is a bad idea, since I can duplicate tabs and images can have the same name.
+        void EventSetter_OnHandler(object sender, MouseButtonEventArgs e)
+        {
+            var tabItem = e.Source as TextBlock;
+
+            if (tabItem == null)
+            {
+                return;
+            }
+
+            if (Mouse.PrimaryDevice.LeftButton == MouseButtonState.Pressed)
+            {
+                DragDrop.DoDragDrop(tabItem, tabItem, System.Windows.DragDropEffects.All);
+            }
+        }
+
+        void EventSetter_OnHandler(object sender, DragEventArgs e)
+        {
+            if (e.Source is TextBlock dropItem)
+            {
+                MessageBox.Show(dropItem.Text);
+            }
+        }
     }
 }
