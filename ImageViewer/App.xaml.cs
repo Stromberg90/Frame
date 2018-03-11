@@ -2,18 +2,18 @@
 
 namespace Frame
 {
-    public partial class App
+  public partial class App
+  {
+    protected override void OnStartup(StartupEventArgs e)
     {
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
+      base.OnStartup(e);
 
-            var unused = new MainWindow();
-        }
-
-        public void Poke()
-        {
-            MainWindow?.Activate();
-        }
+      var unused = new MainWindow();
     }
+
+    public void Poke()
+    {
+      MainWindow?.Activate();
+    }
+  }
 }

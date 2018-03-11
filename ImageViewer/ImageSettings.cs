@@ -20,11 +20,12 @@ namespace Frame
 
     public long Size => SavedSize.HasValue ? SavedSize.Value : new FileInfo(ImageCollection[MipValue].FileName).Length;
 
-    public SortMode SortMode { get; set; }
+    public SortMode   SortMode   { get; set; }
     public SortMethod SortMethod { get; set; }
 
-    public bool HasMips { get; set; }
-    public int MipCount { get; set; }
+    public bool HasMips  { get; set; }
+    public int  MipCount { get; set; }
+
     public int MipValue
     {
       get => HasMips ? mipValue : 0;
