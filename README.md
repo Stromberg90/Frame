@@ -8,6 +8,8 @@ Features
 * Image Tiling: Makes a 4x4 Tiling image, handy for previewing seamless textures.
 * Mipmaps Viewing: Look at each mip map individually.
 
+[![Download Frame](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/getframe/files/latest/download)
+
 Hotkeys
 * "Ctrl-N"  - Adds New Tab
 * "Ctrl-D"  - Duplicates Tab
