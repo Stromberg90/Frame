@@ -1,58 +1,89 @@
-﻿using Cyotek.Windows.Forms;
-using System;
+﻿using System;
 using System.IO;
 using System.Windows.Controls;
+using Cyotek.Windows.Forms;
 
 namespace Frame
 {
-    public class TabControlManager
+  public class TabControlManager
+  {
+    readonly TabControl    tabControl;
+    readonly MainWindow    mainWindow;
+    readonly ImageViewerWm imageViewerWm;
+
+    public TabControlManager(TabControl tabControl, ImageViewerWm imageViewerWm, MainWindow mainWindow)
     {
-        readonly TabControl tabControl;
-        readonly ImageViewerWm imageViewerWm;
-        readonly ImageBox imageBox;
-
-        public TabControlManager(TabControl tabControl, ImageViewerWm imageViewerWm, ImageBox imageBox)
-        {
-            this.imageBox = imageBox;
-            this.imageViewerWm = imageViewerWm;
-            this.tabControl = tabControl;
-        }
-
-        public void AddTab(string filepath)
-        {
-            var item = TabData.CreateTabData(Path.GetDirectoryName(filepath));
-            imageViewerWm.Tabs.Add(item);
-
-            tabControl.Items.Add(item.tabItem);
-
-            if (imageViewerWm.CurrentTabIndex == -1)
-            {
-                imageViewerWm.CurrentTabIndex = 0;
-                tabControl.SelectedIndex = imageViewerWm.CurrentTabIndex;
-            }
-            else
-            {
-                tabControl.SelectedIndex = tabControl.Items.Count - 1;
-            }
-        }
-
-        public void CloseSelectedTab()
-        {
-            if (!imageViewerWm.CanExcectute())
-            {
-                return;
-            }
-
-            if (tabControl.SelectedIndex == 0)
-            {
-                imageBox.Image.Dispose();
-                imageBox.Image = null;
-            }
-
-            imageViewerWm.Tabs[tabControl.SelectedIndex].Dispose();
-            imageViewerWm.Tabs.RemoveAt(tabControl.SelectedIndex);
-            tabControl.Items.RemoveAt(tabControl.SelectedIndex);
-            GC.Collect();
-        }
+      this.mainWindow = mainWindow;
+      this.imageViewerWm = imageViewerWm;
+      this.tabControl    = tabControl;
     }
+
+    public int CurrentTabIndex => tabControl.SelectedIndex;
+
+    public int TabCount => tabControl.Items.Count;
+
+    public TabItemControl CurrentTab
+    {
+      get
+      {
+        if (tabControl.Items.IsEmpty)
+        {
+          return null;
+        }
+
+        return tabControl.SelectedItem as TabItemControl;
+      }
+    }
+
+    public bool CanExcectute()
+    {
+      if (tabControl.SelectedIndex < 0)
+      {
+        return false;
+      }
+
+      if (tabControl.Items.IsEmpty)
+      {
+        return false;
+      }
+
+      return tabControl.SelectedIndex != -1 && ((TabItemControl) tabControl.SelectedItem).IsValid;
+    }
+
+    TabItemControl CreateTabData(string path)
+    {
+      return new TabItemControl(mainWindow)
+      {
+        InitialImagePath = path
+      };
+    }
+
+    public void AddTab(string filepath)
+    {
+      var item = CreateTabData(Path.GetDirectoryName(filepath));
+
+      tabControl.Items.Add(item);
+
+      if (tabControl.SelectedIndex == -1)
+      {
+        tabControl.SelectedIndex = 0;
+      }
+      else
+      {
+        tabControl.SelectedIndex = tabControl.Items.Count - 1;
+      }
+    }
+
+    public void CloseSelectedTab()
+    {
+      if (!CanExcectute())
+      {
+        return;
+      }
+      
+      ((TabItemControl)tabControl.SelectedItem).Dispose();
+      tabControl.Items.RemoveAt(tabControl.SelectedIndex);
+      GC.Collect();
+    }
+  }
 }

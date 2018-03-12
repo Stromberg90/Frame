@@ -15,7 +15,6 @@ namespace Frame
 
     public int Height => MipValue > 0 ? ImageCollection[0].Height : ImageCollection[MipValue].Height;
 
-    //TODO: Seems like a bad way to go about this, I should rework the tab system.
     public long? SavedSize;
 
     public long Size => SavedSize.HasValue ? SavedSize.Value : new FileInfo(ImageCollection[MipValue].FileName).Length;

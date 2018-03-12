@@ -1,0 +1,75 @@
+﻿<TabItem x:Class="Frame.TabItemControl"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+         xmlns:local="clr-namespace:Frame"
+         xmlns:forms="clr-namespace:Cyotek.Windows.Forms;assembly=Cyotek.Windows.Forms.ImageBox"
+         xmlns:drawing="clr-namespace:System.Drawing;assembly=System.Drawing"
+         mc:Ignorable="d"
+         d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False">
+    <DockPanel LastChildFill="True" x:Name="TabItemControlDockPanel" >
+        <DockPanel.Resources>
+            <Brush x:Key="Background">#FF202020</Brush>
+        </DockPanel.Resources>
+        <StatusBar DockPanel.Dock="Bottom" Background="#FF555555">
+            <StatusBar.Resources>
+                <Brush x:Key="Foreground">#FFF0F0F0</Brush>
+            </StatusBar.Resources>
+            <TextBlock x:Name="FooterModeText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
+            <Separator />
+            <TextBlock x:Name="FooterSizeText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
+            <Separator />
+            <TextBlock x:Name="FooterChannelsText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
+            <Separator />
+            <TextBlock x:Name="FooterFilesizeText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
+            <Separator />
+            <TextBlock x:Name="FooterZoomText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
+            <Separator />
+            <TextBlock x:Name="FooterIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
+            <Separator />
+            <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
+        </StatusBar>
+        <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}" Loaded="WinFormsHostLoaded" >
+            <WindowsFormsHost.Resources>
+                <drawing:Color x:Key="GridColor">#FF202020</drawing:Color>
+            </WindowsFormsHost.Resources>
+            <forms:ImageBox x:Name="ImageArea" ShowPixelGrid="False" GridScale="None" GridColor="{StaticResource GridColor}"
+                            BorderStyle="None" ShortcutsEnabled="False" TabStop="False" BackColor="{StaticResource GridColor}"
+                            ZoomChanged="ImageAreaZoomChanged"/>
+        </WindowsFormsHost>
+        <DockPanel.ContextMenu>
+            <ContextMenu>
+                <MenuItem x:Name="AlwaysOnTopUi" Header="Always On Top" IsCheckable="True"
+                          Click="AlwaysOnTopClick" />
+                <Separator />
+                <MenuItem Header="Open In Image Editor" Click="OpenInImageEditor" />
+                <MenuItem Header="Copy">
+                    <MenuItem Header="Copy Path To Clipboard" Click="CopyPathToClipboard" />
+                    <MenuItem Header="Copy Filename To Clipboard" Click="CopyFilenameToClipboard" />
+                </MenuItem>
+                <MenuItem Header="View In Explorer" Click="ViewInExplorer" />
+                <Separator />
+                <MenuItem Header="Reset View" Click="ResetViewClick" />
+                <Separator />
+                <MenuItem Header="Toggle Tile Image" Click="TileImageOnClick" />
+                <MenuItem Header="Toggle Channels Montage" Click="ChannelsMontageOnClick" />
+                <Separator />
+                <MenuItem Header="Sort">
+                    <MenuItem x:Name="SortAscending" Header="Ascending" Click="AscendingSort" IsCheckable="True"
+                              IsChecked="True" />
+                    <MenuItem x:Name="SortDecending" Header="Decending" Click="DecendingSort" IsCheckable="True" />
+                    <Separator />
+                    <MenuItem x:Name="SortName" Header="Name" Click="SortByName" IsChecked="True" />
+                    <MenuItem x:Name="SortDate" Header="Date Modified" Click="SortByDateModified" />
+                    <MenuItem x:Name="SortSize" Header="Size" Click="SortBySize" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="About" Click="AboutClick" />
+                <MenuItem Header="Options" Click="OptionsOnClick" />
+                <Separator />
+                <MenuItem Header="Check For Updates" Click="CheckForUpdateOnClick" />
+            </ContextMenu>
+        </DockPanel.ContextMenu>
+    </DockPanel>
+</TabItem>

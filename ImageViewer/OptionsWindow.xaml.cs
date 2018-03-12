@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
+using Frame.Properties;
 
 namespace Frame
 {
@@ -13,22 +14,22 @@ namespace Frame
             [DisplayName("100% Zoom")]
             public bool FullZoom
             {
-                get => Properties.Settings.Default.ImageFullZoom;
-                set => Properties.Settings.Default.ImageFullZoom = value;
+                get => Settings.Default.ImageFullZoom;
+                set => Settings.Default.ImageFullZoom = value;
             }
 
             [DisplayName("Channels Montage Borders")]
             public bool SplitChannelsBorder
             {
-                get => Properties.Settings.Default.SplitChannelsBorder;
-                set => Properties.Settings.Default.SplitChannelsBorder = value;
+                get => Settings.Default.SplitChannelsBorder;
+                set => Settings.Default.SplitChannelsBorder = value;
             }
 
             [DisplayName("Replace Tab On Drop")]
             public bool ReplaceTabOnDrop
             {
-                get => Properties.Settings.Default.ReplaceImageOnDrop;
-                set => Properties.Settings.Default.ReplaceImageOnDrop = value;
+                get => Settings.Default.ReplaceImageOnDrop;
+                set => Settings.Default.ReplaceImageOnDrop = value;
             }
 
             [DisplayName("Background Color")]
@@ -36,10 +37,10 @@ namespace Frame
             {
                 get
                 {
-                    var color = Properties.Settings.Default.BackgroundColor;
+                    var color = Settings.Default.BackgroundColor;
                     return Color.FromArgb(color.A, color.R, color.G, color.B);
                 }
-                set => Properties.Settings.Default.BackgroundColor =
+                set => Settings.Default.BackgroundColor =
                     System.Drawing.Color.FromArgb(value.A, value.R, value.G, value.B);
             }
         }
@@ -56,20 +57,20 @@ namespace Frame
             OptionsProperyGrid.Update();
             if ((bool)e.NewValue)
             {
-                Properties.Settings.Default.Reload();
+                Settings.Default.Reload();
             }
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            Properties.Settings.Default.Reload();
+            Settings.Default.Reload();
             Hide();
             e.Cancel = true;
         }
 
         void Save_OnClick(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.Save();
+            Settings.Default.Save();
             Hide();
         }
 
@@ -80,7 +81,7 @@ namespace Frame
 
             if (result == MessageBoxResult.OK)
             {
-                Properties.Settings.Default.Reset();
+                Settings.Default.Reset();
                 OptionsProperyGrid.Update();
             }
         }

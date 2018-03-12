@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Frame.Properties;
 
 namespace Frame
 {
@@ -10,10 +11,10 @@ namespace Frame
             var newFilterString = new StringBuilder();
             newFilterString.Append("Image files (");
 
-            for (var i = 0; i < Properties.Settings.Default.SupportedExtensions.Count; i++)
+            for (var i = 0; i < Settings.Default.SupportedExtensions.Count; i++)
             {
-                var fileExt = "*." + Properties.Settings.Default.SupportedExtensions[i];
-                if (i < Properties.Settings.Default.SupportedExtensions.Count)
+                var fileExt = "*." + Settings.Default.SupportedExtensions[i];
+                if (i < Settings.Default.SupportedExtensions.Count)
                 {
                     newFilterString.Append(fileExt + ", ");
                 }
@@ -23,10 +24,10 @@ namespace Frame
                 }
             }
             newFilterString.Append(" | ");
-            for (var i = 0; i < Properties.Settings.Default.SupportedExtensions.Count; i++)
+            for (var i = 0; i < Settings.Default.SupportedExtensions.Count; i++)
             {
-                var fileExt = "*." + Properties.Settings.Default.SupportedExtensions[i];
-                if (i < Properties.Settings.Default.SupportedExtensions.Count)
+                var fileExt = "*." + Settings.Default.SupportedExtensions[i];
+                if (i < Settings.Default.SupportedExtensions.Count)
                 {
                     newFilterString.Append(fileExt + "; ");
                 }
