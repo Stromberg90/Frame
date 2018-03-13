@@ -14,12 +14,16 @@
 //TODO Thumbnail on tab
 //TODO Folder browser
 
+//BUG First time toggling the context menu, it shows up then goes away right away.
+//BUG Background color/settings don't update for all tabs.
+//BUG Probably several memory leaks, but there is definitly one when opening a bunch of tabs then closing them, it does not come down to the startup memory.
 //BUG Doesn't reload if the current image changes.
 
 //CHANGLOG
 //1.0.4.3
 //Fixed some problems with the tabs
-//1.1
+//1.5
+//Reworked the tab system, faster to switch between tabs and remembers zoom and pan.
 //Copy to path now uses windows style slashes.
 
 using System;
@@ -262,12 +266,14 @@ namespace Frame
     {
       tabControlManager.CurrentTab.Tiled = !tabControlManager.CurrentTab.Tiled;
       RefreshImage();
+      tabControlManager.CurrentTab.ResetView();
     }
 
     void ChannelsMontage()
     {
       tabControlManager.CurrentTab.ChannelsMontage = !tabControlManager.CurrentTab.ChannelsMontage;
       RefreshImage();
+      tabControlManager.CurrentTab.ResetView();
     }
 
     static bool ModifierKeyDown()
@@ -1013,6 +1019,7 @@ namespace Frame
 
           break;
       }
+      tabControlManager.CurrentTab.ResetView();
     }
 
     public void ViewInExplorer(object sender, RoutedEventArgs e)

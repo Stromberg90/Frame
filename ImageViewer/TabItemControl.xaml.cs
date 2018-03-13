@@ -38,8 +38,17 @@ namespace Frame
       }
     }
 
-    public uint   CurrentSlideshowTime { get; set; }
-    public string InitialImagePath     { get; set; }
+    public uint CurrentSlideshowTime
+    {
+      get => currentSlideshowTime;
+      set
+      {
+        currentSlideshowTime = value;
+        UpdateFooter();
+      }
+    }
+
+    public string InitialImagePath { get; set; }
 
     public int Index
     {
@@ -72,7 +81,15 @@ namespace Frame
         {
           using (var orginalImage = ImageSettings.ImageCollection[0])
           {
-            ImageSettings.SavedSize = new FileInfo(orginalImage.FileName).Length;
+            try
+            {
+              ImageSettings.SavedSize = new FileInfo(orginalImage.FileName).Length;
+            }
+            catch (FileNotFoundException)
+            {
+              ImageSettings.SavedSize = 0;
+            }
+
             using (var images = new MagickImageCollection())
             {
               foreach (var img in ImageSettings.ImageCollection[ImageSettings.MipValue].Separate())
@@ -131,7 +148,16 @@ namespace Frame
           var       images       = new MagickImageCollection();
           const int tileCount    = 8;
           var       orginalImage = ImageSettings.ImageCollection[0];
-          ImageSettings.SavedSize = new FileInfo(orginalImage.FileName).Length;
+
+          try
+          {
+            ImageSettings.SavedSize = new FileInfo(orginalImage.FileName).Length;
+          }
+          catch (FileNotFoundException)
+          {
+            ImageSettings.SavedSize = 0;
+          }
+
           for (var i = 0; i <= tileCount; i++)
           {
             var image = ImageSettings.ImageCollection[ImageSettings.MipValue].Clone();
@@ -225,6 +251,8 @@ namespace Frame
     string Filename => new FileInfo(Paths[Index]).Name;
 
     readonly MainWindow mainWindow;
+    uint                currentSlideshowTime;
+    bool                firstImageLoaded;
 
     public TabItemControl(MainWindow mainWindow)
     {
@@ -235,7 +263,12 @@ namespace Frame
       ImageArea.AllowDoubleClick =  true;
       ImageArea.MouseDoubleClick += (sender, args) => { this.mainWindow.WindowMouseDoubleClick(sender, args); };
       ImageArea.MouseDown        += ImageAreaOnMouseDown;
-      ImageArea.ImageChanged     += ResetViewClick;
+      ImageArea.Paint += (sender, args) =>
+      {
+        if (firstImageLoaded) return;
+        ResetView();
+        firstImageLoaded = true;
+      };
     }
 
     void WinFormsHostLoaded(object sender, RoutedEventArgs e)
@@ -248,7 +281,7 @@ namespace Frame
       }
     }
 
-    void UpdateFooter()
+    public void UpdateFooter()
     {
       if (!ImageSettings.ImageCollection.Any())
       {
@@ -354,20 +387,32 @@ namespace Frame
     {
       get
       {
-        if (ImageSettings.Size < 1024)
+        try
         {
-          return $"FILESIZE: {ImageSettings.Size}Bytes";
-        }
+          if (ImageSettings.Size == 0)
+          {
+            return "FILESIZE: ";
+          }
 
-        if (ImageSettings.Size < 1048576)
-        {
-          var filesize = (double) (ImageSettings.Size / 1024f);
-          return $"FILESIZE: {filesize:N2}KB";
+          if (ImageSettings.Size < 1024)
+          {
+            return $"FILESIZE: {ImageSettings.Size}Bytes";
+          }
+
+          if (ImageSettings.Size < 1048576)
+          {
+            var filesize = (double) (ImageSettings.Size / 1024f);
+            return $"FILESIZE: {filesize:N2}KB";
+          }
+          else
+          {
+            var filesize = (double) (ImageSettings.Size / 1024f) / 1024f;
+            return $"FILESIZE: {filesize:N2}MB";
+          }
         }
-        else
+        catch (FileNotFoundException)
         {
-          var filesize = (double) (ImageSettings.Size / 1024f) / 1024f;
-          return $"FILESIZE: {filesize:N2}MB";
+          return "FILESIZE: ";
         }
       }
     }
