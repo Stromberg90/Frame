@@ -15,7 +15,7 @@ Hotkeys
 * "Ctrl-D"  - Duplicates Tab
 * "Ctrl-W"  - Closes Tab
 * "Ctrl-S"  - Splits Channels Into Single Image
-* "T"       - Tiles Image 4x4
+* "T"       - Tiles Image 2x2
 * "S"       - Starts Slideshow
 * "R"       - Toggles Red Channel
 * "G"       - Toggles Green Channel
