@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 using ImageMagick;
 
 namespace Frame
@@ -11,13 +13,56 @@ namespace Frame
 
     public MagickImageCollection ImageCollection = new MagickImageCollection();
 
-    public int Width => MipValue > 0 ? ImageCollection[0].Width : ImageCollection[MipValue].Width;
+    public int Width
+    {
+      get
+      {
+        if (ImageCollection == null ||
+            ImageCollection.Count == 0)
+        {
+          return 0;
+        }
 
-    public int Height => MipValue > 0 ? ImageCollection[0].Height : ImageCollection[MipValue].Height;
+        return MipValue > 0 ? ImageCollection[0].Width : ImageCollection[MipValue].Width;
+      }
+    }
 
-    public long? SavedSize;
+    public int Height
+    {
+      get
+      {
+        if (ImageCollection == null ||
+            ImageCollection.Count == 0)
+        {
+          return 0;
+        }
 
-    public long Size => SavedSize.HasValue ? SavedSize.Value : new FileInfo(ImageCollection[MipValue].FileName).Length;
+        return MipValue > 0 ? ImageCollection[0].Height : ImageCollection[MipValue].Height;
+      }
+    }
+
+    long size;
+
+    public long Size
+    {
+      get
+      {
+        var newSize = size;
+        try
+        {
+          newSize = new FileInfo(ImageCollection[MipValue].FileName).Length;
+        }
+        catch (FileNotFoundException) { }
+        catch (ArgumentException) { }
+        finally
+        {
+          size = newSize;
+        }
+
+        return size;
+      }
+      set { size = value; }
+    }
 
     public SortMode   SortMode   { get; set; }
     public SortMethod SortMethod { get; set; }

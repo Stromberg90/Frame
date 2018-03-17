@@ -2,13 +2,13 @@
 
 namespace Frame
 {
-    public class FrameApp
+  public class FrameApp
+  {
+    [STAThread]
+    static void Main(string[] args)
     {
-        [STAThread]
-        static void Main(string[] args)
-        {
-            var manager = new SingleAppMangager();
-            manager.Run(args);
-        }
+      var manager = new SingleAppMangager();
+      manager.Run(args);
     }
+  }
 }

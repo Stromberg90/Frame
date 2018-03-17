@@ -81,15 +81,6 @@ namespace Frame
         {
           using (var orginalImage = ImageSettings.ImageCollection[0])
           {
-            try
-            {
-              ImageSettings.SavedSize = new FileInfo(orginalImage.FileName).Length;
-            }
-            catch (FileNotFoundException)
-            {
-              ImageSettings.SavedSize = 0;
-            }
-
             using (var images = new MagickImageCollection())
             {
               foreach (var img in ImageSettings.ImageCollection[ImageSettings.MipValue].Separate())
@@ -149,15 +140,6 @@ namespace Frame
           const int tileCount    = 8;
           var       orginalImage = ImageSettings.ImageCollection[0];
 
-          try
-          {
-            ImageSettings.SavedSize = new FileInfo(orginalImage.FileName).Length;
-          }
-          catch (FileNotFoundException)
-          {
-            ImageSettings.SavedSize = 0;
-          }
-
           for (var i = 0; i <= tileCount; i++)
           {
             var image = ImageSettings.ImageCollection[ImageSettings.MipValue].Clone();
@@ -181,7 +163,8 @@ namespace Frame
             };
           ImageSettings.ImageCollection.Clear();
           ImageSettings.ImageCollection.Add(images.Montage(montageSettings));
-          ImageSettings.HasMips = false;
+          ImageSettings.HasMips =  false;
+          ImageSettings.Size    *= tileCount + 1;
         }
 
         UpdateFooter();
@@ -195,11 +178,7 @@ namespace Frame
           }
           case Channels.Green:
           {
-            var magickImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
-            if (ImageSettings.MipValue > 0)
-            {
-              magickImage.Resize(ImageSettings.ImageCollection[0].Width, ImageSettings.ImageCollection[0].Height);
-            }
+            var magickImage = ResizeCurrentMip();
 
             return magickImage.Separate(Channels.Green)
                               .ElementAt(0)?.ToBitmap();
@@ -253,16 +232,15 @@ namespace Frame
     readonly MainWindow mainWindow;
     uint                currentSlideshowTime;
     bool                firstImageLoaded;
+    MainWindow          ParentMainWindow => ((MainWindow) Window.GetWindow(this));
 
     public TabItemControl(MainWindow mainWindow)
     {
       Margin          = new Thickness(0.5);
       this.mainWindow = mainWindow;
       InitializeComponent();
-      ImageArea.KeyDown          += (sender, args) => { this.mainWindow.ImageAreaKeyDown(sender, args); };
-      ImageArea.AllowDoubleClick =  true;
-      ImageArea.MouseDoubleClick += (sender, args) => { this.mainWindow.WindowMouseDoubleClick(sender, args); };
-      ImageArea.MouseDown        += ImageAreaOnMouseDown;
+      ImageArea.KeyDown   += (sender, args) => { this.mainWindow.ImageAreaKeyDown(sender, args); };
+      ImageArea.MouseDown += ImageAreaOnMouseDown;
       ImageArea.Paint += (sender, args) =>
       {
         if (firstImageLoaded) return;
@@ -334,11 +312,6 @@ namespace Frame
         FooterChannelsText.Text = $"Channels: {channel}";
         FooterZoomText.Text     = $"Zoom: {ImageArea.Zoom}%";
       }
-    }
-
-    public void ResetViewClick(object sender, EventArgs e)
-    {
-      ResetView();
     }
 
     public void ResetView()
@@ -446,7 +419,6 @@ namespace Frame
 
     void LoadImage()
     {
-      ImageSettings.SavedSize = null;
       try
       {
         switch (System.IO.Path.GetExtension(Path))
@@ -519,85 +491,10 @@ namespace Frame
         return;
       }
 
-      if (TabItemControlDockPanel.ContextMenu != null)
+      if (ParentMainWindow.DockLayout.ContextMenu != null)
       {
-        TabItemControlDockPanel.ContextMenu.IsOpen = true;
+        ParentMainWindow.DockLayout.ContextMenu.IsOpen = true;
       }
-    }
-
-    void AlwaysOnTopClick(object sender, RoutedEventArgs e)
-    {
-      mainWindow.AlwaysOnTopClick(sender, e);
-    }
-
-    void OpenInImageEditor(object sender, RoutedEventArgs e)
-    {
-      mainWindow.OpenInImageEditor(sender, e);
-    }
-
-    void CopyPathToClipboard(object sender, RoutedEventArgs e)
-    {
-      mainWindow.CopyPathToClipboard(sender, e);
-    }
-
-    void CopyFilenameToClipboard(object sender, RoutedEventArgs e)
-    {
-      mainWindow.CopyFilenameToClipboard(sender, e);
-    }
-
-    void ViewInExplorer(object sender, RoutedEventArgs e)
-    {
-      mainWindow.ViewInExplorer(sender, e);
-    }
-
-    void TileImageOnClick(object sender, RoutedEventArgs e)
-    {
-      mainWindow.TileImageOnClick(sender, e);
-    }
-
-    void ChannelsMontageOnClick(object sender, RoutedEventArgs e)
-    {
-      mainWindow.ChannelsMontageOnClick(sender, e);
-    }
-
-    void AscendingSort(object sender, RoutedEventArgs e)
-    {
-      mainWindow.AscendingSort(sender, e);
-    }
-
-    void DecendingSort(object sender, RoutedEventArgs e)
-    {
-      mainWindow.DecendingSort(sender, e);
-    }
-
-    void SortByName(object sender, RoutedEventArgs e)
-    {
-      mainWindow.SortByName(sender, e);
-    }
-
-    void SortByDateModified(object sender, RoutedEventArgs e)
-    {
-      mainWindow.SortByDateModified(sender, e);
-    }
-
-    void SortBySize(object sender, RoutedEventArgs e)
-    {
-      mainWindow.SortBySize(sender, e);
-    }
-
-    void AboutClick(object sender, RoutedEventArgs e)
-    {
-      mainWindow.AboutClick(sender, e);
-    }
-
-    void OptionsOnClick(object sender, RoutedEventArgs e)
-    {
-      mainWindow.OptionsOnClick(sender, e);
-    }
-
-    void CheckForUpdateOnClick(object sender, RoutedEventArgs e)
-    {
-      mainWindow.CheckForUpdateOnClick(sender, e);
     }
   }
 }
