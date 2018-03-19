@@ -65,7 +65,7 @@
         </dragablz:TabablzControl>
         <dockablz:Layout.ContextMenu>
             <ContextMenu>
-                <MenuItem x:Name="OpenFiles" Header="Open File(s)..." Click="OpenFilesClick" />
+                <MenuItem Header="Open File(s)..." Click="OpenFilesClick" />
                 <MenuItem x:Name="AlwaysOnTopUi" Header="Always On Top" IsCheckable="True"
                           Click="AlwaysOnTopClick" />
                 <Separator />

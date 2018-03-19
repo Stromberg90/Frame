@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Forms;
 using Frame.Properties;
 using ImageMagick;
-using Color = System.Windows.Media.Color;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using TextAlignment = ImageMagick.TextAlignment;
 
@@ -224,7 +223,6 @@ namespace Frame
     string Title
     {
       set => Header = value;
-      get => Header.ToString();
     }
 
     string Filename => new FileInfo(Paths[Index]).Name;

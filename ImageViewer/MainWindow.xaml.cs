@@ -67,23 +67,23 @@ namespace Frame
     }
 
     readonly TabControlManager tabControlManager;
-    readonly SortingManager sortingManager;
-    readonly FilesManager filesManager;
-    FileSystemWatcher imageDirectoryWatcher;
-    FileSystemWatcher parentDirectoryWatcher;
+    readonly SortingManager    sortingManager;
+    readonly FilesManager      filesManager;
+    FileSystemWatcher          imageDirectoryWatcher;
+    FileSystemWatcher          parentDirectoryWatcher;
 
     public MainWindow()
     {
       AutoUpdater.ShowSkipButton = false;
 
       Settings.Default.PropertyChanged += (sender, args) => RefreshUi();
-      Settings.Default.SettingsLoaded += (sender, args) => RefreshUi();
+      Settings.Default.SettingsLoaded  += (sender, args) => RefreshUi();
 
       InitializeComponent();
-      ImageTabControl.NewItemFactory += NewTabItem;
-      tabControlManager = new TabControlManager(ImageTabControl, ImageViewerWm, this);
-      sortingManager = new SortingManager(ImageViewerWm, tabControlManager);
-      filesManager = new FilesManager(sortingManager, ImageViewerWm, tabControlManager);
+
+      tabControlManager = new TabControlManager(ImageTabControl);
+      sortingManager    = new SortingManager(ImageViewerWm, tabControlManager);
+      filesManager      = new FilesManager(sortingManager, ImageViewerWm, tabControlManager);
 
       CheckForUpdates();
       SetupSlideshow();
@@ -91,11 +91,10 @@ namespace Frame
 
     static DispatcherTimer slideshowTimer;
 
-    readonly About aboutDialog = new About();
+    readonly About         aboutDialog   = new About();
     readonly OptionsWindow optionsDialog = new OptionsWindow();
-    int closingMainWindowCount;
 
-    ImageViewerWm ImageViewerWm { get; } = new ImageViewerWm();
+    ImageViewerWm ImageViewerWm                    { get; } = new ImageViewerWm();
     static string BackwardToForwardSlash(string v) => v.Replace('\\', '/');
 
 
@@ -204,8 +203,17 @@ namespace Frame
         {
           if (Keyboard.IsKeyDown(Key.LeftCtrl))
           {
-            if (ImageTabControl.SelectedIndex == ImageTabControl.Items.Count - 1) return;
-            ImageTabControl.SelectedIndex += 1;
+            if (VisualSelectedIndex() == tabControlManager.TabCount - 1)
+            {
+              return;
+            }
+
+            var indecies = ImageTabControl.GetOrderedHeaders().ToList();
+
+            if (indecies[VisualSelectedIndex() + 1].Content is TabItemControl nextTabItem)
+            {
+              ImageTabControl.SelectedIndex = ImageTabControl.Items.IndexOf(nextTabItem);
+            }
           }
           else
           {
@@ -218,9 +226,14 @@ namespace Frame
         {
           if (Keyboard.IsKeyDown(Key.LeftCtrl))
           {
-            if (ImageTabControl.SelectedIndex > 0)
+            if (VisualSelectedIndex() > 0)
             {
-              ImageTabControl.SelectedIndex -= 1;
+              var indecies = ImageTabControl.GetOrderedHeaders().ToList();
+
+              if (indecies[VisualSelectedIndex() - 1].Content is TabItemControl nextTabItem)
+              {
+                ImageTabControl.SelectedIndex = ImageTabControl.Items.IndexOf(nextTabItem);
+              }
             }
           }
           else
@@ -263,6 +276,31 @@ namespace Frame
           break;
         }
       }
+    }
+
+    int VisualSelectedIndex()
+    {
+      return VisualIndex((TabItemControl) ImageTabControl.SelectedItem);
+    }
+
+    int VisualIndex(TabItemControl obj)
+    {
+      var indecies = ImageTabControl.GetOrderedHeaders().ToList();
+      var index    = 0;
+      foreach (var indecy in indecies)
+      {
+        if (indecy.Content is TabItemControl tabItem)
+        {
+          if (Equals(obj, tabItem))
+          {
+            return index;
+          }
+        }
+
+        index++;
+      }
+
+      return -1;
     }
 
     void TileImage()
@@ -313,13 +351,13 @@ namespace Frame
     void DeleteImage()
     {
       var result = MessageBox.Show(this, "Do you want to move this file to the recycle bin?",
-        $"{Properties.Resources.Delete}{FileSystem.GetName(tabControlManager.CurrentTab.Path)}",
-        MessageBoxButton.YesNo);
+                                   $"{Properties.Resources.Delete}{FileSystem.GetName(tabControlManager.CurrentTab.Path)}",
+                                   MessageBoxButton.YesNo);
 
       if (result != MessageBoxResult.Yes) return;
 
       FileSystem.DeleteFile(tabControlManager.CurrentTab.Path, UIOption.OnlyErrorDialogs,
-        RecycleOption.SendToRecycleBin);
+                            RecycleOption.SendToRecycleBin);
 
       if (tabControlManager.CurrentTab.Paths.Count > 0)
       {
@@ -368,7 +406,7 @@ namespace Frame
 
       if (!FilesManager.ValidFile(filepath)) return null;
 
-      var item = tabControlManager.GetTab(filepath);
+      var item = TabControlManager.GetTab(filepath);
 
       filesManager.SupportedFiles(Path.GetDirectoryName(filepath));
 
@@ -396,19 +434,19 @@ namespace Frame
       {
         return;
       }
-      
+
       if (!FilesManager.ValidFile(filepath)) return;
 
-      if (tabControlManager.TabControl.SelectedIndex != -1)
+      if (tabControlManager.CurrentTabControl.SelectedIndex != -1)
       {
-        tabControlManager.TabControl.SelectedIndex = ImageTabControl.Items.Count - 1;
+        tabControlManager.CurrentTabControl.SelectedIndex = ImageTabControl.Items.Count - 1;
       }
 
       tabControlManager.AddTab(filepath);
 
-      if (tabControlManager.TabControl.Visibility == Visibility.Collapsed)
+      if (tabControlManager.CurrentTabControl.Visibility == Visibility.Collapsed)
       {
-        tabControlManager.TabControl.Visibility = Visibility.Visible;
+        tabControlManager.CurrentTabControl.Visibility = Visibility.Visible;
       }
 
       filesManager.SupportedFiles(Path.GetDirectoryName(filepath));
@@ -424,7 +462,7 @@ namespace Frame
       SetupDirectoryWatcher();
     }
 
-    public void AscendingSort(object sender, RoutedEventArgs e)
+    void AscendingSort(object sender, RoutedEventArgs e)
     {
       if (!tabControlManager.CanExcectute())
       {
@@ -437,8 +475,8 @@ namespace Frame
       }
 
       tabControlManager.CurrentTab.ImageSettings.SortMode = SortMode.Ascending;
-      SortDecending.IsChecked = false;
-      SortAscending.IsChecked = true;
+      SortDecending.IsChecked                             = false;
+      SortAscending.IsChecked                             = true;
     }
 
     void CloseTab()
@@ -447,7 +485,7 @@ namespace Frame
       Focus();
     }
 
-    public void CopyPathToClipboard(object sender, RoutedEventArgs e)
+    void CopyPathToClipboard(object sender, RoutedEventArgs e)
     {
       if (!tabControlManager.CanExcectute())
       {
@@ -457,7 +495,7 @@ namespace Frame
       Clipboard.SetText($"\"{tabControlManager.CurrentTab.Path}\"");
     }
 
-    public void CopyFilenameToClipboard(object sender, RoutedEventArgs e)
+    void CopyFilenameToClipboard(object sender, RoutedEventArgs e)
     {
       if (!tabControlManager.CanExcectute())
       {
@@ -467,7 +505,7 @@ namespace Frame
       Clipboard.SetText($"\"{BackwardToForwardSlash(Path.GetFileName(tabControlManager.CurrentTab.Path))}\"");
     }
 
-    public void DecendingSort(object sender, RoutedEventArgs e)
+    void DecendingSort(object sender, RoutedEventArgs e)
     {
       if (!tabControlManager.CanExcectute())
       {
@@ -481,41 +519,16 @@ namespace Frame
       }
 
       tabControlManager.CurrentTab.ImageSettings.SortMode = SortMode.Descending;
-      SortDecending.IsChecked = true;
-      SortAscending.IsChecked = false;
+      SortDecending.IsChecked                             = true;
+      SortAscending.IsChecked                             = false;
     }
 
     void ReversePaths()
     {
-      var initalImage = tabControlManager.CurrentTab.Path;
+      var initalImage   = tabControlManager.CurrentTab.Path;
       var filePathsList = tabControlManager.CurrentTab.Paths;
       filePathsList.Reverse();
       sortingManager.FindImageAfterSort(filePathsList, initalImage);
-    }
-
-    void DisplayAllChannels(object sender, RoutedEventArgs e)
-    {
-      SetDisplayChannel(Channels.RGB);
-    }
-
-    void DisplayAlphaChannel(object sender, RoutedEventArgs e)
-    {
-      SetDisplayChannel(Channels.Alpha);
-    }
-
-    void DisplayBlueChannel(object sender, RoutedEventArgs e)
-    {
-      SetDisplayChannel(Channels.Blue);
-    }
-
-    void DisplayGreenChannel(object sender, RoutedEventArgs e)
-    {
-      SetDisplayChannel(Channels.Green);
-    }
-
-    void DisplayRedChannel(object sender, RoutedEventArgs e)
-    {
-      SetDisplayChannel(Channels.Red);
     }
 
     void DisplayImage()
@@ -530,7 +543,10 @@ namespace Frame
         return;
       }
 
-      if (tabControlManager.CurrentTab.ImageArea == null || !tabControlManager.CurrentTab.IsValid) return;
+      if (tabControlManager.CurrentTab.ImageArea == null || !tabControlManager.CurrentTab.IsValid)
+      {
+        return;
+      }
 
       tabControlManager.CurrentTab.ImageArea.Image = tabControlManager.CurrentTab.Image;
 
@@ -549,20 +565,7 @@ namespace Frame
       Focus();
     }
 
-    TabItemControl NewTabItem()
-    {
-      var fileDialog = new OpenFileDialog
-      {
-        Multiselect = false,
-        AddExtension = true,
-        Filter = FileFormats.FilterString
-      };
-      fileDialog.ShowDialog();
-
-      return string.IsNullOrEmpty(fileDialog.SafeFileName) ? null : GetNewTab(Path.GetFullPath(fileDialog.FileName));
-    }
-
-    public void FileBrowser()
+    void FileBrowser()
     {
       var fileDialog = ImageViewerWm.ShowOpenFileDialog();
       if (!fileDialog.SafeFileNames.Any())
@@ -574,28 +577,13 @@ namespace Frame
       }
     }
 
-    void ImageTabControlDrop(object sender, DragEventArgs e)
-    {
-      var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
-      if (filenames != null)
-      {
-        var supportedFilenames = FilesManager.FilterSupportedFiles(filenames);
-        foreach (var filename in supportedFilenames)
-        {
-          AddNewTab(filename);
-        }
-      }
-
-      e.Handled = true;
-    }
-
-    public void ImageEditorBrowse()
+    void ImageEditorBrowse()
     {
       var fileDialog = new OpenFileDialog
       {
-        Multiselect = false,
+        Multiselect  = false,
         AddExtension = true,
-        Filter = "Executable Files (*.exe, *.lnk)|*.exe;*.lnk"
+        Filter       = "Executable Files (*.exe, *.lnk)|*.exe;*.lnk"
       };
       if (fileDialog.ShowDialog() == true)
       {
@@ -604,7 +592,7 @@ namespace Frame
       }
     }
 
-    public void OpenInImageEditor(object sender, RoutedEventArgs e)
+    void OpenInImageEditor(object sender, RoutedEventArgs e)
     {
       if (!tabControlManager.CanExcectute())
       {
@@ -620,7 +608,7 @@ namespace Frame
         }
 
         if (MessageBox.Show("Editor not found\nDo you want to browse for editor?",
-              Properties.Resources.FileMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                            Properties.Resources.FileMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
         {
           ImageEditorBrowse();
         }
@@ -628,7 +616,7 @@ namespace Frame
       else
       {
         if (MessageBox.Show("No image editor specified in settings file\nDo you want to browse for editor?",
-              Properties.Resources.ImageEditorMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                            Properties.Resources.ImageEditorMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
         {
           ImageEditorBrowse();
         }
@@ -682,43 +670,6 @@ namespace Frame
     {
       tabControlManager.CurrentTab.Index = newIndex;
       DisplayImage();
-    }
-
-    void SetDisplayChannel(Channels channel)
-    {
-      if (!tabControlManager.CanExcectute())
-      {
-        return;
-      }
-
-      switch (channel)
-      {
-        case Channels.RGB:
-        {
-          DisplayChannel = Channels.RGB;
-          break;
-        }
-        case Channels.Red:
-        {
-          DisplayChannel = Channels.Red;
-          break;
-        }
-        case Channels.Green:
-        {
-          DisplayChannel = Channels.Green;
-          break;
-        }
-        case Channels.Blue:
-        {
-          DisplayChannel = Channels.Blue;
-          break;
-        }
-        case Channels.Alpha:
-        {
-          DisplayChannel = Channels.Alpha;
-          break;
-        }
-      }
     }
 
     void ToggleDisplayChannel(Channels channel)
@@ -823,13 +774,15 @@ namespace Frame
             break;
           }
           case WatcherChangeTypes.Changed:
+          {
             break;
+          }
           case WatcherChangeTypes.Renamed:
           {
             var renamedArgs = (RenamedEventArgs) args;
             var newFile = Path.Combine(renamedArgs.FullPath,
-              Path.GetFileName(tabControlManager.CurrentTab.Path) ??
-              throw new InvalidOperationException("It was the null"));
+                                       Path.GetFileName(tabControlManager.CurrentTab.Path) ??
+                                       throw new InvalidOperationException("It was the null"));
             if (Path.GetDirectoryName(tabControlManager.CurrentTab.InitialImagePath) ==
                 renamedArgs.OldFullPath)
             {
@@ -839,16 +792,22 @@ namespace Frame
             break;
           }
           case WatcherChangeTypes.All:
+          {
             break;
+          }
+          case WatcherChangeTypes.Created:
+          {
+            break;
+          }
         }
       });
     }
 
     void SetupSlideshow()
     {
-      slideshowTimer = new DispatcherTimer();
-      slideshowTimer.Tick += Slideshow;
-      slideshowTimer.Interval = new TimeSpan(0, 0, 1);
+      slideshowTimer          =  new DispatcherTimer();
+      slideshowTimer.Tick     += Slideshow;
+      slideshowTimer.Interval =  new TimeSpan(0, 0, 1);
     }
 
     void Slideshow(object source, EventArgs e)
@@ -879,73 +838,7 @@ namespace Frame
       tabControlManager.CurrentTab.CurrentSlideshowTime = 1;
     }
 
-    void Slideshow10SecUI_Click(object sender, RoutedEventArgs e) =>
-      SlideshowIntervalUi(SlideshowInterval.Seconds10);
-
-    void Slideshow1SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUi(SlideshowInterval.Second1);
-
-    void Slideshow20SecUI_Click(object sender, RoutedEventArgs e) =>
-      SlideshowIntervalUi(SlideshowInterval.Seconds20);
-
-    void Slideshow2SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUi(SlideshowInterval.Seconds2);
-
-    void Slideshow30SecUI_Click(object sender, RoutedEventArgs e) =>
-      SlideshowIntervalUi(SlideshowInterval.Seconds30);
-
-    void Slideshow3SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUi(SlideshowInterval.Seconds3);
-
-    void Slideshow4SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUi(SlideshowInterval.Seconds4);
-
-    void Slideshow5SecUI_Click(object sender, RoutedEventArgs e) => SlideshowIntervalUi(SlideshowInterval.Seconds5);
-
-    void SlideshowIntervalUi(SlideshowInterval newInterval)
-    {
-      switch (newInterval)
-      {
-        case SlideshowInterval.Second1:
-        {
-          ImageViewerWm.SlideshowInterval = 1;
-          break;
-        }
-        case SlideshowInterval.Seconds2:
-        {
-          ImageViewerWm.SlideshowInterval = 2;
-          break;
-        }
-        case SlideshowInterval.Seconds3:
-        {
-          ImageViewerWm.SlideshowInterval = 3;
-          break;
-        }
-        case SlideshowInterval.Seconds4:
-        {
-          ImageViewerWm.SlideshowInterval = 4;
-          break;
-        }
-        case SlideshowInterval.Seconds5:
-        {
-          ImageViewerWm.SlideshowInterval = 5;
-          break;
-        }
-        case SlideshowInterval.Seconds10:
-        {
-          ImageViewerWm.SlideshowInterval = 10;
-          break;
-        }
-        case SlideshowInterval.Seconds20:
-        {
-          ImageViewerWm.SlideshowInterval = 20;
-          break;
-        }
-        case SlideshowInterval.Seconds30:
-        {
-          ImageViewerWm.SlideshowInterval = 30;
-          break;
-        }
-      }
-    }
-
-    public void SortByDateModified(object sender, RoutedEventArgs e)
+    void SortByDateModified(object sender, RoutedEventArgs e)
     {
       if (tabControlManager.CurrentTab == null)
       {
@@ -964,7 +857,7 @@ namespace Frame
       SortSize.IsChecked = false;
     }
 
-    public void SortByName(object sender, RoutedEventArgs e)
+    void SortByName(object sender, RoutedEventArgs e)
     {
       if (tabControlManager.CurrentTab == null)
       {
@@ -983,7 +876,7 @@ namespace Frame
       SortSize.IsChecked = false;
     }
 
-    public void SortBySize(object sender, RoutedEventArgs e)
+    void SortBySize(object sender, RoutedEventArgs e)
     {
       if (tabControlManager.CurrentTab == null)
       {
@@ -1002,35 +895,11 @@ namespace Frame
       SortSize.IsChecked = true;
     }
 
-    void StartSlideshowUiClick(object sender, RoutedEventArgs e)
-    {
-      if (!tabControlManager.CanExcectute())
-      {
-        return;
-      }
-
-      tabControlManager.CurrentTab.Mode = ApplicationMode.Slideshow;
-      tabControlManager.CurrentTab.CurrentSlideshowTime = 1;
-      slideshowTimer.Start();
-    }
-
-    void StopSlideshowUiClick(object sender, RoutedEventArgs e)
-    {
-      if (!tabControlManager.CanExcectute())
-      {
-        return;
-      }
-
-      tabControlManager.CurrentTab.Mode = ApplicationMode.Normal;
-      tabControlManager.CurrentTab.CurrentSlideshowTime = 1;
-      slideshowTimer.Stop();
-    }
-
     void SwitchImage(SwitchDirection switchDirection)
     {
       tabControlManager.CurrentTab.ImageSettings.MipValue = 0;
-      tabControlManager.CurrentTab.Tiled = false;
-      tabControlManager.CurrentTab.ChannelsMontage = false;
+      tabControlManager.CurrentTab.Tiled                  = false;
+      tabControlManager.CurrentTab.ChannelsMontage        = false;
       if (tabControlManager.CurrentTab.Mode == ApplicationMode.Slideshow)
       {
         tabControlManager.CurrentTab.CurrentSlideshowTime = 1;
@@ -1069,7 +938,7 @@ namespace Frame
       tabControlManager.CurrentTab.ResetView();
     }
 
-    public void ViewInExplorer(object sender, RoutedEventArgs e)
+    void ViewInExplorer(object sender, RoutedEventArgs e)
     {
       if (!tabControlManager.CanExcectute())
       {
@@ -1079,23 +948,23 @@ namespace Frame
       Process.Start("explorer.exe", "/select, " + tabControlManager.CurrentTab.Path);
     }
 
-    public void AlwaysOnTopClick(object sender, RoutedEventArgs e)
+    void AlwaysOnTopClick(object sender, RoutedEventArgs e)
     {
       if (tabControlManager.CurrentTab == null)
       {
         return;
       }
 
-      Topmost = !Topmost;
+      Topmost                 = !Topmost;
       AlwaysOnTopUi.IsChecked = Topmost;
     }
 
     void WindowLoaded(object sender, RoutedEventArgs e)
     {
       Left = Settings.Default.WindowLocation.X;
-      Top = Settings.Default.WindowLocation.Y;
+      Top  = Settings.Default.WindowLocation.Y;
 
-      Width = Settings.Default.WindowSize.Width;
+      Width  = Settings.Default.WindowSize.Width;
       Height = Settings.Default.WindowSize.Height;
 
       WindowState = (WindowState) Settings.Default.WindowState;
@@ -1105,17 +974,8 @@ namespace Frame
 
     void WindowClosing(object sender, CancelEventArgs e)
     {
-      closingMainWindowCount = 0;
-      foreach (var window in Current.Windows)
-      {
-        if (window.GetType() == typeof(MainWindow))
-        {
-          closingMainWindowCount++;
-        }
-      }
-
       Settings.Default.WindowLocation = new Point((int) Left, (int) Top);
-      Settings.Default.WindowState = (int) WindowState;
+      Settings.Default.WindowState    = (int) WindowState;
       if (WindowState == WindowState.Normal)
       {
         Settings.Default.WindowSize = new Size((int) Width, (int) Height);
@@ -1128,17 +988,17 @@ namespace Frame
       Settings.Default.Save();
     }
 
-    public void AboutClick(object sender, RoutedEventArgs e)
+    void AboutClick(object sender, RoutedEventArgs e)
     {
       if (WindowState == WindowState.Maximized)
       {
         var rect = Screen.GetWorkingArea(new Point((int) Left, (int) Top));
-        aboutDialog.Top = rect.Top + (ActualHeight / 2.0) - (aboutDialog.Height / 2.0);
+        aboutDialog.Top  = rect.Top + (ActualHeight / 2.0) - (aboutDialog.Height / 2.0);
         aboutDialog.Left = rect.Left + (ActualWidth / 2.0) - (aboutDialog.Width / 2.0);
       }
       else
       {
-        aboutDialog.Top = Top + (ActualHeight / 2.0) - (aboutDialog.Height / 2.0);
+        aboutDialog.Top  = Top + (ActualHeight / 2.0) - (aboutDialog.Height / 2.0);
         aboutDialog.Left = Left + (ActualWidth / 2.0) - (aboutDialog.Width / 2.0);
       }
 
@@ -1147,7 +1007,7 @@ namespace Frame
 
     void WindowClosed(object sender, EventArgs e)
     {
-      if (closingMainWindowCount == 1)
+      if (TabablzControl.GetLoadedInstances().Count() == 1)
       {
         Current.Shutdown();
       }
@@ -1195,7 +1055,7 @@ namespace Frame
       e.Handled = true;
     }
 
-    public void WindowKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    void WindowKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
       string keyString;
       switch (e.Key)
@@ -1215,7 +1075,7 @@ namespace Frame
         {
           keyString = Keys.Alt.ToString();
           break;
-          }
+        }
         default:
         {
           keyString = e.Key.ToString();
@@ -1223,34 +1083,33 @@ namespace Frame
         }
       }
 
-      Keys key;
-      key = (Keys) new KeysConverter().ConvertFromString(keyString);
+      var key = (Keys) new KeysConverter().ConvertFromString(keyString);
       ImageAreaKeyDown(sender, new KeyEventArgs(key));
       e.Handled = true;
     }
 
-    public void TileImageOnClick(object sender, RoutedEventArgs e) => TileImage();
+    void TileImageOnClick(object sender, RoutedEventArgs e) => TileImage();
 
-    public void ChannelsMontageOnClick(object sender, RoutedEventArgs e) => ChannelsMontage();
+    void ChannelsMontageOnClick(object sender, RoutedEventArgs e) => ChannelsMontage();
 
-    public void OptionsOnClick(object sender, RoutedEventArgs e)
+    void OptionsOnClick(object sender, RoutedEventArgs e)
     {
       if (WindowState == WindowState.Maximized)
       {
         var rect = Screen.GetWorkingArea(new Point((int) Left, (int) Top));
-        optionsDialog.Top = rect.Top + (ActualHeight / 2.0) - (optionsDialog.Height / 2.0);
+        optionsDialog.Top  = rect.Top + (ActualHeight / 2.0) - (optionsDialog.Height / 2.0);
         optionsDialog.Left = rect.Left + (ActualWidth / 2.0) - (optionsDialog.Width / 2.0);
       }
       else
       {
-        optionsDialog.Top = Top + (ActualHeight / 2.0) - (optionsDialog.Height / 2.0);
+        optionsDialog.Top  = Top + (ActualHeight / 2.0) - (optionsDialog.Height / 2.0);
         optionsDialog.Left = Left + (ActualWidth / 2.0) - (optionsDialog.Width / 2.0);
       }
 
       optionsDialog.ShowDialog();
     }
 
-    public void CheckForUpdateOnClick(object sender, RoutedEventArgs e) => CheckForUpdates();
+    void CheckForUpdateOnClick(object sender, RoutedEventArgs e) => CheckForUpdates();
 
     static void CheckForUpdates() => AutoUpdater.Start("http://www.dropbox.com/s/2b0gna7rz889b5u/Update.xml?dl=1");
 
@@ -1275,6 +1134,26 @@ namespace Frame
     void OpenFilesClick(object sender, RoutedEventArgs e)
     {
       FileBrowser();
+    }
+
+
+    public DragablzItem VisualSelectedItem(TabItemControl obj)
+    {
+      var indecies = ImageTabControl.GetOrderedHeaders().ToList();
+      foreach (var indecy in indecies)
+      {
+        if (!(indecy.Content is TabItemControl tabItem))
+        {
+          continue;
+        }
+
+        if (Equals(obj, tabItem))
+        {
+          return indecy;
+        }
+      }
+
+      return null;
     }
   }
 }
