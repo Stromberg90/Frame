@@ -257,7 +257,7 @@ namespace Frame
       }
     }
 
-    public void UpdateFooter()
+    void UpdateFooter()
     {
       if (!ImageSettings.ImageCollection.Any())
       {
@@ -338,7 +338,7 @@ namespace Frame
 
     void ImageAreaZoomChanged(object sender, EventArgs e) => UpdateFooter();
 
-    public string FooterMode
+    string FooterMode
     {
       get
       {
@@ -351,10 +351,10 @@ namespace Frame
       }
     }
 
-    public string FooterSize => $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
+    string FooterSize => $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
 
 
-    public string FooterFilesize
+    string FooterFilesize
     {
       get
       {
@@ -388,11 +388,11 @@ namespace Frame
       }
     }
 
-    public string FooterIndex     => $"INDEX: {Index + 1}/{Paths.Count}";
+    string FooterIndex     => $"INDEX: {Index + 1}/{Paths.Count}";
     public bool   Tiled           { get; set; }
     public bool   ChannelsMontage { get; set; }
 
-    public string FooterMipIndex => ImageSettings.HasMips
+    string FooterMipIndex => ImageSettings.HasMips
       ? $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}"
       : "MIP: None";
 

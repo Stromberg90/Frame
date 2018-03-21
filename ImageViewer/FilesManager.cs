@@ -27,7 +27,8 @@ namespace Frame
           return;
         }
 
-        TabControlManager.CurrentTab.Paths.Clear();
+        var tabItemControl = TabControlManager.CurrentTab;
+        tabItemControl.Paths.Clear();
 
         foreach (var file in Directory.EnumerateFiles(folderpath, "*.*", SearchOption.TopDirectoryOnly))
         {
@@ -36,17 +37,17 @@ namespace Frame
           // Should find a way to check without upper case characters and that crap.
           if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
           {
-            TabControlManager.CurrentTab.Paths.Add(file);
+            tabItemControl.Paths.Add(file);
             continue;
           }
 
           if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
           {
-            TabControlManager.CurrentTab.Paths.Add(file);
+            tabItemControl.Paths.Add(file);
           }
         }
 
-        if (TabControlManager.CurrentTab.IsValid)
+        if (tabItemControl.IsValid)
         {
           Manager.SortAcending();
         }
@@ -78,9 +79,10 @@ namespace Frame
       return supportedFiles.ToArray();
     }
 
-    public static bool ValidFile(string file)
+    public static bool ValidFile(string filepath)
     {
-      var extension = Path.GetExtension(Path.GetFileName(file));
+      if (string.IsNullOrEmpty(filepath)) return false;
+      var extension = Path.GetExtension(Path.GetFileName(filepath));
       if (string.IsNullOrEmpty(extension)) return false;
       return Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)) ||
              Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1));

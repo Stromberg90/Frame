@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="About" Height="360" Width="350" Background="#FF2E2E2E" WindowStyle="ToolWindow">
+        Title="About" Height="400" Width="350" Background="#FF2E2E2E" WindowStyle="ToolWindow">
     <StackPanel MouseDown="Grid_MouseDown" Margin="5" VerticalAlignment="Top">
         <TextBlock Text="Frame" FontSize="18" Foreground="#FFF0F0F0"/>
         <TextBlock Name="VersionText" Text="Version: 0.0.0" Foreground="#FFF0F0F0"/>
@@ -53,6 +53,13 @@
         <TextBlock>            
             <Hyperlink NavigateUri="https://github.com/daveaglick/Scripty" RequestNavigate="Hyperlink_RequestNavigate">
                 Scripty.MsBuild(0.7.4) by Dave Glick
+            </Hyperlink>
+        </TextBlock>
+        <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>
+        <Separator/>
+        <TextBlock>            
+            <Hyperlink NavigateUri="https://github.com/ButchersBoy/Dragablz" RequestNavigate="Hyperlink_RequestNavigate">
+                Dragablz(0.0.3.203) by James Willock
             </Hyperlink>
         </TextBlock>
         <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>

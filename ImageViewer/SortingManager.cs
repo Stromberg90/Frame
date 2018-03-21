@@ -7,50 +7,44 @@ namespace Frame
 {
   public class SortingManager
   {
-    ImageViewerWm     ImageViewerVm     { get; }
     TabControlManager TabControlManager { get; }
 
-    public SortingManager(ImageViewerWm imageViewerVm, TabControlManager tabControlManager)
+    public SortingManager(TabControlManager tabControlManager)
     {
-      ImageViewerVm     = imageViewerVm;
       TabControlManager = tabControlManager;
     }
 
     void SortDecending()
     {
       SortAcending();
-      TabControlManager.CurrentTab.Paths.Reverse();
-      TabControlManager.CurrentTab.Index = TabControlManager.CurrentTab.Paths.IndexOf(TabControlManager.CurrentTab.Path);
+      var currentTab = TabControlManager.CurrentTab;
+      currentTab.Paths.Reverse();
+      currentTab.Index = currentTab.Paths.IndexOf(currentTab.Path);
     }
 
     public void SortAcending()
     {
       var    id = 0;
-      string initialImage;
-      if (TabControlManager.CurrentTab.Paths.Count < TabControlManager.CurrentTab.Index)
-      {
-        initialImage = TabControlManager.CurrentTab.InitialImagePath;
-      }
-      else
-      {
-        initialImage = TabControlManager.CurrentTab.Path;
-      }
+      var currentTab = TabControlManager.CurrentTab;
+      var paths = currentTab.Paths;
+      var initialImage = paths.Count < currentTab.Index ? currentTab.InitialImagePath : currentTab.Path;
 
       List<string> sortedPaths;
-      switch (TabControlManager.CurrentTab.ImageSettings.SortMethod)
+      var pathsList = paths.ToList();
+      switch (currentTab.ImageSettings.SortMethod)
       {
         case SortMethod.Name:
         {
-          sortedPaths = TabControlManager.CurrentTab.Paths.ToList();
+          sortedPaths = pathsList;
           sortedPaths.Sort();
           break;
         }
 
         case SortMethod.Date:
         {
-          var keys = TabControlManager.CurrentTab.Paths.ToList().Select(s => new FileInfo(s).LastWriteTime).ToList();
+          var keys = pathsList.Select(s => new FileInfo(s).LastWriteTime).ToList();
 
-          var dateTimeLookup = keys.Zip(TabControlManager.CurrentTab.Paths.ToList(), (k, v) => new {k, v})
+          var dateTimeLookup = keys.Zip(pathsList, (k, v) => new {k, v})
                                    .ToLookup(x => x.k, x => x.v);
 
           var idList = dateTimeLookup.SelectMany(pair => pair,
@@ -63,8 +57,8 @@ namespace Frame
         }
         case SortMethod.Size:
         {
-          var keys = TabControlManager.CurrentTab.Paths.ToList().Select(s => new FileInfo(s).Length).ToList();
-          var sizeLookup = keys.Zip(TabControlManager.CurrentTab.Paths.ToList(), (k, v) => new {k, v})
+          var keys = pathsList.Select(s => new FileInfo(s).Length).ToList();
+          var sizeLookup = keys.Zip(pathsList, (k, v) => new {k, v})
                                .ToLookup(x => x.k, x => x.v);
 
           var idList = sizeLookup.SelectMany(pair => pair,
@@ -85,8 +79,9 @@ namespace Frame
 
     public void FindImageAfterSort(List<string> sortedPaths, string initialImage)
     {
-      TabControlManager.CurrentTab.Paths = sortedPaths;
-      TabControlManager.CurrentTab.Index =
+      var currentTab = TabControlManager.CurrentTab;
+      currentTab.Paths = sortedPaths;
+      currentTab.Index =
         sortedPaths.FindIndex(x => Path.GetFileName(x) == Path.GetFileName(initialImage));
     }
 

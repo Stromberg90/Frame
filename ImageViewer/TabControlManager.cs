@@ -71,14 +71,16 @@ namespace Frame
     {
       get
       {
-        if (CurrentMainWindow() == null || CurrentTabControl.Items.IsEmpty)
+        var currentMainWindow = CurrentMainWindow();
+        var tabControl = CurrentTabControl;
+        if (currentMainWindow == null || tabControl.Items.IsEmpty)
         {
           return null;
         }
 
-        var tabItemControl = CurrentTabControl.SelectedItem as TabItemControl;
+        var tabItemControl = tabControl.SelectedItem as TabItemControl;
 
-        if (!(CurrentMainWindow().DockLayout.Content is Branch children))
+        if (!(currentMainWindow.DockLayout.Content is Branch children))
         {
           return tabItemControl;
         }
@@ -160,13 +162,14 @@ namespace Frame
 
     public bool CanExcectute()
     {
-      if (CurrentTabControl.SelectedIndex < 0
-          || CurrentTabControl.Items.IsEmpty)
+      var tabControl = CurrentTabControl;
+      if (tabControl.SelectedIndex < 0
+          || tabControl.Items.IsEmpty)
       {
         return false;
       }
 
-      return CurrentTabControl.SelectedIndex != -1 && ((TabItemControl) CurrentTabControl.SelectedItem).IsValid;
+      return tabControl.SelectedIndex != -1 && ((TabItemControl) tabControl.SelectedItem).IsValid;
     }
 
     static TabItemControl CreateTabData(string path)
@@ -180,15 +183,16 @@ namespace Frame
     public void AddTab(string filepath)
     {
       var item = CreateTabData(Path.GetDirectoryName(filepath));
-      CurrentTabControl.AddToSource(item);
+      var tabControl = CurrentTabControl;
+      tabControl.AddToSource(item);
 
-      if (CurrentTabControl.SelectedIndex == -1)
+      if (tabControl.SelectedIndex == -1)
       {
-        CurrentTabControl.SelectedIndex = 0;
+        tabControl.SelectedIndex = 0;
       }
       else
       {
-        CurrentTabControl.SelectedIndex = TabCount - 1;
+        tabControl.SelectedIndex = TabCount - 1;
       }
     }
 
@@ -204,6 +208,7 @@ namespace Frame
         return;
       }
 
+      CurrentTab.Dispose();
       TabablzControl.CloseItem(CurrentTab);
 
       GC.Collect();
