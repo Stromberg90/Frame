@@ -5,13 +5,13 @@ using ImageMagick;
 
 namespace Frame
 {
-  public class ImageSettings
+  public class ImageSettings: IDisposable
   {
-    public Channels DisplayChannel = Channels.RGB;
+    public Channels DisplayChannel { get; set; } = Channels.RGB;
 
     int mipValue;
 
-    public MagickImageCollection ImageCollection = new MagickImageCollection();
+    public MagickImageCollection ImageCollection { get; set; } = new MagickImageCollection();
 
     public int Width
     {
@@ -97,6 +97,11 @@ namespace Frame
           }
         }
       }
+    }
+
+    public void Dispose()
+    {
+      ImageCollection?.Dispose();
     }
   }
 }

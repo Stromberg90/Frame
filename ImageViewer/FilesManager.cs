@@ -7,14 +7,12 @@ namespace Frame
 {
   public class FilesManager
   {
-    ImageViewerWm     ImageViewerVm     { get; }
     SortingManager    Manager           { get; }
     TabControlManager TabControlManager { get; }
 
-    public FilesManager(SortingManager sortingManager, ImageViewerWm imageViewerVm, TabControlManager tabControlManager)
+    public FilesManager(SortingManager sortingManager, TabControlManager tabControlManager)
     {
       Manager           = sortingManager;
-      ImageViewerVm     = imageViewerVm;
       TabControlManager = tabControlManager;
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using Dragablz;
@@ -9,7 +10,7 @@ namespace Frame
 {
   public class TabControlManager
   {
-    readonly TabablzControl currentTabControl;
+    TabablzControl currentTabControl;
 
     public TabablzControl CurrentTabControl
     {
@@ -56,11 +57,12 @@ namespace Frame
         currentMainWindow.ImageTabControl = tabItemControl;
         return tabItemControl;
       }
+      private set => currentTabControl = value;
     }
 
     public TabControlManager(TabablzControl tabControl)
     {
-      currentTabControl = tabControl;
+      CurrentTabControl = tabControl;
     }
 
     public int CurrentTabIndex => CurrentTabControl.SelectedIndex;
@@ -79,29 +81,6 @@ namespace Frame
         }
 
         var tabItemControl = tabControl.SelectedItem as TabItemControl;
-
-        if (!(currentMainWindow.DockLayout.Content is Branch children))
-        {
-          return tabItemControl;
-        }
-
-        var controls = GetTabablzControls(children);
-        foreach (var control in controls)
-        {
-          foreach (var controlItem in control.Items)
-          {
-            if (!(controlItem is TabItemControl itemTabItemControl))
-            {
-              continue;
-            }
-
-            if (itemTabItemControl.WinFormsHost.IsFocused)
-            {
-              tabItemControl = itemTabItemControl;
-            }
-          }
-        }
-
         return tabItemControl;
       }
     }
@@ -169,20 +148,15 @@ namespace Frame
         return false;
       }
 
-      return tabControl.SelectedIndex != -1 && ((TabItemControl) tabControl.SelectedItem).IsValid;
-    }
-
-    static TabItemControl CreateTabData(string path)
-    {
-      return new TabItemControl(CurrentMainWindow())
-      {
-        InitialImagePath = path
-      };
+      return ((TabItemControl) tabControl.SelectedItem).IsValid;
     }
 
     public void AddTab(string filepath)
     {
-      var item = CreateTabData(Path.GetDirectoryName(filepath));
+      var item = new TabItemControl(CurrentMainWindow())
+      {
+        InitialImagePath = filepath
+      };
       var tabControl = CurrentTabControl;
       tabControl.AddToSource(item);
 
@@ -198,7 +172,10 @@ namespace Frame
 
     public static TabItemControl GetTab(string filepath)
     {
-      return CreateTabData(Path.GetDirectoryName(filepath));
+      return new TabItemControl(CurrentMainWindow())
+      {
+        InitialImagePath = filepath
+      };
     }
 
     public void CloseSelectedTab()
@@ -210,8 +187,6 @@ namespace Frame
 
       CurrentTab.Dispose();
       TabablzControl.CloseItem(CurrentTab);
-
-      GC.Collect();
     }
   }
 }

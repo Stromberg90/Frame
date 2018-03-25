@@ -31,15 +31,14 @@
             <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
         </StatusBar>
         <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}"
-                          Loaded="WinFormsHostLoaded">
+                          Loaded="WinFormsHostLoaded" >
             <WindowsFormsHost.Resources>
                 <drawing:Color x:Key="GridColor">#FF202020</drawing:Color>
             </WindowsFormsHost.Resources>
             <forms:ImageBox x:Name="ImageArea" ShowPixelGrid="False" GridScale="None"
                             GridColor="{StaticResource GridColor}"
                             BorderStyle="None" ShortcutsEnabled="False" TabStop="False"
-                            BackColor="{StaticResource GridColor}"
-                            ZoomChanged="ImageAreaZoomChanged" />
+                            BackColor="{StaticResource GridColor}" ZoomChanged="ImageAreaZoomChanged" MouseClick="ImageAreaOnMouseDown" />
         </WindowsFormsHost>
     </DockPanel>
 </TabItem>

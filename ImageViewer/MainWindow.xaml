@@ -15,7 +15,7 @@
     Height="350" Width="525"
     MinHeight="250" MinWidth="250"
     Background="#FF2E2E2E"
-    Loaded="WindowLoaded" Closing="WindowClosing" Closed="WindowClosed" KeyDown="WindowKeyDown">
+    Loaded="WindowLoaded" Closing="WindowClosing" Closed="WindowClosed" KeyDown="WindowKeyDown" SizeChanged="MainWindow_OnSizeChanged">
     <Window.Resources>
         <Style TargetType="{x:Type fm:TabItemControl}">
             <Setter Property="Foreground" Value="#FFF0F0F0" />
@@ -55,10 +55,9 @@
         </Style>
         <system:String x:Key="Partition">Frame</system:String>
     </Window.Resources>
-    <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="ImageAreaDragDrop">
+    <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="ImageAreaDragDrop" IsTabStop="False">
         <dragablz:TabablzControl x:Name="ImageTabControl" Width="Auto" Background="#FF202020"
-                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0"
-                                 SelectionChanged="ImageTabControl_OnSelectionChanged" >
+                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" >
             <dragablz:TabablzControl.InterTabController>
                 <dragablz:InterTabController Partition="{StaticResource Partition}" />
             </dragablz:TabablzControl.InterTabController>

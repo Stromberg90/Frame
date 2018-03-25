@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Forms;
+using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
@@ -16,13 +17,6 @@ namespace Frame
 {
   public partial class TabItemControl : IDisposable, INotifyPropertyChanged
   {
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
-    {
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
     public ImageSettings ImageSettings { get; } = new ImageSettings();
 
     public ApplicationMode Mode
@@ -30,11 +24,20 @@ namespace Frame
       get => mode;
       set
       {
-        if (value == mode) return;
         mode = value;
-        NotifyPropertyChanged();
-        UpdateFooter();
+        OnPropertyChanged();
       }
+    }
+
+    void UpdateFooter()
+    {
+      FooterModeText.Text     = FooterModeTextP;
+      FooterSizeText.Text     = FooterSizeTextP;
+      FooterChannelsText.Text = FooterChannelsTextP;
+      FooterFilesizeText.Text = FooterFilesizeTextP;
+      FooterZoomText.Text     = FooterZoomTextP;
+      FooterIndexText.Text    = FooterIndexTextP;
+      FooterMipIndexText.Text = FooterMipIndexTextP;
     }
 
     public uint CurrentSlideshowTime
@@ -43,7 +46,7 @@ namespace Frame
       set
       {
         currentSlideshowTime = value;
-        UpdateFooter();
+        OnPropertyChanged();
       }
     }
 
@@ -54,10 +57,8 @@ namespace Frame
       get => index;
       set
       {
-        if (value == index) return;
         index = value;
-        NotifyPropertyChanged();
-        UpdateFooter();
+        OnPropertyChanged();
       }
     }
 
@@ -166,7 +167,7 @@ namespace Frame
           ImageSettings.Size    *= tileCount + 1;
         }
 
-        UpdateFooter();
+        OnPropertyChanged();
         switch (ImageSettings.DisplayChannel)
         {
           case Channels.Red:
@@ -230,15 +231,21 @@ namespace Frame
     readonly MainWindow mainWindow;
     uint                currentSlideshowTime;
     bool                firstImageLoaded;
-    MainWindow          ParentMainWindow => ((MainWindow) Window.GetWindow(this));
+    MainWindow          ParentMainWindow => Window.GetWindow(this) as MainWindow;
 
     public TabItemControl(MainWindow mainWindow)
     {
       Margin          = new Thickness(0.5);
       this.mainWindow = mainWindow;
       InitializeComponent();
-      ImageArea.KeyDown   += (sender, args) => { this.mainWindow.ImageAreaKeyDown(sender, args); };
-      ImageArea.MouseDown += ImageAreaOnMouseDown;
+
+      PropertyChanged += (sender, args) =>
+      {
+        UpdateFooter();
+        UpdateTitle();
+      };
+
+      ImageArea.KeyDown += (sender, args) => { this.mainWindow.ImageAreaKeyDown(sender, args); };
       ImageArea.Paint += (sender, args) =>
       {
         if (firstImageLoaded) return;
@@ -257,27 +264,47 @@ namespace Frame
       }
     }
 
-    void UpdateFooter()
+    string FooterModeTextP
     {
-      if (!ImageSettings.ImageCollection.Any())
+      get
       {
-        FooterModeText.Text     = "MODE: ";
-        FooterSizeText.Text     = "SIZE: ";
-        FooterChannelsText.Text = "CHANNELS: ";
-        FooterFilesizeText.Text = "FILESIZE: ";
-        FooterZoomText.Text     = "ZOOM: ";
-        FooterIndexText.Text    = "INDEX: ";
-        FooterMipIndexText.Text = "MIP: ";
-      }
-      else
-      {
-        var channel = string.Empty;
+        if (!ImageSettings.ImageCollection.Any())
+        {
+          return "MODE: ";
+        }
 
-        FooterModeText.Text     = FooterMode;
-        FooterSizeText.Text     = FooterSize;
-        FooterFilesizeText.Text = FooterFilesize;
-        FooterIndexText.Text    = FooterIndex;
-        FooterMipIndexText.Text = FooterMipIndex;
+        if (Mode == ApplicationMode.Slideshow)
+        {
+          return $"MODE: {Mode} " + CurrentSlideshowTime;
+        }
+
+        return $"MODE: {Mode}";
+      }
+    }
+
+    string FooterSizeTextP
+    {
+      get
+      {
+        if (!ImageSettings.ImageCollection.Any())
+        {
+          return "SIZE: ";
+        }
+
+        return $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
+      }
+    }
+
+    string FooterChannelsTextP
+    {
+      get
+      {
+        if (!ImageSettings.ImageCollection.Any())
+        {
+          return "CHANNELS: ";
+        }
+
+        var channel = string.Empty;
         switch (ImageSettings.DisplayChannel)
         {
           case (Channels.RGB):
@@ -307,57 +334,19 @@ namespace Frame
           }
         }
 
-        FooterChannelsText.Text = $"Channels: {channel}";
-        FooterZoomText.Text     = $"Zoom: {ImageArea.Zoom}%";
+        return $"CHANNELS: {channel}";
       }
     }
 
-    public void ResetView()
-    {
-      if (ImageArea == null)
-      {
-        return;
-      }
-
-      if (Settings.Default.ImageFullZoom)
-      {
-        ImageArea.Zoom = 100;
-        return;
-      }
-
-      if (ImageArea.Size.Width < ImageSettings.Width ||
-          ImageArea.Size.Height < ImageSettings.Height)
-      {
-        ImageArea.ZoomToFit();
-      }
-      else
-      {
-        ImageArea.Zoom = 100;
-      }
-    }
-
-    void ImageAreaZoomChanged(object sender, EventArgs e) => UpdateFooter();
-
-    string FooterMode
+    string FooterFilesizeTextP
     {
       get
       {
-        if (Mode == ApplicationMode.Slideshow)
+        if (!ImageSettings.ImageCollection.Any())
         {
-          return $"MODE: {Mode} " + CurrentSlideshowTime;
+          return "FILESIZE: ";
         }
 
-        return $"MODE: {Mode}";
-      }
-    }
-
-    string FooterSize => $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
-
-
-    string FooterFilesize
-    {
-      get
-      {
         try
         {
           if (ImageSettings.Size == 0)
@@ -388,15 +377,64 @@ namespace Frame
       }
     }
 
-    string FooterIndex     => $"INDEX: {Index + 1}/{Paths.Count}";
-    public bool   Tiled           { get; set; }
-    public bool   ChannelsMontage { get; set; }
+    string FooterZoomTextP => !ImageSettings.ImageCollection.Any() ? "ZOOM: " : $"ZOOM: {ImageArea.Zoom}%";
 
-    string FooterMipIndex => ImageSettings.HasMips
-      ? $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}"
-      : "MIP: None";
+    string FooterIndexTextP
+    {
+      get
+      {
+        if (!ImageSettings.ImageCollection.Any())
+        {
+          return "INDEX: ";
+        }
 
-    public void UpdateTitle()
+        return $"INDEX: {Index + 1}/{Paths.Count}";
+      }
+    }
+
+    string FooterMipIndexTextP
+    {
+      get
+      {
+        if (!ImageSettings.ImageCollection.Any())
+        {
+          return "MIP: ";
+        }
+
+        return ImageSettings.HasMips ? $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}" : "MIP: None";
+      }
+    }
+
+    public void ResetView()
+    {
+      if (ImageArea == null)
+      {
+        return;
+      }
+
+      if (Settings.Default.ImageFullZoom)
+      {
+        ImageArea.Zoom = 100;
+        return;
+      }
+
+      if (ImageArea.Size.Width < ImageSettings.Width ||
+          ImageArea.Size.Height < ImageSettings.Height)
+      {
+        ImageArea.ZoomToFit();
+      }
+      else
+      {
+        ImageArea.Zoom = 100;
+      }
+    }
+
+    void ImageAreaZoomChanged(object sender, EventArgs e) => UpdateFooter();
+
+    public bool Tiled           { get; set; }
+    public bool ChannelsMontage { get; set; }
+
+    void UpdateTitle()
     {
       Title = Filename;
     }
@@ -451,34 +489,10 @@ namespace Frame
           }
         }
       }
-      catch (MagickCoderErrorException)
+      catch (Exception)
       {
         ImageSettings.ImageCollection.Clear();
         ImageSettings.ImageCollection.Add(ErrorImage(Path));
-      }
-      catch (MagickMissingDelegateErrorException)
-      {
-        ImageSettings.ImageCollection.Clear();
-        ImageSettings.ImageCollection.Add(ErrorImage(Path));
-      }
-      catch (MagickCorruptImageErrorException)
-      {
-        ImageSettings.ImageCollection.Clear();
-        ImageSettings.ImageCollection.Add(ErrorImage(Path));
-      }
-    }
-
-    public void Dispose()
-    {
-      Dispose(true);
-    }
-
-    void Dispose(bool disposing)
-    {
-      if (disposing && ImageSettings.ImageCollection != null)
-      {
-        ImageSettings.ImageCollection.Dispose();
-        ImageSettings.ImageCollection = null;
       }
     }
 
@@ -493,6 +507,35 @@ namespace Frame
       {
         ParentMainWindow.DockLayout.ContextMenu.IsOpen = true;
       }
+    }
+
+    void Dispose(bool disposing)
+    {
+      if (disposing)
+      {
+        mainWindow?.Dispose();
+        WinFormsHost?.Dispose();
+        ImageArea?.Dispose();
+        ImageSettings?.Dispose();
+      }
+    }
+
+    public void Dispose()
+    {
+      Dispose(true);
+    }
+
+    ~TabItemControl()
+    {
+      Dispose(false);
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    [NotifyPropertyChangedInvocator]
+    void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    {
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
   }
 }

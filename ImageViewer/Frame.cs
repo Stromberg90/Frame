@@ -2,7 +2,7 @@
 
 namespace Frame
 {
-  public class FrameApp
+  public static class FrameApp
   {
     [STAThread]
     static void Main(string[] args)

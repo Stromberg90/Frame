@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.Reflection;
 using System.Windows.Input;
 
 namespace Frame
@@ -9,7 +10,7 @@ namespace Frame
         public About()
         {
             InitializeComponent();
-            VersionText.Text = VersionText.Text.Replace("0.0.0", ImageViewerWm.VERSION);
+            VersionText.Text = VersionText.Text.Replace("0.0.0", Assembly.GetEntryAssembly().GetName().Version.ToString());
             CopyrightText.Text = CopyrightText.Text.Replace("{}", System.DateTime.Now.Year.ToString());
             UpdateManager.CheckForUpdate();
         }
