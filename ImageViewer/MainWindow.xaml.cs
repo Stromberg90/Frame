@@ -15,7 +15,6 @@
 //TODO Folder browser
 
 //BUG When closing last window, it doesn't always shutdown the application.
-//BUG Dropping file, needs to set focus to WinFormHost under the mouse, so it adds to the right place.
 //BUG Background color/settings don't update for all tabs.
 //BUG Doesn't reload if the current image changes.
 
@@ -23,10 +22,9 @@
 //1.5
 //Dragable and tearable tabs, tiling tabs.
 //Reworked the tab system, faster to switch between tabs and remembers zoom and pan.
-//Copy to path now uses windows style seperators.
+//Copy filename and path now uses windows style seperators.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -35,6 +33,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using AutoUpdaterDotNET;
 using Dragablz;
@@ -248,13 +247,14 @@ namespace Frame
 
     int VisualIndex(TabItemControl obj)
     {
-      var indecies = ImageTabControl.GetOrderedHeaders().ToList();
-      var index    = 0;
-      foreach (var indecy in indecies)
+      var orderedHeaders = ImageTabControl.GetOrderedHeaders().ToList();
+      var index          = 0;
+      foreach (var header in orderedHeaders)
       {
-        if (indecy.Content is TabItemControl tabItem)
-          if (Equals(obj, tabItem))
-            return index;
+        if (header.Content is TabItemControl tabItem && Equals(obj, tabItem))
+        {
+          return index;
+        }
 
         index++;
       }
@@ -803,14 +803,12 @@ namespace Frame
     {
       Settings.Default.WindowLocation = new Point((int) Left, (int) Top);
       Settings.Default.WindowState    = (int) WindowState;
-      if (WindowState == WindowState.Normal)
+      var newSize = new Size
       {
-        Settings.Default.WindowSize = new Size((int) Width, (int) Height);
-      }
-      else
-      {
-        Settings.Default.WindowSize = new Size((int) RestoreBounds.Width, (int) RestoreBounds.Height);
-      }
+        Width  = WindowState == WindowState.Normal ? (int) Width : (int) RestoreBounds.Width,
+        Height = WindowState == WindowState.Normal ? (int) Height : (int) RestoreBounds.Height
+      };
+      Settings.Default.WindowSize = newSize;
 
       Settings.Default.Save();
     }
@@ -844,21 +842,44 @@ namespace Frame
     void ImageAreaDragDrop(object sender, DragEventArgs e)
     {
       var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
-      if (filenames != null)
+      if (filenames == null)
       {
-        var supportedFilenames = FilesManager.FilterSupportedFiles(filenames);
-        if (supportedFilenames.Length == 0) return;
+        return;
+      }
 
-        if (supportedFilenames.Length > 1)
+      if (e.OriginalSource is Border border)
+      {
+        if (border.Parent is Grid grid)
         {
-          foreach (var filename in supportedFilenames) AddNewTab(filename);
+          if (VisualTreeHelper.GetParent(grid) is TabablzControl tabablzControl)
+          {
+            (tabablzControl.SelectedItem as TabItemControl)?.WinFormsHost.Focus();
+          }
+        }
+      }
+
+      var supportedFilenames = FilesManager.FilterSupportedFiles(filenames);
+      if (!supportedFilenames.Any())
+      {
+        return;
+      }
+
+      if (supportedFilenames.Length > 1)
+      {
+        foreach (var filename in supportedFilenames)
+        {
+          AddNewTab(filename);
+        }
+      }
+      else
+      {
+        if (Settings.Default.ReplaceImageOnDrop)
+        {
+          ReplaceImageInTab(supportedFilenames[0]);
         }
         else
         {
-          if (Settings.Default.ReplaceImageOnDrop)
-            ReplaceImageInTab(supportedFilenames[0]);
-          else
-            AddNewTab(supportedFilenames[0]);
+          AddNewTab(supportedFilenames[0]);
         }
       }
 
@@ -980,15 +1001,18 @@ namespace Frame
 
     void MainWindow_OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
+      if (!tabControlManager.CanExcectute())
+      {
+        return;
+      }
+
       Settings.Default.WindowState = (int) WindowState;
-      if (WindowState == WindowState.Normal)
+      var newSize = new Size
       {
-        Settings.Default.WindowSize = new Size((int) Width, (int) Height);
-      }
-      else
-      {
-        Settings.Default.WindowSize = new Size((int) RestoreBounds.Width, (int) RestoreBounds.Height);
-      }
+        Width  = WindowState == WindowState.Normal ? (int) Width : (int) RestoreBounds.Width,
+        Height = WindowState == WindowState.Normal ? (int) Height : (int) RestoreBounds.Height
+      };
+      Settings.Default.WindowSize = newSize;
 
       Settings.Default.Save();
     }

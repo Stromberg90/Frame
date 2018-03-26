@@ -15,49 +15,34 @@
     Height="350" Width="525"
     MinHeight="250" MinWidth="250"
     Background="#FF2E2E2E"
-    Loaded="WindowLoaded" Closing="WindowClosing" Closed="WindowClosed" KeyDown="WindowKeyDown" SizeChanged="MainWindow_OnSizeChanged">
+    Loaded="WindowLoaded" Closing="WindowClosing" Closed="WindowClosed" KeyDown="WindowKeyDown"
+    SizeChanged="MainWindow_OnSizeChanged">
     <Window.Resources>
-        <Style TargetType="{x:Type fm:TabItemControl}">
-            <Setter Property="Foreground" Value="#FFF0F0F0" />
+        <Style x:Key="ClassiczTabItemStyle" TargetType="{x:Type dragablz:DragablzItem}">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="Green" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type fm:TabItemControl}">
-                        <Border>
-                            <Grid>
-                                <Grid>
-                                    <Border x:Name="Border"
-                                            CornerRadius="3,3,0,0"
-                                            Background="#FF515151" />
-                                </Grid>
-                                <ContentPresenter ContentSource="Header"
-                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                  Margin="2,1" />
-                            </Grid>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver"
-                                     Value="True">
-                                <Setter TargetName="Border"
-                                        Property="Background"
-                                        Value="LightGray" />
-                            </Trigger>
-                            <Trigger Property="IsSelected"
-                                     Value="True">
-                                <Setter TargetName="Border"
-                                        Property="Background"
-                                        Value="Gray" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
+                    <ControlTemplate TargetType="{x:Type dragablz:DragablzItem}">
+                        <Grid
+                            x:Name="templateRoot"
+                            Margin="0,1,0,-4"
+                            SnapsToDevicePixels="true"
+                            />
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
         <system:String x:Key="Partition">Frame</system:String>
     </Window.Resources>
-    <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="ImageAreaDragDrop" IsTabStop="False">
+    <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="ImageAreaDragDrop"
+                     IsTabStop="False">
         <dragablz:TabablzControl x:Name="ImageTabControl" Width="Auto" Background="#FF202020"
-                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" >
+                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0"
+                                 ItemContainerStyle="{StaticResource ClassiczTabItemStyle}">
             <dragablz:TabablzControl.InterTabController>
                 <dragablz:InterTabController Partition="{StaticResource Partition}" />
             </dragablz:TabablzControl.InterTabController>
