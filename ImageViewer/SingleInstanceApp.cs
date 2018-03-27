@@ -1,61 +1,67 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows;
 using Microsoft.VisualBasic.ApplicationServices;
 using StartupEventArgs = System.Windows.StartupEventArgs;
 
 namespace Frame
 {
-    public class SingleInstanceApp : Application
+  public class SingleInstanceApp : Application
+  {
+    public readonly List<string> Args = new List<string>();
+    protected override void OnStartup(StartupEventArgs e)
     {
-        protected override void OnStartup(StartupEventArgs e)
-        {
-            base.OnStartup(e);
+      base.OnStartup(e);
 
-            MainWindow = new MainWindow();
-            MainWindow.Show();
-        }
-
-        public void Poke()
-        {
-            MainWindow?.Activate();
-        }
+      MainWindow = new MainWindow();
+      foreach (var arg in Args)
+      {
+        ((MainWindow)MainWindow).AddNewTab(arg);
+      }
+      MainWindow.Show();
     }
 
-    public class SingleAppMangager : WindowsFormsApplicationBase
+    public void Poke()
     {
-        SingleInstanceApp app;
-        ReadOnlyCollection<string> args;
-
-        public SingleAppMangager()
-        {
-            IsSingleInstance = true;
-        }
-
-        protected override bool OnStartup(Microsoft.VisualBasic.ApplicationServices.StartupEventArgs eventArgs)
-        {
-            args = eventArgs.CommandLine;
-            app = new SingleInstanceApp();
-            app.Run();
-            var mainWindow = (MainWindow)app.MainWindow;
-
-            foreach (var arg in args)
-            {
-                mainWindow?.AddNewTab(arg);
-            }
-            return false;
-        }
-
-        protected override void OnStartupNextInstance(StartupNextInstanceEventArgs eventArgs)
-        {
-            base.OnStartupNextInstance(eventArgs);
-            args = eventArgs.CommandLine;
-            var mainWindow = (MainWindow) app.MainWindow;
-
-            foreach (var arg in args)
-            {
-                mainWindow?.AddNewTab(arg);
-            }
-            app.Poke();
-        }
+      MainWindow?.Activate();
     }
+  }
+
+  public class SingleAppMangager : WindowsFormsApplicationBase
+  {
+    SingleInstanceApp          app;
+    ReadOnlyCollection<string> args;
+
+    public SingleAppMangager()
+    {
+      IsSingleInstance = true;
+    }
+
+    protected override bool OnStartup(Microsoft.VisualBasic.ApplicationServices.StartupEventArgs eventArgs)
+    {
+      args = eventArgs.CommandLine;
+      app  = new SingleInstanceApp();
+      foreach (var arg in args)
+      {
+        app.Args.Add(arg);
+      }
+
+      app.Run();
+      return false;
+    }
+
+    protected override void OnStartupNextInstance(StartupNextInstanceEventArgs eventArgs)
+    {
+      base.OnStartupNextInstance(eventArgs);
+      args = eventArgs.CommandLine;
+      var mainWindow = (MainWindow) app.MainWindow;
+
+      foreach (var arg in args)
+      {
+        mainWindow?.AddNewTab(arg);
+      }
+
+      app.Poke();
+    }
+  }
 }

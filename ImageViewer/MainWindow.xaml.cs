@@ -441,8 +441,7 @@ namespace Frame
 
     void DisplayImage()
     {
-      Current.Dispatcher.Invoke(() =>
-      {
+
         var currentTab = tabControlManager.CurrentTab;
         if (currentTab == null) return;
 
@@ -451,7 +450,6 @@ namespace Frame
         if (currentTab.ImageArea == null || !currentTab.IsValid) return;
 
         currentTab.ImageArea.Image = currentTab.Image;
-      });
     }
 
     void FileBrowser()

@@ -29,8 +29,7 @@
             <Separator />
             <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
         </StatusBar>
-        <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}"
-                          Loaded="WinFormsHostLoaded" >
+        <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}" >
             <WindowsFormsHost.Resources>
                 <drawing:Color x:Key="GridColor">#FF202020</drawing:Color>
             </WindowsFormsHost.Resources>

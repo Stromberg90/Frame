@@ -256,16 +256,6 @@ namespace Frame
       };
     }
 
-    void WinFormsHostLoaded(object sender, RoutedEventArgs e)
-    {
-      if (Environment.GetCommandLineArgs().Length <= 1) return;
-
-      foreach (var filePath in Environment.GetCommandLineArgs().Skip(1))
-      {
-        mainWindow.AddNewTab(filePath);
-      }
-    }
-
     string FooterModeTextP
     {
       get
