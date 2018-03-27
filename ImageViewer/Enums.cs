@@ -13,19 +13,7 @@
         Size
     }
 
-    public enum SlideshowInterval
-    {
-        Second1,
-        Seconds2,
-        Seconds3,
-        Seconds4,
-        Seconds5,
-        Seconds10,
-        Seconds20,
-        Seconds30
-    }
-
-    public enum SwitchDirection
+  public enum SwitchDirection
     {
         Next,
         Previous

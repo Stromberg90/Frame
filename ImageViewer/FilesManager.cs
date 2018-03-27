@@ -32,14 +32,9 @@ namespace Frame
         {
           var extension = Path.GetExtension(Path.GetFileName(file));
           if (string.IsNullOrEmpty(extension)) continue;
-          // Should find a way to check without upper case characters and that crap.
-          if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
-          {
-            tabItemControl.Paths.Add(file);
-            continue;
-          }
-
-          if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+          var supportedExtensions = Settings.Default.SupportedExtensions;
+          if (supportedExtensions.Contains(extension.Remove(0, 1))
+              || supportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
           {
             tabItemControl.Paths.Add(file);
           }
@@ -62,13 +57,9 @@ namespace Frame
         {
           var extension = Path.GetExtension(Path.GetFileName(file));
           if (string.IsNullOrEmpty(extension)) continue;
-          if (Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)))
-          {
-            supportedFiles.Add(file);
-            continue;
-          }
-
-          if (Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+          var supportedExtensions = Settings.Default.SupportedExtensions;
+          if (supportedExtensions.Contains(extension.Remove(0, 1))
+          || supportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
           {
             supportedFiles.Add(file);
           }

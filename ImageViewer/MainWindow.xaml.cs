@@ -1,5 +1,7 @@
-﻿//TODO Collapse footer, to only show info not the labels when the footer size is "to small"
+﻿//TODO When a display channel property changes, make it update the image, so I can remove those methods for doing it.
+//TODO Collapse footer, to only show info not the labels when the footer size is "to small"
 //TODO Key for hiding footer, or have a option to if you have docked tabs, it gets hidden.
+//TODO When closing the last tab, it don't want it to shutdown, only when pressing esc or the close window.
 //TODO Show file format info, like DDS(BC5), DDS(DXT1)
 //TODO Uppgrade settings?
 //TODO GIF Support
@@ -14,17 +16,15 @@
 //TODO Thumbnail on tab
 //TODO Folder browser
 
-//BUG When closing last window, it doesn't always shutdown the application.
-//BUG Background color/settings don't update for all tabs.
-//BUG Doesn't reload if the current image changes.
-
 //CHANGLOG
 //1.5
-//Dragable and tearable tabs, tiling tabs.
+//Dragable, tearable tabs and tiling tabs.
 //Reworked the tab system, faster to switch between tabs and remembers zoom and pan.
 //Copy filename and path now uses windows style seperators.
+//Image now reloads if you change it.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -168,7 +168,7 @@ namespace Frame
         {
           if (Keyboard.IsKeyDown(Key.LeftCtrl))
           {
-            if (VisualSelectedIndex() == tabControlManager.TabCount - 1) return;
+            if (VisualSelectedIndex() == tabControlManager.CurrentTabControl.Items.Count - 1) return;
 
             var indecies = ImageTabControl.GetOrderedHeaders().ToList();
 
@@ -441,14 +441,17 @@ namespace Frame
 
     void DisplayImage()
     {
-      var currentTab = tabControlManager.CurrentTab;
-      if (currentTab == null) return;
+      Current.Dispatcher.Invoke(() =>
+      {
+        var currentTab = tabControlManager.CurrentTab;
+        if (currentTab == null) return;
 
-      if (tabControlManager.CurrentTabIndex < 0 || currentTab.Index == -1) return;
+        if (tabControlManager.CurrentTabIndex < 0 || currentTab.Index == -1) return;
 
-      if (currentTab.ImageArea == null || !currentTab.IsValid) return;
+        if (currentTab.ImageArea == null || !currentTab.IsValid) return;
 
-      currentTab.ImageArea.Image = currentTab.Image;
+        currentTab.ImageArea.Image = currentTab.Image;
+      });
     }
 
     void FileBrowser()
@@ -494,7 +497,7 @@ namespace Frame
           return;
         }
 
-        if (MessageBox.Show("Editor not found\nDo you want to browse for editor?",
+        if (MessageBox.Show("Image editor not found\nDo you want to browse for editor?",
                             Properties.Resources.FileMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
           ImageEditorBrowse();
       }
@@ -613,7 +616,7 @@ namespace Frame
       }
 
       imageDirectoryWatcher.Changed += (sender, args) =>
-        filesManager.SupportedFiles(directoryName);
+        DisplayImage();
       imageDirectoryWatcher.Created += (sender, args) =>
         filesManager.SupportedFiles(directoryName);
       imageDirectoryWatcher.Deleted += (sender, args) =>
@@ -813,6 +816,20 @@ namespace Frame
       Settings.Default.Save();
     }
 
+    static List<Window> GetMainWindows()
+    {
+      var mainWindows = new List<Window>(Current.Windows.Count);
+      foreach (Window currentWindow in Current.Windows)
+      {
+        if (currentWindow.GetType() == typeof(MainWindow))
+        {
+          mainWindows.Add(currentWindow);
+        }
+      }
+
+      return mainWindows;
+    }
+
     void AboutClick(object sender, RoutedEventArgs e)
     {
       if (WindowState == WindowState.Maximized)
@@ -833,7 +850,7 @@ namespace Frame
     void WindowClosed(object sender, EventArgs e)
     {
       Dispose();
-      if (TabablzControl.GetLoadedInstances().Count() == 1)
+      if (GetMainWindows().Count == 0)
       {
         Current.Shutdown();
       }
@@ -926,10 +943,16 @@ namespace Frame
         }
       }
 
-      var key = (Keys) new KeysConverter().ConvertFromString(keyString);
-      ImageAreaKeyDown(sender, new KeyEventArgs(key));
-
-      e.Handled = true;
+      try
+      {
+        var key = (Keys) new KeysConverter().ConvertFromString(keyString);
+        ImageAreaKeyDown(sender, new KeyEventArgs(key));
+      }
+      catch (ArgumentException) { }
+      finally
+      {
+        e.Handled = true;
+      }
     }
 
     void TileImageOnClick(object sender, RoutedEventArgs e)
@@ -980,19 +1003,6 @@ namespace Frame
       Keyboard.Focus(this);
     }
 
-    public DragablzItem VisualSelectedItem(TabItemControl obj)
-    {
-      var indecies = ImageTabControl.GetOrderedHeaders().ToList();
-      foreach (var indecy in indecies)
-      {
-        if (!(indecy.Content is TabItemControl tabItem)) continue;
-
-        if (Equals(obj, tabItem)) return indecy;
-      }
-
-      return null;
-    }
-
     public void Dispose()
     {
       imageDirectoryWatcher?.Dispose();
@@ -1015,6 +1025,31 @@ namespace Frame
       Settings.Default.WindowSize = newSize;
 
       Settings.Default.Save();
+    }
+
+    void DisplayAllChannels(object sender, RoutedEventArgs e)
+    {
+      ToggleDisplayChannel(Channels.RGB);
+    }
+
+    void DisplayRedChannel(object sender, RoutedEventArgs e)
+    {
+      ToggleDisplayChannel(Channels.Red);
+    }
+
+    void DisplayGreenChannel(object sender, RoutedEventArgs e)
+    {
+      ToggleDisplayChannel(Channels.Green);
+    }
+
+    void DisplayBlueChannel(object sender, RoutedEventArgs e)
+    {
+      ToggleDisplayChannel(Channels.Blue);
+    }
+
+    void DisplayAlphaChannel(object sender, RoutedEventArgs e)
+    {
+      ToggleDisplayChannel(Channels.Alpha);
     }
   }
 }

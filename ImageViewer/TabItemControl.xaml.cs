@@ -75,7 +75,9 @@ namespace Frame
       {
         LoadImage();
 
-        var borderWidth = (int) Math.Max(2.0, (ImageSettings.Width * ImageSettings.Height) / 200000.0);
+        var imageWidth  = ImageSettings.Width;
+        var imageHeight = ImageSettings.Height;
+        var borderWidth = (int) Math.Max(2.0, (imageWidth * imageHeight) / 200000.0);
         var channelNum  = 0;
         if (ChannelsMontage)
         {
@@ -123,7 +125,7 @@ namespace Frame
               var montageSettings =
                 new MontageSettings
                 {
-                  Geometry = new MagickGeometry(ImageSettings.Width, ImageSettings.Height)
+                  Geometry = new MagickGeometry(imageWidth, imageHeight)
                 };
               var result = images.Montage(montageSettings);
               ImageSettings.ImageCollection.Clear();
@@ -159,7 +161,7 @@ namespace Frame
           var montageSettings =
             new MontageSettings
             {
-              Geometry = new MagickGeometry(ImageSettings.Width, ImageSettings.Height)
+              Geometry = new MagickGeometry(imageWidth, imageHeight)
             };
           ImageSettings.ImageCollection.Clear();
           ImageSettings.ImageCollection.Add(images.Montage(montageSettings));
@@ -379,18 +381,7 @@ namespace Frame
 
     string FooterZoomTextP => !ImageSettings.ImageCollection.Any() ? "ZOOM: " : $"ZOOM: {ImageArea.Zoom}%";
 
-    string FooterIndexTextP
-    {
-      get
-      {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "INDEX: ";
-        }
-
-        return $"INDEX: {Index + 1}/{Paths.Count}";
-      }
-    }
+    string FooterIndexTextP => !ImageSettings.ImageCollection.Any() ? "INDEX: " : $"INDEX: {Index + 1}/{Paths.Count}";
 
     string FooterMipIndexTextP
     {

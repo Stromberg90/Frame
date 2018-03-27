@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Windows;
 using Dragablz;
 using Dragablz.Dockablz;
@@ -66,8 +63,6 @@ namespace Frame
     }
 
     public int CurrentTabIndex => CurrentTabControl.SelectedIndex;
-
-    public int TabCount => CurrentTabControl.Items.Count;
 
     public TabItemControl CurrentTab
     {
@@ -166,7 +161,7 @@ namespace Frame
       }
       else
       {
-        tabControl.SelectedIndex = TabCount - 1;
+        tabControl.SelectedIndex = tabControl.Items.Count - 1;
       }
     }
 

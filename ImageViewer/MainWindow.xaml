@@ -3,46 +3,23 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ct="clr-namespace:Cyotek.Windows.Forms;assembly=Cyotek.Windows.Forms.ImageBox"
-    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     xmlns:dragablz="clr-namespace:Dragablz;assembly=Dragablz"
     xmlns:dockablz="clr-namespace:Dragablz.Dockablz;assembly=Dragablz"
-    xmlns:fm="clr-namespace:Frame"
     xmlns:system="clr-namespace:System;assembly=mscorlib"
     x:Class="Frame.MainWindow"
     mc:Ignorable="d"
     Title="Frame"
     Height="350" Width="525"
-    MinHeight="250" MinWidth="250"
     Background="#FF2E2E2E"
     Loaded="WindowLoaded" Closing="WindowClosing" Closed="WindowClosed" KeyDown="WindowKeyDown"
     SizeChanged="MainWindow_OnSizeChanged">
     <Window.Resources>
-        <Style x:Key="ClassiczTabItemStyle" TargetType="{x:Type dragablz:DragablzItem}">
-            <Setter Property="Foreground" Value="Black" />
-            <Setter Property="Background" Value="Green" />
-            <Setter Property="Margin" Value="0,0,0,0" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type dragablz:DragablzItem}">
-                        <Grid
-                            x:Name="templateRoot"
-                            Margin="0,1,0,-4"
-                            SnapsToDevicePixels="true"
-                            />
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
         <system:String x:Key="Partition">Frame</system:String>
     </Window.Resources>
     <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="ImageAreaDragDrop"
                      IsTabStop="False">
         <dragablz:TabablzControl x:Name="ImageTabControl" Width="Auto" Background="#FF202020"
-                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0"
-                                 ItemContainerStyle="{StaticResource ClassiczTabItemStyle}">
+                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0">
             <dragablz:TabablzControl.InterTabController>
                 <dragablz:InterTabController Partition="{StaticResource Partition}" />
             </dragablz:TabablzControl.InterTabController>
@@ -61,6 +38,14 @@
                 <MenuItem Header="View In Explorer" Click="ViewInExplorer" />
                 <Separator />
                 <MenuItem Header="Reset View" Click="ResetViewClick" />
+                <Separator />
+                <MenuItem Header="Channels">
+                    <MenuItem Header="RGB" Click="DisplayAllChannels" />
+                    <MenuItem Header="Red" Click="DisplayRedChannel" />
+                    <MenuItem Header="Green" Click="DisplayGreenChannel" />
+                    <MenuItem Header="Blue" Click="DisplayBlueChannel" />
+                    <MenuItem Header="Alpha" Click="DisplayAlphaChannel" />
+                </MenuItem>
                 <Separator />
                 <MenuItem Header="Toggle Tile Image" Click="TileImageOnClick" />
                 <MenuItem Header="Toggle Channels Montage" Click="ChannelsMontageOnClick" />

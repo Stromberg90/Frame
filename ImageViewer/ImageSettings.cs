@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using ImageMagick;
 
@@ -61,7 +60,7 @@ namespace Frame
 
         return size;
       }
-      set { size = value; }
+      set => size = value;
     }
 
     public SortMode   SortMode   { get; set; }
