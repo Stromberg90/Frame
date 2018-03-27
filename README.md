@@ -2,7 +2,7 @@
 ![](https://i.imgur.com/9X0i98M.jpg)
 ![](https://i.imgur.com/EAgP2tv.gif)
 Features
-* Tabs
+* Dragable, tearable tabs and tiling tabs.
 * Channel Viewing: Useful for artist, where several textures are packed into one.
 * Channel Splitting: Combines all channels into one image and displays it.
 * Image Tiling: Makes a 3x3 Tiling image, handy for previewing seamless textures.
