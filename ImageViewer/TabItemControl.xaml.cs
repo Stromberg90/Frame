@@ -154,14 +154,13 @@ namespace Frame
             {
               image.Alpha(AlphaOption.Opaque);
             }
-
             images.Add(image);
           }
 
           var montageSettings =
             new MontageSettings
             {
-              Geometry = new MagickGeometry(imageWidth, imageHeight)
+              Geometry = new MagickGeometry(imageWidth, imageHeight),
             };
           ImageSettings.ImageCollection.Clear();
           ImageSettings.ImageCollection.Add(images.Montage(montageSettings));
@@ -181,28 +180,24 @@ namespace Frame
           case Channels.Green:
           {
             var magickImage = ResizeCurrentMip();
-
             return magickImage.Separate(Channels.Green)
                               .ElementAt(0)?.ToBitmap();
           }
           case Channels.Blue:
           {
             var magickImage = ResizeCurrentMip();
-
             return magickImage.Separate(Channels.Blue)
                               .ElementAt(0)?.ToBitmap();
           }
           case Channels.Alpha:
           {
             var magickImage = ResizeCurrentMip();
-
             return magickImage.Separate(Channels.Alpha)
                               .ElementAt(0)?.ToBitmap();
           }
           default:
           {
             var magickImage = ResizeCurrentMip();
-
             magickImage.Alpha(AlphaOption.Opaque);
             return magickImage.ToBitmap();
           }

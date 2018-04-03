@@ -1,12 +1,25 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
+using System.Runtime.CompilerServices;
+using Frame.Annotations;
 using ImageMagick;
 
 namespace Frame
 {
-  public class ImageSettings: IDisposable
+  public class ImageSettings: IDisposable, INotifyPropertyChanged
   {
-    public Channels DisplayChannel { get; set; } = Channels.RGB;
+    Channels displayChannel = Channels.RGB;
+
+    public Channels DisplayChannel
+    {
+      get => displayChannel;
+      set
+      {
+        OnPropertyChanged();
+         displayChannel = value;
+      }
+    }
 
     int mipValue;
 
@@ -101,6 +114,14 @@ namespace Frame
     public void Dispose()
     {
       ImageCollection?.Dispose();
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    [NotifyPropertyChangedInvocator]
+    void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    {
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
   }
 }

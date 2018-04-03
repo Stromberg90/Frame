@@ -2,6 +2,7 @@
 using System.Windows;
 using Dragablz;
 using Dragablz.Dockablz;
+using ThicknessConverter = Xceed.Wpf.DataGrid.Converters.ThicknessConverter;
 
 namespace Frame
 {
@@ -69,7 +70,7 @@ namespace Frame
       get
       {
         var currentMainWindow = CurrentMainWindow();
-        var tabControl = CurrentTabControl;
+        var tabControl        = CurrentTabControl;
         if (currentMainWindow == null || tabControl.Items.IsEmpty)
         {
           return null;

@@ -16,12 +16,10 @@
 //TODO Thumbnail on tab
 //TODO Folder browser
 
-//CHANGLOG
-//1.5
-//Dragable, tearable tabs and tiling tabs.
-//Reworked the tab system, faster to switch between tabs and remembers zoom and pan.
-//Copy filename and path now uses windows style seperators.
-//Image now reloads if you change it.
+//CHANGLOG 1.5.1
+//Doesn't crash when files in folder change.
+//Saves window size on close.
+//44 new image supported formats
 
 using System;
 using System.Collections.Generic;
@@ -441,15 +439,17 @@ namespace Frame
 
     void DisplayImage()
     {
-
+      Dispatcher.Invoke(() =>
+      {
         var currentTab = tabControlManager.CurrentTab;
         if (currentTab == null) return;
 
-        if (tabControlManager.CurrentTabIndex < 0 || currentTab.Index == -1) return;
+        if (tabControlManager.CurrentTabIndex < 0) return;
 
         if (currentTab.ImageArea == null || !currentTab.IsValid) return;
 
         currentTab.ImageArea.Image = currentTab.Image;
+      });
     }
 
     void FileBrowser()
@@ -814,6 +814,15 @@ namespace Frame
       Settings.Default.Save();
     }
 
+    void WindowClosed(object sender, EventArgs e)
+    {
+      Dispose();
+      if (GetMainWindows().Count == 0)
+      {
+        Current.Shutdown();
+      }
+    }
+
     static List<Window> GetMainWindows()
     {
       var mainWindows = new List<Window>(Current.Windows.Count);
@@ -843,15 +852,6 @@ namespace Frame
       }
 
       App.AboutDialog.ShowDialog();
-    }
-
-    void WindowClosed(object sender, EventArgs e)
-    {
-      Dispose();
-      if (GetMainWindows().Count == 0)
-      {
-        Current.Shutdown();
-      }
     }
 
     void ImageAreaDragDrop(object sender, DragEventArgs e)

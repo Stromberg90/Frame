@@ -61,6 +61,10 @@ namespace Frame
         mainWindow?.AddNewTab(arg);
       }
 
+      if (app.MainWindow != null && app.MainWindow.WindowState == WindowState.Minimized)
+      {
+        app.MainWindow.WindowState = WindowState.Normal;
+      }
       app.Poke();
     }
   }
