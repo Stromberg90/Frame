@@ -2,7 +2,6 @@
 using System.Windows;
 using Dragablz;
 using Dragablz.Dockablz;
-using ThicknessConverter = Xceed.Wpf.DataGrid.Converters.ThicknessConverter;
 
 namespace Frame
 {
@@ -147,7 +146,7 @@ namespace Frame
       return ((TabItemControl) tabControl.SelectedItem).IsValid;
     }
 
-    public void AddTab(string filepath)
+    public TabItemControl AddTab(string filepath)
     {
       var item = new TabItemControl(CurrentMainWindow())
       {
@@ -164,6 +163,8 @@ namespace Frame
       {
         tabControl.SelectedIndex = tabControl.Items.Count - 1;
       }
+
+      return item;
     }
 
     public static TabItemControl GetTab(string filepath)

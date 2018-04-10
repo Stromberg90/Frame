@@ -1,10 +1,10 @@
-﻿//TODO When a display channel property changes, make it update the image, so I can remove those methods for doing it.
+﻿//TODO GIF Support
+//TODO When a display channel property changes, make it update the image, so I can remove those methods for doing it.
 //TODO Collapse footer, to only show info not the labels when the footer size is "to small"
 //TODO Key for hiding footer, or have a option to if you have docked tabs, it gets hidden.
 //TODO When closing the last tab, it don't want it to shutdown, only when pressing esc or the close window.
 //TODO Show file format info, like DDS(BC5), DDS(DXT1)
 //TODO Uppgrade settings?
-//TODO GIF Support
 //TODO Recent Files
 //TODO Data bindings
 //TODO Thumbnail using the render size, then I can load in the real image in the background, like when I open a folder make thumbnails for "all" the images in the folder.
@@ -15,10 +15,11 @@
 //TODO Slideshow Random Image Option, And Loop option
 //TODO Thumbnail on tab
 //TODO Folder browser
+//TODO Show in the footer if the image has alpha or not, RGB or RGBA
 
 //CHANGLOG 1.5.1
-//Doesn't crash when files in folder change.
-//Saves window size on close.
+//Saves window size
+//Fixed crash, when files in folder change.
 //44 new image supported formats
 
 using System;
@@ -60,6 +61,7 @@ namespace Frame
     readonly TabControlManager tabControlManager;
     FileSystemWatcher          imageDirectoryWatcher;
     FileSystemWatcher          parentDirectoryWatcher;
+    bool changingSize = true;
 
     public MainWindow()
     {
@@ -76,17 +78,6 @@ namespace Frame
 
       CheckForUpdates();
       SetupSlideshow();
-    }
-
-    Channels DisplayChannel
-    {
-      get => tabControlManager.CurrentTab.ImageSettings.DisplayChannel;
-
-      set
-      {
-        tabControlManager.CurrentTab.ImageSettings.DisplayChannel = value;
-        RefreshImage();
-      }
     }
 
     void ValidatedKeyHandling(KeyEventArgs e)
@@ -367,7 +358,8 @@ namespace Frame
       }
       else
       {
-        tabControlManager.AddTab(filepath);
+        var addedTab = tabControlManager.AddTab(filepath);
+        addedTab.ImageSettings.PropertyChanged += ImageSettings_PropertyChanged;
       }
 
       currentTab = tabControlManager.CurrentTab;
@@ -383,6 +375,11 @@ namespace Frame
 
       DisplayImage();
       SetupDirectoryWatcher();
+    }
+
+    void ImageSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+      RefreshImage();
     }
 
     void AscendingSort(object sender, RoutedEventArgs e)
@@ -549,32 +546,35 @@ namespace Frame
     void ToggleDisplayChannel(Channels channel)
     {
       if (!tabControlManager.CanExcectute()) return;
-
       switch (channel)
       {
         case Channels.RGB:
         {
-          DisplayChannel = Channels.RGB;
+          tabControlManager.CurrentTab.ImageSettings.DisplayChannel = Channels.RGB;
           break;
         }
         case Channels.Red:
         {
-          DisplayChannel = DisplayChannel == Channels.Red ? Channels.RGB : Channels.Red;
+          tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+            tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Red ? Channels.RGB : Channels.Red;
           break;
         }
         case Channels.Green:
         {
-          DisplayChannel = DisplayChannel == Channels.Green ? Channels.RGB : Channels.Green;
+          tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+            tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Green ? Channels.RGB : Channels.Green;
           break;
         }
         case Channels.Blue:
         {
-          DisplayChannel = DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
+          tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+            tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
           break;
         }
         case Channels.Alpha:
         {
-          DisplayChannel = DisplayChannel == Channels.Alpha ? Channels.RGB : Channels.Alpha;
+          tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+            tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Alpha ? Channels.RGB : Channels.Alpha;
           break;
         }
       }
@@ -792,10 +792,12 @@ namespace Frame
       Left = Settings.Default.WindowLocation.X;
       Top  = Settings.Default.WindowLocation.Y;
 
+      changingSize = true;
       Width  = Settings.Default.WindowSize.Width;
       Height = Settings.Default.WindowSize.Height;
 
       WindowState = (WindowState) Settings.Default.WindowState;
+      changingSize = false;
 
       e.Handled = true;
     }
@@ -1009,45 +1011,52 @@ namespace Frame
 
     void MainWindow_OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-      if (!tabControlManager.CanExcectute())
+      if (!changingSize)
       {
-        return;
+        Settings.Default.WindowState = (int) WindowState;
+        var newSize = new Size
+        {
+          Width  = WindowState == WindowState.Normal ? (int) Width : (int) RestoreBounds.Width,
+          Height = WindowState == WindowState.Normal ? (int) Height : (int) RestoreBounds.Height
+        };
+        Settings.Default.WindowSize = newSize;
+
+        Settings.Default.Save();
       }
-
-      Settings.Default.WindowState = (int) WindowState;
-      var newSize = new Size
-      {
-        Width  = WindowState == WindowState.Normal ? (int) Width : (int) RestoreBounds.Width,
-        Height = WindowState == WindowState.Normal ? (int) Height : (int) RestoreBounds.Height
-      };
-      Settings.Default.WindowSize = newSize;
-
-      Settings.Default.Save();
     }
 
     void DisplayAllChannels(object sender, RoutedEventArgs e)
     {
-      ToggleDisplayChannel(Channels.RGB);
+      if (!tabControlManager.CanExcectute()) return;
+      tabControlManager.CurrentTab.ImageSettings.DisplayChannel = Channels.RGB;
     }
 
     void DisplayRedChannel(object sender, RoutedEventArgs e)
     {
-      ToggleDisplayChannel(Channels.Red);
+      if (!tabControlManager.CanExcectute()) return;
+      tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+        tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Red ? Channels.RGB : Channels.Red;
     }
 
     void DisplayGreenChannel(object sender, RoutedEventArgs e)
     {
-      ToggleDisplayChannel(Channels.Green);
+      if (!tabControlManager.CanExcectute()) return;
+      tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+        tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Green ? Channels.RGB : Channels.Green;
     }
 
     void DisplayBlueChannel(object sender, RoutedEventArgs e)
     {
-      ToggleDisplayChannel(Channels.Blue);
+      if (!tabControlManager.CanExcectute()) return;
+      tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+        tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
     }
 
     void DisplayAlphaChannel(object sender, RoutedEventArgs e)
     {
-      ToggleDisplayChannel(Channels.Alpha);
+      if (!tabControlManager.CanExcectute()) return;
+      tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
+        tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Alpha ? Channels.RGB : Channels.Alpha;
     }
   }
 }

@@ -236,6 +236,11 @@ namespace Frame
       this.mainWindow = mainWindow;
       InitializeComponent();
 
+      ImageSettings.PropertyChanged += (sender, args) =>
+      {
+        UpdateFooter();
+        UpdateTitle();
+      };
       PropertyChanged += (sender, args) =>
       {
         UpdateFooter();

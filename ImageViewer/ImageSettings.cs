@@ -7,7 +7,7 @@ using ImageMagick;
 
 namespace Frame
 {
-  public class ImageSettings: IDisposable, INotifyPropertyChanged
+  public class ImageSettings : IDisposable, INotifyPropertyChanged
   {
     Channels displayChannel = Channels.RGB;
 
@@ -16,8 +16,8 @@ namespace Frame
       get => displayChannel;
       set
       {
+        displayChannel = value;
         OnPropertyChanged();
-         displayChannel = value;
       }
     }
 
