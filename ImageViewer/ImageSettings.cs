@@ -111,6 +111,10 @@ namespace Frame
       }
     }
 
+    public bool IsGif { get; set; }
+    public int CurrentFrame { get; set; } = 0;
+    public int EndFrame { get; set; }
+
     public void Dispose()
     {
       ImageCollection?.Dispose();

@@ -7,9 +7,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
+using Application = System.Windows.Application;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using TextAlignment = ImageMagick.TextAlignment;
 
@@ -73,19 +76,29 @@ namespace Frame
     {
       get
       {
-        LoadImage();
+        if (!ImageSettings.IsGif)
+        {
+          LoadImage();
+        }
+        else
+        {
+          var image = ImageSettings.ImageCollection[ImageSettings.CurrentFrame];
+          gifTimer.Interval = ImageSettings.ImageCollection[ImageSettings.CurrentFrame].AnimationDelay * 10;
+          return image.ToBitmap();
+        }
 
         var imageWidth  = ImageSettings.Width;
         var imageHeight = ImageSettings.Height;
         var borderWidth = (int) Math.Max(2.0, (imageWidth * imageHeight) / 200000.0);
         var channelNum  = 0;
+        var settingsImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
         if (ChannelsMontage)
         {
           using (var orginalImage = ImageSettings.ImageCollection[0])
           {
             using (var images = new MagickImageCollection())
             {
-              foreach (var img in ImageSettings.ImageCollection[ImageSettings.MipValue].Separate())
+              foreach (var img in settingsImage.Separate())
               {
                 if (Settings.Default.SplitChannelsBorder)
                 {
@@ -144,7 +157,7 @@ namespace Frame
 
           for (var i = 0; i <= tileCount; i++)
           {
-            var image = ImageSettings.ImageCollection[ImageSettings.MipValue].Clone();
+            var image = settingsImage.Clone();
             if (ImageSettings.MipValue > 0)
             {
               image.Resize(orginalImage.Width, orginalImage.Height);
@@ -154,6 +167,7 @@ namespace Frame
             {
               image.Alpha(AlphaOption.Opaque);
             }
+
             images.Add(image);
           }
 
@@ -228,6 +242,7 @@ namespace Frame
     readonly MainWindow mainWindow;
     uint                currentSlideshowTime;
     bool                firstImageLoaded;
+    System.Timers.Timer gifTimer;
     MainWindow          ParentMainWindow => Window.GetWindow(this) as MainWindow;
 
     public TabItemControl(MainWindow mainWindow)
@@ -235,6 +250,9 @@ namespace Frame
       Margin          = new Thickness(0.5);
       this.mainWindow = mainWindow;
       InitializeComponent();
+
+      gifTimer         =  new System.Timers.Timer();
+      gifTimer.Elapsed += GifAnim;
 
       ImageSettings.PropertyChanged += (sender, args) =>
       {
@@ -436,20 +454,30 @@ namespace Frame
 
     void LoadImage()
     {
+      //gifTimer.Stop();
       try
       {
         switch (System.IO.Path.GetExtension(Path))
         {
           case ".gif":
           {
+            ImageSettings.ImageCollection = new MagickImageCollection(Path);
+            ImageSettings.ImageCollection.Coalesce();
+            gifTimer.Start();
+            gifTimer.Interval      = ImageSettings.ImageCollection[ImageSettings.CurrentFrame].AnimationDelay;
+            ImageSettings.IsGif    = true;
             ImageSettings.HasMips  = false;
+            ImageSettings.EndFrame = ImageSettings.ImageCollection.Count - 1;
             ImageSettings.MipValue = 0;
-            ImageSettings.ImageCollection.Clear();
-            ImageSettings.ImageCollection.Add(Path);
+//            ImageSettings.ImageCollection.Clear();
+//            ImageSettings.ImageCollection.Add(collection[ImageSettings.CurrentFrame]);
             break;
           }
           case ".dds":
           {
+            ImageSettings.IsGif        = false;
+            ImageSettings.CurrentFrame = 0;
+            gifTimer.Stop();
             var defines      = new DdsReadDefines {SkipMipmaps = false};
             var readSettings = new MagickReadSettings(defines);
             ImageSettings.ImageCollection = new MagickImageCollection(Path, readSettings);
@@ -463,6 +491,9 @@ namespace Frame
           }
           default:
           {
+            ImageSettings.IsGif        = false;
+            ImageSettings.CurrentFrame = 0;
+            gifTimer.Stop();
             ImageSettings.HasMips         = false;
             ImageSettings.MipValue        = 0;
             ImageSettings.ImageCollection = new MagickImageCollection(Path);
@@ -475,6 +506,20 @@ namespace Frame
         ImageSettings.ImageCollection.Clear();
         ImageSettings.ImageCollection.Add(ErrorImage(Path));
       }
+    }
+
+    void GifAnim(object sender, EventArgs e)
+    {
+      if (ImageSettings.CurrentFrame < ImageSettings.EndFrame)
+      {
+        ImageSettings.CurrentFrame += 1;
+      }
+      else
+      {
+        ImageSettings.CurrentFrame = 0;
+      }
+
+      Application.Current?.Dispatcher.Invoke(() => { mainWindow.RefreshImage(); });
     }
 
     void ImageAreaOnMouseDown(object sender, MouseEventArgs e)

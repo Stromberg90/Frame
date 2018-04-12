@@ -61,7 +61,7 @@ namespace Frame
     readonly TabControlManager tabControlManager;
     FileSystemWatcher          imageDirectoryWatcher;
     FileSystemWatcher          parentDirectoryWatcher;
-    bool changingSize = true;
+    bool                       changingSize = true;
 
     public MainWindow()
     {
@@ -371,7 +371,8 @@ namespace Frame
 
       currentTab.Index = filenameIndex == -1 ? 0 : filenameIndex;
 
-      currentTab.InitialImagePath = filepath;
+      currentTab.InitialImagePath    = filepath;
+      currentTab.ImageSettings.IsGif = false;
 
       DisplayImage();
       SetupDirectoryWatcher();
@@ -506,12 +507,16 @@ namespace Frame
       Settings.Default.Save();
     }
 
-    void RefreshImage()
+    public void RefreshImage()
     {
-      var currentTab = tabControlManager.CurrentTab;
-      if (!currentTab.IsValid) return;
+      Current.Dispatcher.Invoke(() =>
+      {
+        var currentTab = tabControlManager.CurrentTab;
+        if (currentTab == null) return;
+        if (!currentTab.IsValid) return;
 
-      currentTab.ImageArea.Image = currentTab.Image;
+        currentTab.ImageArea.Image = currentTab.Image;
+      });
     }
 
     void RefreshUi()
@@ -532,7 +537,8 @@ namespace Frame
       filesManager.SupportedFiles(Path.GetDirectoryName(filename));
 
       var filenameIndex = currentTab.Paths.IndexOf(filename);
-      currentTab.Index = filenameIndex == -1 ? 0 : filenameIndex;
+      currentTab.Index               = filenameIndex == -1 ? 0 : filenameIndex;
+      currentTab.ImageSettings.IsGif = false;
 
       SetupDirectoryWatcher();
     }
@@ -743,9 +749,12 @@ namespace Frame
 
     void SwitchImage(SwitchDirection switchDirection)
     {
-      tabControlManager.CurrentTab.ImageSettings.MipValue = 0;
-      tabControlManager.CurrentTab.Tiled                  = false;
-      tabControlManager.CurrentTab.ChannelsMontage        = false;
+      tabControlManager.CurrentTab.ImageSettings.MipValue     = 0;
+      tabControlManager.CurrentTab.ImageSettings.IsGif        = false;
+      tabControlManager.CurrentTab.ImageSettings.CurrentFrame = 0;
+      tabControlManager.CurrentTab.ImageSettings.EndFrame     = 0;
+      tabControlManager.CurrentTab.Tiled                      = false;
+      tabControlManager.CurrentTab.ChannelsMontage            = false;
       if (tabControlManager.CurrentTab.Mode == ApplicationMode.Slideshow)
         tabControlManager.CurrentTab.CurrentSlideshowTime = 1;
 
@@ -793,10 +802,10 @@ namespace Frame
       Top  = Settings.Default.WindowLocation.Y;
 
       changingSize = true;
-      Width  = Settings.Default.WindowSize.Width;
-      Height = Settings.Default.WindowSize.Height;
+      Width        = Settings.Default.WindowSize.Width;
+      Height       = Settings.Default.WindowSize.Height;
 
-      WindowState = (WindowState) Settings.Default.WindowState;
+      WindowState  = (WindowState) Settings.Default.WindowState;
       changingSize = false;
 
       e.Handled = true;
