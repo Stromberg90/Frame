@@ -148,7 +148,7 @@ namespace Frame
 
     public TabItemControl AddTab(string filepath)
     {
-      var item = new TabItemControl(CurrentMainWindow())
+      var item = new TabItemControl()
       {
         InitialImagePath = filepath
       };
@@ -169,7 +169,7 @@ namespace Frame
 
     public static TabItemControl GetTab(string filepath)
     {
-      return new TabItemControl(CurrentMainWindow())
+      return new TabItemControl()
       {
         InitialImagePath = filepath
       };

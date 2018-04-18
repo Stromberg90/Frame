@@ -127,5 +127,13 @@ namespace Frame
     {
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+
+    public void Reset()
+    {
+      MipValue     = 0;
+      IsGif        = false;
+      CurrentFrame = 0;
+      EndFrame     = 0;
+    }
   }
 }
