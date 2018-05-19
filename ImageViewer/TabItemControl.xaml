@@ -6,12 +6,12 @@
          xmlns:forms="clr-namespace:Cyotek.Windows.Forms;assembly=Cyotek.Windows.Forms.ImageBox"
          xmlns:drawing="clr-namespace:System.Drawing;assembly=System.Drawing"
          mc:Ignorable="d"
-         d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False">
+         d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False" >
     <DockPanel LastChildFill="True">
         <DockPanel.Resources>
             <Brush x:Key="Background">#FF202020</Brush>
         </DockPanel.Resources>
-        <StatusBar DockPanel.Dock="Bottom" Background="#FF555555">
+        <StatusBar Name="Footer" DockPanel.Dock="Bottom" Background="#FF555555" SizeChanged="Footer_OnSizeChanged">
             <StatusBar.Resources>
                 <Brush x:Key="Foreground">#FFF0F0F0</Brush>
             </StatusBar.Resources>

@@ -239,6 +239,7 @@ namespace Frame
         uint currentSlideshowTime;
         bool firstImageLoaded;
         public readonly System.Timers.Timer gifTimer;
+        private bool _collapseFooterText;
         MainWindow ParentMainWindow => Window.GetWindow(this) as MainWindow;
 
         protected override void OnSelected(RoutedEventArgs e)
@@ -313,10 +314,20 @@ namespace Frame
 
                 if (Mode == ApplicationMode.Slideshow)
                 {
-                    return $"MODE: {Mode} " + CurrentSlideshowTime;
+                    if (!_collapseFooterText)
+                    {
+                        return $"MODE: {Mode} " + CurrentSlideshowTime;
+                    }
+
+                    return $"{Mode} " + CurrentSlideshowTime;
                 }
 
-                return $"MODE: {Mode}";
+                if (!_collapseFooterText)
+                {
+                    return $"MODE: {Mode}";
+                }
+
+                return $"{Mode}";
             }
         }
 
@@ -329,7 +340,12 @@ namespace Frame
                     return "SIZE: ";
                 }
 
-                return $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
+                if (!_collapseFooterText)
+                {
+                    return $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
+                }
+
+                return $"{ImageSettings.Width}x{ImageSettings.Height}";
             }
         }
 
@@ -372,7 +388,12 @@ namespace Frame
                     }
                 }
 
-                return $"CHANNELS: {channel}";
+                if (!_collapseFooterText)
+                {
+                    return $"CHANNELS: {channel}";
+                }
+
+                return $"{channel}";
             }
         }
 
@@ -394,18 +415,33 @@ namespace Frame
 
                     if (ImageSettings.Size < 1024)
                     {
-                        return $"FILESIZE: {ImageSettings.Size}Bytes";
+                        if (!_collapseFooterText)
+                        {
+                            return $"FILESIZE: {ImageSettings.Size}Bytes";
+                        }
+
+                        return $"{ImageSettings.Size}Bytes";
                     }
 
                     if (ImageSettings.Size < 1048576)
                     {
                         var filesize = (double) (ImageSettings.Size / 1024f);
-                        return $"FILESIZE: {filesize:N2}KB";
+                        if (!_collapseFooterText)
+                        {
+                            return $"FILESIZE: {filesize:N2}KB";
+                        }
+
+                        return $"{filesize:N2}KB";
                     }
                     else
                     {
                         var filesize = (double) (ImageSettings.Size / 1024f) / 1024f;
-                        return $"FILESIZE: {filesize:N2}MB";
+                        if (!_collapseFooterText)
+                        {
+                            return $"FILESIZE: {filesize:N2}MB";
+                        }
+
+                        return $"{filesize:N2}MB";
                     }
                 }
                 catch (FileNotFoundException)
@@ -415,12 +451,42 @@ namespace Frame
             }
         }
 
-        string FooterZoomTextP => !ImageSettings.ImageCollection.Any() ? "ZOOM: " : $"ZOOM: {ImageArea.Zoom}%";
+        private string FooterZoomTextP
+        {
+            get
+            {
+                if (!ImageSettings.ImageCollection.Any())
+                {
+                    return "ZOOM: ";
+                }
 
-        string FooterIndexTextP =>
-            !ImageSettings.ImageCollection.Any() ? "INDEX: " : $"INDEX: {Index + 1}/{Paths.Count}";
+                if (!_collapseFooterText)
+                {
+                    return $"ZOOM: {ImageArea.Zoom}%";
+                }
 
-        string FooterMipIndexTextP
+                return $"{ImageArea.Zoom}%";
+            }
+        }
+
+        private string FooterIndexTextP
+        {
+            get
+            {
+                if (!ImageSettings.ImageCollection.Any())
+                {
+                    return "INDEX: ";
+                }
+
+                if (!_collapseFooterText)
+                {
+                    return $"INDEX: {Index + 1}/{Paths.Count}";
+                }
+                return $"{Index + 1}/{Paths.Count}";
+            }
+        }
+
+        private string FooterMipIndexTextP
         {
             get
             {
@@ -429,9 +495,15 @@ namespace Frame
                     return "MIP: ";
                 }
 
-                return ImageSettings.HasMips
-                    ? $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}"
-                    : "MIP: None";
+                if (ImageSettings.HasMips)
+                {
+                    if (!_collapseFooterText)
+                    {
+                        return $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
+                    }
+                    return $"{ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
+                }
+                return !_collapseFooterText ? "MIP: None" : "None";
             }
         }
 
@@ -649,6 +721,19 @@ namespace Frame
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
+        }
+
+        private void Footer_OnSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (Footer.RenderSize.Width < 620)
+            {
+                _collapseFooterText = true;
+            }
+            else
+            {
+                _collapseFooterText = false;
+            }
+            UpdateFooter();
         }
     }
 }

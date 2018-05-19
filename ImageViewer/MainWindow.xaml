@@ -19,7 +19,7 @@
     <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="ImageAreaDragDrop"
                      IsTabStop="False">
         <dragablz:TabablzControl x:Name="ImageTabControl" Width="Auto" Background="#FF202020"
-                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0">
+                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" IsDraggingWindowChanged="ImageTabControl_OnIsDraggingWindowChanged">
             <dragablz:TabablzControl.InterTabController>
                 <dragablz:InterTabController Partition="{StaticResource Partition}" />
             </dragablz:TabablzControl.InterTabController>
@@ -50,6 +50,8 @@
                 <MenuItem Header="Toggle Tile Image" Click="TileImageOnClick" />
                 <MenuItem Header="Toggle Channels Montage" Click="ChannelsMontageOnClick" />
                 <Separator />
+                <MenuItem Header="Toggle Bars" Click="ToggleBars"></MenuItem>
+                <Separator/>
                 <MenuItem Header="Sort">
                     <MenuItem x:Name="SortAscending" Header="Ascending" Click="AscendingSort" IsCheckable="True"
                               IsChecked="True" />

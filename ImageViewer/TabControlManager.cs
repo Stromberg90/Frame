@@ -9,7 +9,37 @@ namespace Frame
   {
     TabablzControl currentTabControl;
 
-    public TabablzControl CurrentTabControl
+    public List<TabablzControl> TabControls
+    {
+      get
+      {
+        var tabablzControls = new List<TabablzControl>();
+        var currentMainWindow = CurrentMainWindow();
+        if (currentMainWindow == null)
+        {
+          tabablzControls.Add(currentTabControl);
+          return tabablzControls;
+        }
+
+        switch (currentMainWindow.DockLayout.Content)
+        {
+          case Branch children:
+          {
+            tabablzControls.AddRange(GetTabablzControls(children));
+            break;
+          }
+          case TabablzControl tabablzControl:
+          {
+            tabablzControls.Add(tabablzControl);
+            break;
+          }
+        }
+
+        return tabablzControls;
+      }
+    }
+
+        public TabablzControl CurrentTabControl
     {
       get
       {
