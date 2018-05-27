@@ -98,6 +98,9 @@
     <Compile Include="FileId.cs" />
     <Compile Include="FilesManager.cs" />
     <Compile Include="Frame.cs" />
+    <Compile Include="ImageBox.xaml.cs">
+      <DependentUpon>ImageBox.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ImageSettings.cs" />
     <Compile Include="OptionsWindow.xaml.cs">
       <DependentUpon>OptionsWindow.xaml</DependentUpon>
@@ -116,6 +119,10 @@
     </Compile>
     <Compile Include="UpdateManager.cs" />
     <Page Include="About.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ImageBox.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

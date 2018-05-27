@@ -454,9 +454,9 @@ namespace Frame
 
         if (tabControlManager.CurrentTabIndex < 0) return;
 
-        if (currentTab.ImageArea == null || !currentTab.IsValid) return;
+        if (currentTab.ImageBox.ImageArea == null || !currentTab.IsValid) return;
 
-        currentTab.ImageArea.Source = currentTab.Image;
+        currentTab.ImageBox.ImageArea.Source = currentTab.Image;
       });
     }
 
@@ -525,7 +525,7 @@ namespace Frame
         if (currentTab == null) return;
         if (!currentTab.IsValid) return;
 
-        currentTab.ImageArea.Source = currentTab.Image;
+        currentTab.ImageBox.ImageArea.Source = currentTab.Image;
       });
     }
 
@@ -1105,12 +1105,12 @@ namespace Frame
         tabControl.IsHeaderPanelVisible = FooterVisibility == Visibility.Visible;
         foreach (TabItemControl tabItemControl in tabControl.Items)
         {
-          tabItemControl.ImageAreaScrollViewwer.VerticalScrollBarVisibility =
-            tabItemControl.ImageAreaScrollViewwer.VerticalScrollBarVisibility == ScrollBarVisibility.Visible
+          tabItemControl.ImageBox.ImageAreaScrollViewwer.VerticalScrollBarVisibility =
+            tabItemControl.ImageBox.ImageAreaScrollViewwer.VerticalScrollBarVisibility == ScrollBarVisibility.Visible
               ? ScrollBarVisibility.Hidden
               : ScrollBarVisibility.Visible;
-          tabItemControl.ImageAreaScrollViewwer.HorizontalScrollBarVisibility =
-            tabItemControl.ImageAreaScrollViewwer.HorizontalScrollBarVisibility ==
+          tabItemControl.ImageBox.ImageAreaScrollViewwer.HorizontalScrollBarVisibility =
+            tabItemControl.ImageBox.ImageAreaScrollViewwer.HorizontalScrollBarVisibility ==
             ScrollBarVisibility.Visible
               ? ScrollBarVisibility.Hidden
               : ScrollBarVisibility.Visible;

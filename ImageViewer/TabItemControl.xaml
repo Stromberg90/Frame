@@ -4,6 +4,7 @@
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
          xmlns:drawing="clr-namespace:System.Drawing;assembly=System.Drawing"
+         xmlns:frame="clr-namespace:Frame"
          mc:Ignorable="d"
          d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False">
     <DockPanel LastChildFill="True">
@@ -28,26 +29,7 @@
             <Separator />
             <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
         </StatusBar>
-        <ScrollViewer Name="ImageAreaScrollViewwer"
-                      VerticalScrollBarVisibility="Visible"
-                      HorizontalScrollBarVisibility="Visible" IsTabStop="False" PreviewKeyDown="ImageAreaScrollViewwer_OnPreviewKeyDown">
-            <Grid Name="grid" Width="400"
-                  Height="400" RenderTransformOrigin="0.5,0.5">
-                <Grid.LayoutTransform>
-                    <TransformGroup>
-                        <ScaleTransform x:Name="scaleTransform" />
-                    </TransformGroup>
-                </Grid.LayoutTransform>
-                <Viewbox Grid.Column="0" Grid.Row="0">
-                    <ContentPresenter>
-                        <ContentPresenter.Content>
-                            <Image x:Name="ImageArea" />
-                        </ContentPresenter.Content>
-                    </ContentPresenter>
-                </Viewbox>
-            </Grid>
-        </ScrollViewer>
-
+        <frame:ImageBox x:Name="ImageBox"></frame:ImageBox>
         <!-- <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}" > -->
         <!--     <WindowsFormsHost.Resources> -->
         <!--         <drawing:Color x:Key="GridColor">#FF202020</drawing:Color> -->

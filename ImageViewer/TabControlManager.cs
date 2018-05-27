@@ -65,7 +65,7 @@ namespace Frame
                   continue;
                 }
 
-                if (itemTabItemControl.ImageAreaScrollViewwer.IsFocused)
+                if (itemTabItemControl.ImageBox.ImageAreaScrollViewwer.IsFocused)
                 {
                   tabItemControl = control;
                 }
