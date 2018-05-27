@@ -50,7 +50,7 @@
                 <MenuItem Header="Toggle Tile Image" Click="TileImageOnClick" />
                 <MenuItem Header="Toggle Channels Montage" Click="ChannelsMontageOnClick" />
                 <Separator />
-                <MenuItem Header="Toggle Bars" Click="ToggleBars"></MenuItem>
+                <MenuItem Header="Toggle Bars" Click="OnClickToggleBars"></MenuItem>
                 <Separator/>
                 <MenuItem Header="Sort">
                     <MenuItem x:Name="SortAscending" Header="Ascending" Click="AscendingSort" IsCheckable="True"

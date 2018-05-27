@@ -3,10 +3,9 @@
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-         xmlns:forms="clr-namespace:Cyotek.Windows.Forms;assembly=Cyotek.Windows.Forms.ImageBox"
          xmlns:drawing="clr-namespace:System.Drawing;assembly=System.Drawing"
          mc:Ignorable="d"
-         d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False" >
+         d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False">
     <DockPanel LastChildFill="True">
         <DockPanel.Resources>
             <Brush x:Key="Background">#FF202020</Brush>
@@ -29,14 +28,34 @@
             <Separator />
             <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
         </StatusBar>
-        <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}" >
-            <WindowsFormsHost.Resources>
-                <drawing:Color x:Key="GridColor">#FF202020</drawing:Color>
-            </WindowsFormsHost.Resources>
-            <forms:ImageBox x:Name="ImageArea" ShowPixelGrid="False" GridScale="None"
-                            GridColor="{StaticResource GridColor}"
-                            BorderStyle="None" ShortcutsEnabled="False" TabStop="False"
-                            BackColor="{StaticResource GridColor}" ZoomChanged="ImageAreaZoomChanged" MouseClick="ImageAreaOnMouseDown" />
-        </WindowsFormsHost>
+        <ScrollViewer Name="ImageAreaScrollViewwer"
+                      VerticalScrollBarVisibility="Visible"
+                      HorizontalScrollBarVisibility="Visible" IsTabStop="False" PreviewKeyDown="ImageAreaScrollViewwer_OnPreviewKeyDown">
+            <Grid Name="grid" Width="400"
+                  Height="400" RenderTransformOrigin="0.5,0.5">
+                <Grid.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="scaleTransform" />
+                    </TransformGroup>
+                </Grid.LayoutTransform>
+                <Viewbox Grid.Column="0" Grid.Row="0">
+                    <ContentPresenter>
+                        <ContentPresenter.Content>
+                            <Image x:Name="ImageArea" />
+                        </ContentPresenter.Content>
+                    </ContentPresenter>
+                </Viewbox>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}" > -->
+        <!--     <WindowsFormsHost.Resources> -->
+        <!--         <drawing:Color x:Key="GridColor">#FF202020</drawing:Color> -->
+        <!--     </WindowsFormsHost.Resources> -->
+        <!--     <forms:ImageBox x:Name="ImageArea" ShowPixelGrid="False" GridScale="None" -->
+        <!--                     GridColor="{StaticResource GridColor}" -->
+        <!--                     BorderStyle="None" ShortcutsEnabled="False" TabStop="False" -->
+        <!--                     BackColor="{StaticResource GridColor}" ZoomChanged="ImageAreaZoomChanged" MouseClick="ImageAreaOnMouseDown" /> -->
+        <!-- </WindowsFormsHost> -->
     </DockPanel>
 </TabItem>

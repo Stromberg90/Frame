@@ -1,31 +1,4 @@
-﻿//BUG Slow opening
-//BUG When a file get's added in a folder, the current picture changes.
-//BUG Sort settings not sticking, like if I duplicate a tab.
-
-
-//TODO Image search, F2 or something, to bring up a window where you can type in and it fuzzy searches trough tabs and images in folder.
-//TODO I would like to change to a wpf image controller, to get rid of winform interop, and it will fix the docking helpers.
-//TODO All the can excecute for doing commands, could be wrapped into a RunCommand function or something like that.
-//TODO Don't worry about hotkeying "hide bars" mode, since I'm going to do a custom hotkey setup.
-//TODO Open open/drag-drop from url.
-//TODO Change size footer with mip.
-//TODO Show in the footer if the image has alpha or not, RGB or RGBA
-//TODO When closing the last tab, it don't want it to shutdown, only when pressing esc or the close window.
-//TODO Show file format info, like DDS(BC5), DDS(DXT1)
-//TODO Uppgrade settings?
-//TODO Recent Files
-//TODO Data bindings
-//TODO Thumbnail using the render size, then I can load in the real image in the background, like when I open a folder make thumbnails for "all" the images in the folder.
-//TODO Bar at the buttom with thumbnails of the images in the folder
-//TODO Thumbnail on tab
-//TODO Show hotkey next to menuitem
-//TODO Progress bar when loading large images
-//TODO Read sort setting from file explorer?
-//TODO Slideshow Random Image Option, And Loop option
-//TODO Folder browser
-//TODO Return bools for error handling, I could replace some try/catch control flows with that.
-
-//CHANGLOG 1.6
+﻿//CHANGLOG 1.6
 
 //Bugs fixed.
 //When dragging tab from maximized window, it now changes it to not tbe maximized.
@@ -56,7 +29,6 @@ using static System.Windows.Application;
 using Clipboard = System.Windows.Clipboard;
 using DataFormats = System.Windows.DataFormats;
 using DragEventArgs = System.Windows.DragEventArgs;
-using KeyEventArgs = System.Windows.Forms.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Drawing.Point;
@@ -72,11 +44,11 @@ namespace Frame
     readonly FilesManager   filesManager;
     readonly SortingManager sortingManager;
 
-    readonly TabControlManager tabControlManager;
-    FileSystemWatcher          imageDirectoryWatcher;
-    FileSystemWatcher          parentDirectoryWatcher;
-    bool                       changingSize = true;
-    Dictionary<Keys, ICommand> commands;
+    readonly TabControlManager        tabControlManager;
+    FileSystemWatcher                 imageDirectoryWatcher;
+    FileSystemWatcher                 parentDirectoryWatcher;
+    bool                              changingSize = true;
+    Dictionary<CommandKeys, ICommand> commands;
 
     public class ToggleDisplayChannelCommand : ICommand
     {
@@ -100,51 +72,63 @@ namespace Frame
       }
     }
 
-    public class VoidNoModifierCommand : ICommand
+    public class Command : ICommand
     {
-      readonly CommandFunction func;
+      readonly CommandFunction  func;
+      readonly ValidateFunction validateFunction;
 
       public delegate void CommandFunction();
 
-      public VoidNoModifierCommand(CommandFunction func)
+      public delegate void ValidateFunction();
+
+
+      public Command(CommandFunction func, ValidateFunction validateFunction = null, params object[] args)
       {
-        this.func = func;
+        this.func             = func;
+        this.validateFunction = validateFunction;
       }
 
       public void Execute()
       {
-        if (!ModifierKeyDown())
-        {
-          func();
-        }
+        validateFunction?.Invoke();
+        func();
       }
     }
 
-    public class VoidSingleModifierCommand : ICommand
+    struct CommandKeys
     {
-      readonly CommandFunction func;
-      readonly CommandFunction secondFunc;
-      readonly Key             modifierKey;
+      Key  key;
+      bool LeftShift;
+      bool LeftCtrl;
 
-      public delegate void CommandFunction();
-
-      public VoidSingleModifierCommand(Key modifierKey, CommandFunction func, CommandFunction secondFunc)
+      public CommandKeys(Key key, params Key[] keys)
       {
-        this.func        = func;
-        this.secondFunc  = secondFunc;
-        this.modifierKey = modifierKey;
+        this.key  = key;
+        LeftShift = false;
+        LeftCtrl  = false;
+        foreach (var key1 in keys)
+        {
+          switch (key1)
+          {
+            case Key.LeftShift:
+            {
+              LeftShift = true;
+              break;
+            }
+            case Key.LeftCtrl:
+            {
+              LeftCtrl = true;
+              break;
+            }
+          }
+        }
       }
 
-      public void Execute()
+      public CommandKeys(Key key, bool leftShift, bool leftCtrl)
       {
-        if (Keyboard.IsKeyDown(modifierKey))
-        {
-          func?.Invoke();
-        }
-        else
-        {
-          secondFunc?.Invoke();
-        }
+        this.key  = key;
+        LeftShift = leftShift;
+        LeftCtrl  = leftCtrl;
       }
     }
 
@@ -164,23 +148,27 @@ namespace Frame
       CheckForUpdates();
       SetupSlideshow();
 
-      commands = new Dictionary<Keys, ICommand>
+      commands = new Dictionary<CommandKeys, ICommand>
       {
-        {Keys.A, new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Alpha)},
-        {Keys.R, new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Red)},
-        {Keys.G, new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Green)},
-        {Keys.B, new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Blue)},
-        {Keys.F, new VoidNoModifierCommand(ResetView)},
-        {Keys.T, new VoidNoModifierCommand(TileImage)},
-        {Keys.Space, new VoidNoModifierCommand(NextImage)},
-        {Keys.Delete, new VoidNoModifierCommand(DeleteImage)},
-        {Keys.D, new VoidSingleModifierCommand(Key.LeftCtrl, DuplicateTab, null)},
-        {Keys.W, new VoidSingleModifierCommand(Key.LeftCtrl, CloseTab, null)},
-        {Keys.S, new VoidSingleModifierCommand(Key.LeftCtrl, ChannelsMontage, ToggleSlideshow)},
-        {Keys.Right, new VoidSingleModifierCommand(Key.LeftCtrl, NextTab, NextImage)},
-        {Keys.Left, new VoidSingleModifierCommand(Key.LeftCtrl, PreviousTab, PreviousImage)},
-        {Keys.Add, new VoidNoModifierCommand(LowerMip)},
-        {Keys.Subtract, new VoidNoModifierCommand(HigherMip)},
+        {new CommandKeys(Key.A), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Alpha)},
+        {new CommandKeys(Key.R), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Red)},
+        {new CommandKeys(Key.G), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Green)},
+        {new CommandKeys(Key.B), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Blue)},
+        {new CommandKeys(Key.F), new Command(ResetView)},
+        {new CommandKeys(Key.T), new Command(TileImage)},
+        {new CommandKeys(Key.Space), new Command(NextImage)},
+        {new CommandKeys(Key.Delete), new Command(DeleteImage)},
+        {new CommandKeys(Key.D, Key.LeftCtrl), new Command(DuplicateTab)},
+        {new CommandKeys(Key.W, Key.LeftCtrl), new Command(CloseTab)},
+        {new CommandKeys(Key.S, Key.LeftCtrl), new Command(ChannelsMontage)},
+        {new CommandKeys(Key.S), new Command(ToggleSlideshow)},
+        {new CommandKeys(Key.Right, Key.LeftCtrl), new Command(NextTab)},
+        {new CommandKeys(Key.Left, Key.LeftCtrl), new Command(PreviousTab)},
+        {new CommandKeys(Key.Right), new Command(NextImage)},
+        {new CommandKeys(Key.Left), new Command(PreviousImage)},
+        {new CommandKeys(Key.Add), new Command(LowerMip)},
+        {new CommandKeys(Key.Subtract), new Command(HigherMip)},
+        {new CommandKeys(Key.Space, Key.LeftCtrl), new Command(ToggleBars)},
       };
     }
 
@@ -199,11 +187,11 @@ namespace Frame
       tabControlManager.CurrentTab.ResetView();
     }
 
-    void ValidatedKeyHandling(KeyEventArgs e)
+    void ValidatedKeyHandling(System.Windows.Input.KeyEventArgs e)
     {
       if (!tabControlManager.CanExcectute()) return;
-
-      commands.TryGetValue(e.KeyCode, out var cmd);
+      commands.TryGetValue(new CommandKeys(e.Key, Keyboard.IsKeyDown(Key.LeftShift), Keyboard.IsKeyDown(Key.LeftCtrl)),
+                           out var cmd);
       cmd?.Execute();
     }
 
@@ -336,16 +324,16 @@ namespace Frame
       }
     }
 
-    void RawKeyHandling(KeyEventArgs e)
+    void RawKeyHandling(System.Windows.Input.KeyEventArgs e)
     {
-      switch (e.KeyCode)
+      switch (e.Key)
       {
-        case Keys.Escape:
+        case Key.Escape:
         {
           Close();
           break;
         }
-        case Keys.N:
+        case Key.N:
         {
           if (Keyboard.IsKeyDown(Key.LeftCtrl)) AddNewTab(string.Empty);
 
@@ -468,7 +456,7 @@ namespace Frame
 
         if (currentTab.ImageArea == null || !currentTab.IsValid) return;
 
-        currentTab.ImageArea.Image = currentTab.Image;
+        currentTab.ImageArea.Source = currentTab.Image;
       });
     }
 
@@ -537,7 +525,7 @@ namespace Frame
         if (currentTab == null) return;
         if (!currentTab.IsValid) return;
 
-        currentTab.ImageArea.Image = currentTab.Image;
+        currentTab.ImageArea.Source = currentTab.Image;
       });
     }
 
@@ -545,7 +533,7 @@ namespace Frame
     {
       if (!(ImageTabControl.SelectedItem is TabItemControl)) return;
 
-      ((TabItemControl) ImageTabControl.SelectedItem).ImageArea.GridColor = Settings.Default.BackgroundColor;
+//      ((TabItemControl) ImageTabControl.SelectedItem).ImageArea.GridColor = Settings.Default.BackgroundColor;
     }
 
     void ReplaceImageInTab(string filename)
@@ -903,7 +891,7 @@ namespace Frame
         {
           if (VisualTreeHelper.GetParent(grid) is TabablzControl tabablzControl)
           {
-            (tabablzControl.SelectedItem as TabItemControl)?.WinFormsHost.Focus();
+//            (tabablzControl.SelectedItem as TabItemControl)?.WinFormsHost.Focus();
           }
         }
       }
@@ -940,7 +928,7 @@ namespace Frame
       e.Handled = true;
     }
 
-    public void ImageAreaKeyDown(object sender, KeyEventArgs e)
+    public void ImageAreaKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
       RawKeyHandling(e);
       ValidatedKeyHandling(e);
@@ -979,7 +967,7 @@ namespace Frame
       try
       {
         var key = (Keys) new KeysConverter().ConvertFromString(keyString);
-        ImageAreaKeyDown(sender, new KeyEventArgs(key));
+        ImageAreaKeyDown(sender, e);
       }
       catch (ArgumentException) { }
       finally
@@ -1100,7 +1088,12 @@ namespace Frame
           : Channels.Alpha;
     }
 
-    void ToggleBars(object sender, RoutedEventArgs e)
+    void OnClickToggleBars(object sender, RoutedEventArgs e)
+    {
+      ToggleBars();
+    }
+
+    void ToggleBars()
     {
       if (!tabControlManager.CanExcectute()) return;
       FooterVisibility = tabControlManager.CurrentTab.Footer.Visibility == Visibility.Visible
@@ -1112,6 +1105,15 @@ namespace Frame
         tabControl.IsHeaderPanelVisible = FooterVisibility == Visibility.Visible;
         foreach (TabItemControl tabItemControl in tabControl.Items)
         {
+          tabItemControl.ImageAreaScrollViewwer.VerticalScrollBarVisibility =
+            tabItemControl.ImageAreaScrollViewwer.VerticalScrollBarVisibility == ScrollBarVisibility.Visible
+              ? ScrollBarVisibility.Hidden
+              : ScrollBarVisibility.Visible;
+          tabItemControl.ImageAreaScrollViewwer.HorizontalScrollBarVisibility =
+            tabItemControl.ImageAreaScrollViewwer.HorizontalScrollBarVisibility ==
+            ScrollBarVisibility.Visible
+              ? ScrollBarVisibility.Hidden
+              : ScrollBarVisibility.Visible;
           tabItemControl.Footer.Visibility = FooterVisibility;
         }
       }

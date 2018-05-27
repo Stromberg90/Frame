@@ -29,18 +29,6 @@ foreach (Document document in Project.Analysis.Documents)
                 }
                 text = text.Replace(string.Format("Autoupdater.NET.Official({0}) by RBSoft", oldVersionNumber), string.Format("Autoupdater.NET.Official({0}) by RBSoft", line.Split('=')[2].Split(',')[0]));
             }
-            else if (line.Contains("Cyotek.Windows.Forms.ImageBox, "))
-            {
-                var oldVersionNumber = string.Empty;
-                foreach (var xamlLine in lines)
-                {
-                    if (xamlLine.Contains("CyotekImageBox("))
-                    {
-                        oldVersionNumber = xamlLine.Split('(')[1].Split(')')[0];
-                    }
-                }
-                text = text.Replace(string.Format("CyotekImageBox({0}) by Cyotek", oldVersionNumber), string.Format("CyotekImageBox({0}) by Cyotek", line.Split('=')[2].Split(',')[0]));
-            }
             else if (line.Contains("Magick.NET-Q16-AnyCPU, "))
             {
                 var oldVersionNumber = string.Empty;

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="About" Height="400" Width="350" Background="#FF2E2E2E" WindowStyle="ToolWindow">
+        Title="About" Height="375" Width="350" Background="#FF2E2E2E" WindowStyle="ToolWindow">
     <StackPanel MouseDown="Grid_MouseDown" Margin="5" VerticalAlignment="Top">
         <TextBlock Text="Frame" FontSize="18" Foreground="#FFF0F0F0"/>
         <TextBlock Name="VersionText" Text="Version: 0.0.0" Foreground="#FFF0F0F0"/>
@@ -31,17 +31,10 @@
         <Separator/>
         <TextBlock>            
             <Hyperlink NavigateUri="https://github.com/dlemstra/Magick.NET" RequestNavigate="Hyperlink_RequestNavigate">
-                Magick.NET(7.4.5.0) by Dirk Lemstra
+                Magick.NET(7.4.6.0) by Dirk Lemstra
             </Hyperlink>
         </TextBlock>
         <TextBlock Text="License: Apache License 2.0" Foreground="#FFF0F0F0"/>
-        <Separator/>
-        <TextBlock>            
-            <Hyperlink NavigateUri="https://github.com/cyotek/Cyotek.Windows.Forms.ImageBox" RequestNavigate="Hyperlink_RequestNavigate">
-                CyotekImageBox(1.2.0.0) by Cyotek
-            </Hyperlink>
-        </TextBlock>
-        <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>
         <Separator/>
         <TextBlock>            
             <Hyperlink NavigateUri="https://github.com/ravibpatel/AutoUpdater.NET" RequestNavigate="Hyperlink_RequestNavigate">
