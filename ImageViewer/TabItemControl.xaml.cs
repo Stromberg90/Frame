@@ -647,19 +647,6 @@ namespace Frame
       Application.Current?.Dispatcher.Invoke(() => { ParentMainWindow.RefreshImage(); });
     }
 
-    void ImageAreaOnMouseDown(object sender, MouseEventArgs e)
-    {
-      if (e.RightButton != MouseButtonState.Pressed)
-      {
-        return;
-      }
-
-      if (ParentMainWindow.DockLayout.ContextMenu != null)
-      {
-        ParentMainWindow.DockLayout.ContextMenu.IsOpen = true;
-      }
-    }
-
     void Dispose(bool disposing)
     {
       if (!disposing)

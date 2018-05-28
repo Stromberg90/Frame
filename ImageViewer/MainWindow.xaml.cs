@@ -35,6 +35,7 @@ using static System.Windows.Application;
 using Clipboard = System.Windows.Clipboard;
 using DataFormats = System.Windows.DataFormats;
 using DragEventArgs = System.Windows.DragEventArgs;
+using MenuItem = System.Windows.Controls.MenuItem;
 using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Drawing.Point;
@@ -1063,7 +1064,7 @@ namespace Frame
 
     void OpenFilesClick(object sender, RoutedEventArgs e)
     {
-      if (tabControlManager.CurrentTab == null || e.OriginalSource is ScrollViewer)
+      if (tabControlManager.CurrentTab == null || e.OriginalSource is ScrollViewer || e.OriginalSource is MenuItem)
       {
         FileBrowser();
         Keyboard.Focus(this);

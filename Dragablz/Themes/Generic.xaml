@@ -1515,7 +1515,7 @@
                         <Border x:Name="mainBorder" BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="1,1,1,1" Background="{TemplateBinding Background}">
                             <Border x:Name="innerBorder" BorderBrush="{StaticResource TabItem.Selected.Border}"
-                                    BorderThickness="1,1,0,1" Background="Red"
+                                    BorderThickness="0"
                                     Margin="-1" Opacity="0" />
                         </Border>
                         <ContentPresenter Content="{TemplateBinding ContentControl.Content}"
@@ -1800,7 +1800,7 @@
         <Setter Property="Padding" Value="2" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Background" Value="Red" />
+        <Setter Property="Background" Value="DimGray" />
         <Setter Property="BorderBrush" Value="{StaticResource TabItem.Selected.Border}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
@@ -2124,7 +2124,7 @@
                             </Grid.ColumnDefinitions>
                             <ContentPresenter x:Name="PART_FirstContentPresenter" Content="{TemplateBinding FirstItem}" />
                             <GridSplitter Grid.Column="1" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
-                                          Width="5" />
+                                          Width="5" BorderThickness="0" Background="#FF646464"/>
                             <ContentPresenter x:Name="PART_SecondContentPresenter" Grid.Column="2"
                                               Content="{TemplateBinding SecondItem}" />
                         </Grid>
@@ -2150,7 +2150,7 @@
                                     <ContentPresenter x:Name="PART_FirstContentPresenter"
                                                       Content="{TemplateBinding FirstItem}" />
                                     <GridSplitter Grid.Row="1" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
-                                                  Height="5" HorizontalAlignment="Stretch" />
+                                                  Height="5" BorderThickness="0" HorizontalAlignment="Stretch" Background="#FF646464"/>
                                     <ContentPresenter x:Name="PART_SecondContentPresenter" Grid.Row="2"
                                                       Content="{TemplateBinding SecondItem}" />
                                 </Grid>
