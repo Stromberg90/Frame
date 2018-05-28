@@ -1,6 +1,6 @@
 # Frame
 ![](https://i.imgur.com/LuNLcEd.jpg)
-![](https://i.imgur.com/EAgP2tv.gif)
+![](https://i.imgur.com/60607Ac.gif)
 
 Features
 * Dragable, tearable tabs and tiling tabs.
