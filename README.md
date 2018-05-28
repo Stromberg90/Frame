@@ -1,8 +1,12 @@
 # Frame
-![](https://i.imgur.com/9X0i98M.jpg)
-![](https://i.imgur.com/EAgP2tv.gif)
+
+Frame is a open-source Image viewer with features aimed towards developers and artists.
+
+![](https://i.imgur.com/LuNLcEd.jpg)
+![](https://i.imgur.com/60607Ac.gif)
+
 Features
-* Dragable, tearable tabs and tiling tabs.
+* Drag, tear and dock tabs.
 * Channel Viewing: Useful for artist, where several textures are packed into one.
 * Channel Splitting: Combines all channels into one image and displays it.
 * Image Tiling: Makes a 3x3 Tiling image, handy for previewing seamless textures.
@@ -23,3 +27,4 @@ Hotkeys
 * "A"       - Toggles Alpha Channel
 * "-"       - Goes Down A Mip Level
 * "+"       - Goes Up A Mip Level
+"Ctrl-Space"-Turns of scrollbar, titlebar and footer
