@@ -2,10 +2,14 @@
 
 //Bugs fixed.
 //When dragging tab from maximized window, it now changes it to not tbe maximized.
+//New wpf image box, so docking helpers show up properly.
+//Sort settings now stick when duplicating tab.
+//When files changed in directory, it now keeps the opened image.
 
 //Features
 //Toggle Bars, hides window frame and footer.
-//Collapses footer at a certian size
+//Collapses footer at lower widths.
+//Double click to open image
 
 
 using System;
@@ -22,6 +26,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using AutoUpdaterDotNET;
 using Dragablz;
+using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
 using Microsoft.VisualBasic.FileIO;
@@ -49,6 +54,7 @@ namespace Frame
     FileSystemWatcher                 parentDirectoryWatcher;
     bool                              changingSize = true;
     Dictionary<CommandKeys, ICommand> commands;
+    string                            directoryName;
 
     public class ToggleDisplayChannelCommand : ICommand
     {
@@ -97,9 +103,9 @@ namespace Frame
 
     struct CommandKeys
     {
-      Key  key;
-      bool LeftShift;
-      bool LeftCtrl;
+      [UsedImplicitly] Key  key;
+      [UsedImplicitly] bool LeftShift;
+      [UsedImplicitly] bool LeftCtrl;
 
       public CommandKeys(Key key, params Key[] keys)
       {
@@ -135,9 +141,6 @@ namespace Frame
     public MainWindow()
     {
       AutoUpdater.ShowSkipButton = false;
-
-      Settings.Default.PropertyChanged += (sender, args) => RefreshUi();
-      Settings.Default.SettingsLoaded  += (sender, args) => RefreshUi();
 
       InitializeComponent();
 
@@ -235,7 +238,52 @@ namespace Frame
         return;
       }
 
-      AddNewTab(tabControlManager.CurrentTab.Path);
+//      AddNewTab(tabControlManager.CurrentTab.Path);
+      var oldTab   = tabControlManager.CurrentTab;
+      var filepath = oldTab.Path;
+      if (string.IsNullOrEmpty(filepath))
+      {
+        var fileDialog = new OpenFileDialog
+        {
+          Multiselect  = true,
+          AddExtension = true,
+          Filter       = FileFormats.FilterString
+        };
+        fileDialog.ShowDialog();
+        filepath = fileDialog.FileName;
+      }
+
+      if (!FilesManager.ValidFile(filepath)) return;
+
+      var currentTab        = tabControlManager.CurrentTab;
+      var currentTabControl = tabControlManager.CurrentTabControl;
+      if (currentTabControl.SelectedIndex != -1)
+      {
+        TabablzControl.AddItem(TabControlManager.GetTab(filepath), currentTab, AddLocationHint.After);
+        currentTabControl.SelectedIndex = currentTabControl.Items.Count - 1;
+      }
+      else
+      {
+        var addedTab = tabControlManager.AddTab(filepath);
+        addedTab.ImageSettings.PropertyChanged += ImageSettings_PropertyChanged;
+      }
+
+      currentTab                          = tabControlManager.CurrentTab;
+      currentTab.InitialImagePath         = filepath;
+      currentTab.ImageSettings.IsGif      = false;
+      currentTab.Footer.Visibility        = FooterVisibility;
+      currentTab.ImageSettings.SortMethod = oldTab.ImageSettings.SortMethod;
+      currentTab.ImageSettings.SortMode   = oldTab.ImageSettings.SortMode;
+
+      filesManager.SupportedFiles(Path.GetDirectoryName(filepath));
+
+      var filenameIndex =
+        currentTab.Paths.FindIndex(x => Path.GetFileName(x) == Path.GetFileName(filepath));
+
+      currentTab.Index = filenameIndex == -1 ? 0 : filenameIndex;
+
+      DisplayImage();
+      SetupDirectoryWatcher();
     }
 
     int VisualSelectedIndex()
@@ -454,9 +502,9 @@ namespace Frame
 
         if (tabControlManager.CurrentTabIndex < 0) return;
 
-        if (currentTab.ImageBox.ImageArea == null || !currentTab.IsValid) return;
+        if (currentTab.ImagePresenter.ImageArea == null || !currentTab.IsValid) return;
 
-        currentTab.ImageBox.ImageArea.Source = currentTab.Image;
+        currentTab.ImagePresenter.ImageArea.Source = currentTab.Image;
       });
     }
 
@@ -517,7 +565,7 @@ namespace Frame
       Settings.Default.Save();
     }
 
-    public void RefreshImage()
+    internal void RefreshImage()
     {
       Current.Dispatcher.Invoke(() =>
       {
@@ -525,15 +573,8 @@ namespace Frame
         if (currentTab == null) return;
         if (!currentTab.IsValid) return;
 
-        currentTab.ImageBox.ImageArea.Source = currentTab.Image;
+        currentTab.ImagePresenter.ImageArea.Source = currentTab.Image;
       });
-    }
-
-    void RefreshUi()
-    {
-      if (!(ImageTabControl.SelectedItem is TabItemControl)) return;
-
-//      ((TabItemControl) ImageTabControl.SelectedItem).ImageArea.GridColor = Settings.Default.BackgroundColor;
     }
 
     void ReplaceImageInTab(string filename)
@@ -602,7 +643,7 @@ namespace Frame
 
     void SetupDirectoryWatcher()
     {
-      var directoryName = Path.GetDirectoryName(tabControlManager.CurrentTab.InitialImagePath);
+      directoryName = Path.GetDirectoryName(tabControlManager.CurrentTab.InitialImagePath);
       if (directoryName == null) return;
 
       imageDirectoryWatcher = null;
@@ -633,16 +674,57 @@ namespace Frame
         parentDirectoryWatcher.EnableRaisingEvents = true;
       }
 
-      imageDirectoryWatcher.Changed += (sender, args) =>
-        DisplayImage();
-      imageDirectoryWatcher.Created += (sender, args) =>
-        filesManager.SupportedFiles(directoryName);
-      imageDirectoryWatcher.Deleted += (sender, args) =>
-        filesManager.SupportedFiles(directoryName);
-      imageDirectoryWatcher.Renamed += (sender, args) =>
-        filesManager.SupportedFiles(directoryName);
+      imageDirectoryWatcher.Changed += (sender, args) => { DisplayImage(); };
+      imageDirectoryWatcher.Created += OnCreated;
+      imageDirectoryWatcher.Deleted += OnDeleted;
+
+      imageDirectoryWatcher.Renamed += OnRenamed;
 
       imageDirectoryWatcher.EnableRaisingEvents = true;
+    }
+
+    void OnDeleted(object sender, FileSystemEventArgs args)
+    {
+      Current.Dispatcher.Invoke(() =>
+      {
+        var tabItemControl  = tabControlManager.CurrentTab;
+        var filename        = tabItemControl.Path;
+        var currentTabPaths = tabItemControl.Paths;
+        filesManager.SupportedFiles(directoryName);
+        if (args.FullPath != filename)
+        {
+          sortingManager.FindImageAfterSort(currentTabPaths, filename);
+        }
+      });
+    }
+
+    void OnCreated(object sender, FileSystemEventArgs args)
+    {
+      Current.Dispatcher.Invoke(() =>
+      {
+        var tabItemControl  = tabControlManager.CurrentTab;
+        var filename        = tabItemControl.Path;
+        var currentTabPaths = tabItemControl.Paths;
+        filesManager.SupportedFiles(directoryName);
+        sortingManager.FindImageAfterSort(currentTabPaths, filename);
+      });
+    }
+
+    void OnRenamed(object sender, RenamedEventArgs args)
+    {
+      Current.Dispatcher.Invoke(() =>
+      {
+        var tabItemControl  = tabControlManager.CurrentTab;
+        var filename        = tabItemControl.Path;
+        var currentTabPaths = tabItemControl.Paths;
+        if (filename == args.OldFullPath)
+        {
+          filename = args.FullPath;
+        }
+
+        filesManager.SupportedFiles(directoryName);
+        sortingManager.FindImageAfterSort(currentTabPaths, filename);
+      });
     }
 
     void ParentDirectoryChanged(object sender, FileSystemEventArgs args)
@@ -840,24 +922,10 @@ namespace Frame
     void WindowClosed(object sender, EventArgs e)
     {
       Dispose();
-      if (GetMainWindows().Count == 0)
+      if (App.GetMainWindows().Count == 0)
       {
         Current.Shutdown();
       }
-    }
-
-    static List<Window> GetMainWindows()
-    {
-      var mainWindows = new List<Window>(Current.Windows.Count);
-      foreach (Window currentWindow in Current.Windows)
-      {
-        if (currentWindow.GetType() == typeof(MainWindow))
-        {
-          mainWindows.Add(currentWindow);
-        }
-      }
-
-      return mainWindows;
     }
 
     void AboutClick(object sender, RoutedEventArgs e)
@@ -885,16 +953,17 @@ namespace Frame
         return;
       }
 
-      if (e.OriginalSource is Border border)
+      if (e.OriginalSource is DependencyObject current)
       {
-        if (border.Parent is Grid grid)
+        while (!(VisualTreeHelper.GetParent(current) is TabablzControl))
         {
-          if (VisualTreeHelper.GetParent(grid) is TabablzControl tabablzControl)
-          {
-//            (tabablzControl.SelectedItem as TabItemControl)?.WinFormsHost.Focus();
-          }
+          current = VisualTreeHelper.GetParent(current);
         }
+
+        var tabablzControl = VisualTreeHelper.GetParent(current) as TabablzControl;
+        (tabablzControl?.SelectedItem as TabItemControl)?.ImagePresenter.ScrollViewer.Focus();
       }
+
 
       var supportedFilenames = FilesManager.FilterSupportedFiles(filenames);
       if (!supportedFilenames.Any())
@@ -938,35 +1007,8 @@ namespace Frame
 
     void WindowKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-      string keyString;
-      switch (e.Key)
-      {
-        case Key.LeftShift:
-        {
-          keyString = Keys.LShiftKey.ToString();
-          break;
-        }
-        case Key.LeftCtrl:
-        {
-          keyString = Keys.LControlKey.ToString();
-          break;
-        }
-        case Key.System:
-        case Key.LeftAlt:
-        {
-          keyString = Keys.Alt.ToString();
-          break;
-        }
-        default:
-        {
-          keyString = e.Key.ToString();
-          break;
-        }
-      }
-
       try
       {
-        var key = (Keys) new KeysConverter().ConvertFromString(keyString);
         ImageAreaKeyDown(sender, e);
       }
       catch (ArgumentException) { }
@@ -1020,8 +1062,11 @@ namespace Frame
 
     void OpenFilesClick(object sender, RoutedEventArgs e)
     {
-      FileBrowser();
-      Keyboard.Focus(this);
+      if (tabControlManager.CurrentTab == null || e.OriginalSource is ScrollViewer)
+      {
+        FileBrowser();
+        Keyboard.Focus(this);
+      }
     }
 
     public void Dispose()
@@ -1105,15 +1150,13 @@ namespace Frame
         tabControl.IsHeaderPanelVisible = FooterVisibility == Visibility.Visible;
         foreach (TabItemControl tabItemControl in tabControl.Items)
         {
-          tabItemControl.ImageBox.ImageAreaScrollViewwer.VerticalScrollBarVisibility =
-            tabItemControl.ImageBox.ImageAreaScrollViewwer.VerticalScrollBarVisibility == ScrollBarVisibility.Visible
-              ? ScrollBarVisibility.Hidden
-              : ScrollBarVisibility.Visible;
-          tabItemControl.ImageBox.ImageAreaScrollViewwer.HorizontalScrollBarVisibility =
-            tabItemControl.ImageBox.ImageAreaScrollViewwer.HorizontalScrollBarVisibility ==
-            ScrollBarVisibility.Visible
-              ? ScrollBarVisibility.Hidden
-              : ScrollBarVisibility.Visible;
+          var scrollViewer = tabItemControl.ImagePresenter.ScrollViewer;
+          scrollViewer.VerticalScrollBarVisibility = FooterVisibility != Visibility.Visible
+            ? ScrollBarVisibility.Hidden
+            : ScrollBarVisibility.Auto;
+          scrollViewer.HorizontalScrollBarVisibility = FooterVisibility != Visibility.Visible
+            ? ScrollBarVisibility.Hidden
+            : ScrollBarVisibility.Auto;
           tabItemControl.Footer.Visibility = FooterVisibility;
         }
       }

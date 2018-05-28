@@ -29,15 +29,6 @@
             <Separator />
             <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
         </StatusBar>
-        <frame:ImageBox x:Name="ImageBox"></frame:ImageBox>
-        <!-- <WindowsFormsHost DockPanel.Dock="Top" x:Name="WinFormsHost" Background="{StaticResource Background}" > -->
-        <!--     <WindowsFormsHost.Resources> -->
-        <!--         <drawing:Color x:Key="GridColor">#FF202020</drawing:Color> -->
-        <!--     </WindowsFormsHost.Resources> -->
-        <!--     <forms:ImageBox x:Name="ImageArea" ShowPixelGrid="False" GridScale="None" -->
-        <!--                     GridColor="{StaticResource GridColor}" -->
-        <!--                     BorderStyle="None" ShortcutsEnabled="False" TabStop="False" -->
-        <!--                     BackColor="{StaticResource GridColor}" ZoomChanged="ImageAreaZoomChanged" MouseClick="ImageAreaOnMouseDown" /> -->
-        <!-- </WindowsFormsHost> -->
+        <frame:ImageBox x:Name="ImagePresenter"></frame:ImageBox>
     </DockPanel>
 </TabItem>

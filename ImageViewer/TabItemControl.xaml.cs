@@ -5,17 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
 using Application = System.Windows.Application;
-using Cursors = System.Windows.Input.Cursors;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
-using Point = System.Windows.Point;
 using TextAlignment = ImageMagick.TextAlignment;
 
 namespace Frame
@@ -266,34 +263,28 @@ namespace Frame
       Margin = new Thickness(0.5);
       InitializeComponent();
 
-      ImageBox.PreviewKeyDown += ImageAreaScrollViewwer_OnPreviewKeyDown;
-
-      ImageBox.ImageAreaScrollViewwer.GotFocus  += WinFormsHostOnGotFocus;
-      ImageBox.ImageAreaScrollViewwer.LostFocus += WinFormsHostOnLostFocus;
+      ImagePresenter.PreviewKeyDown += ImagePresenterOnPreviewKeyDown;
 
       gifTimer         =  new System.Timers.Timer();
       gifTimer.Elapsed += GifAnim;
 
+      ImagePresenter.PropertyChanged += (sender, args) => { UpdateFooter(); };
       ImageSettings.PropertyChanged += (sender, args) =>
       {
         UpdateFooter();
         UpdateTitle();
       };
-      PropertyChanged   += OnPropertyChanged;
-      ImageBox.ImageArea.KeyDown += (sender, args) => { ParentMainWindow.ImageAreaKeyDown(sender, args); };
-      ImageBox.ImageArea.Loaded += (sender, args) =>
+      PropertyChanged                  += OnPropertyChanged;
+      ImagePresenter.ImageArea.KeyDown += (sender, args) => { ParentMainWindow.ImageAreaKeyDown(sender, args); };
+      ImagePresenter.ImageArea.Loaded += (sender, args) =>
       {
-        ImageBox.grid.Width  = Image.Width;
-        ImageBox.grid.Height = Image.Height;
+        ImagePresenter.Grid.Width  = Image.Width;
+        ImagePresenter.Grid.Height = Image.Height;
         if (firstImageLoaded) return;
         ResetView();
         firstImageLoaded = true;
       };
     }
-
-    void WinFormsHostOnLostFocus(object o, RoutedEventArgs routedEventArgs) { }
-
-    void WinFormsHostOnGotFocus(object o, RoutedEventArgs routedEventArgs) { }
 
     void OnPropertyChanged(object o, PropertyChangedEventArgs args)
     {
@@ -466,10 +457,10 @@ namespace Frame
 
         if (!_collapseFooterText)
         {
-          return $"ZOOM: {ImageBox.Zoom:N2}%";
+          return $"ZOOM: {ImagePresenter.Zoom:N2}%";
         }
 
-        return $"{ImageBox.Zoom:N2}%";
+        return $"{ImagePresenter.Zoom:N2}%";
       }
     }
 
@@ -516,33 +507,47 @@ namespace Frame
 
     public void ResetView()
     {
-      if (ImageBox.ImageArea == null)
+      ParentMainWindow.Focus();
+
+      if (ImagePresenter.ImageArea == null)
       {
         return;
       }
+
+      ImagePresenter.Grid.Width  = ImageSettings.Width;
+      ImagePresenter.Grid.Height = ImageSettings.Height;
+
+      ImagePresenter.Zoom = 100;
 
       if (Settings.Default.ImageFullZoom)
       {
-        ImageBox.Zoom = 100;
         return;
       }
 
-      if (ImageBox.grid.Width < ImageSettings.Width ||
-          ImageBox.grid.Height < ImageSettings.Height)
+      if (ImagePresenter.ActualWidth < ImageSettings.Width ||
+          ImagePresenter.ActualHeight < ImageSettings.Height)
       {
         ZoomToFit();
       }
-      else
-      {
-        ImageBox.Zoom = 100;
-      }
-
-      ParentMainWindow.Focus();
     }
 
     void ZoomToFit()
     {
-//      throw new NotImplementedException();
+      while (ImagePresenter.Grid.Width * ImagePresenter.ScaleTransform.ScaleX <
+             ImagePresenter.ActualWidth ||
+             ImagePresenter.Grid.Height * ImagePresenter.ScaleTransform.ScaleX <
+             ImagePresenter.ActualHeight)
+      {
+        ImagePresenter.Zoom += 1;
+      }
+
+      while (ImagePresenter.Grid.Width * ImagePresenter.ScaleTransform.ScaleX >
+             ImagePresenter.ActualWidth ||
+             ImagePresenter.Grid.Height * ImagePresenter.ScaleTransform.ScaleX >
+             ImagePresenter.ActualHeight)
+      {
+        ImagePresenter.Zoom -= 1;
+      }
     }
 
     public bool Tiled           { get; set; }
@@ -745,7 +750,7 @@ namespace Frame
       UpdateFooter();
     }
 
-    void ImageAreaScrollViewwer_OnPreviewKeyDown(object sender, KeyEventArgs e)
+    void ImagePresenterOnPreviewKeyDown(object sender, KeyEventArgs e)
     {
       ParentMainWindow.ImageAreaKeyDown(sender, e);
     }

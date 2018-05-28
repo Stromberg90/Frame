@@ -13,7 +13,7 @@ namespace Frame
     {
       get
       {
-        var tabablzControls = new List<TabablzControl>();
+        var tabablzControls   = new List<TabablzControl>();
         var currentMainWindow = CurrentMainWindow();
         if (currentMainWindow == null)
         {
@@ -39,7 +39,7 @@ namespace Frame
       }
     }
 
-        public TabablzControl CurrentTabControl
+    public TabablzControl CurrentTabControl
     {
       get
       {
@@ -65,7 +65,7 @@ namespace Frame
                   continue;
                 }
 
-                if (itemTabItemControl.ImageBox.ImageAreaScrollViewwer.IsFocused)
+                if (itemTabItemControl.ImagePresenter.ScrollViewer.IsFocused)
                 {
                   tabItemControl = control;
                 }

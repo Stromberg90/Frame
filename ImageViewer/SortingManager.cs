@@ -22,15 +22,15 @@ namespace Frame
       currentTab.Index = currentTab.Paths.IndexOf(currentTab.Path);
     }
 
-    public void SortAcending()
+    void SortAcending()
     {
-      var    id = 0;
-      var currentTab = TabControlManager.CurrentTab;
-      var paths = currentTab.Paths;
+      var id           = 0;
+      var currentTab   = TabControlManager.CurrentTab;
+      var paths        = currentTab.Paths;
       var initialImage = paths.Count < currentTab.Index ? currentTab.InitialImagePath : currentTab.Path;
 
       List<string> sortedPaths;
-      var pathsList = paths.ToList();
+      var          pathsList = paths.ToList();
       switch (currentTab.ImageSettings.SortMethod)
       {
         case SortMethod.Name:
