@@ -53,18 +53,6 @@ foreach (Document document in Project.Analysis.Documents)
                 }
                 text = text.Replace(string.Format("Extended.Wpf.Toolkit({0}) by Xceed", oldVersionNumber), string.Format("Extended.Wpf.Toolkit({0}) by Xceed", line.Split('=')[2].Split(',')[0]));
             }
-            else if (line.Contains("Dragablz, "))
-            {
-              var oldVersionNumber = string.Empty;
-              foreach (var xamlLine in lines)
-              {
-                if (xamlLine.Contains("Dragablz("))
-                {
-                  oldVersionNumber = xamlLine.Split('(')[1].Split(')')[0];
-                }
-              }
-              text = text.Replace(string.Format("Dragablz({0}) by James Willock", oldVersionNumber), string.Format("Dragablz({0}) by James Willock", line.Split('=')[2].Split(',')[0]));
-            }
     }
         File.WriteAllText(xamlPath, text);
     }

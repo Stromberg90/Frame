@@ -52,7 +52,7 @@
         <Separator/>
         <TextBlock>            
             <Hyperlink NavigateUri="https://github.com/ButchersBoy/Dragablz" RequestNavigate="Hyperlink_RequestNavigate">
-                Dragablz(0.0.3.203) by James Willock
+                Custom Dragablz forked from Dragablz(0.0.3.203) by James Willock
             </Hyperlink>
         </TextBlock>
         <TextBlock Text="License: MIT" Foreground="#FFF0F0F0"/>

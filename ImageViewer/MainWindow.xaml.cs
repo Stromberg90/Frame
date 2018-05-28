@@ -7,6 +7,7 @@
 //When files changed in directory, it now keeps the opened image.
 
 //Features
+//UI Improvments, tabs color matches the rest.
 //Toggle Bars, hides window frame and footer.
 //Collapses footer at lower widths.
 //Double click to open image
