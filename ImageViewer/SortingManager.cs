@@ -27,7 +27,7 @@ namespace Frame
       var id           = 0;
       var currentTab   = TabControlManager.CurrentTab;
       var paths        = currentTab.Paths;
-      var initialImage = paths.Count < currentTab.Index ? currentTab.InitialImagePath : currentTab.Path;
+      var initialImage = paths.Count > currentTab.Index ? currentTab.InitialImagePath : currentTab.Path;
 
       List<string> sortedPaths;
       var          pathsList = paths.ToList();

@@ -431,11 +431,11 @@ namespace Frame
 
             currentTab.Index = filenameIndex == -1 ? 0 : filenameIndex;
 
-            currentTab.InitialImagePath = filepath;
-            currentTab.ImageSettings.IsGif = false;
+//            currentTab.InitialImagePath = filepath;
+//            currentTab.ImageSettings.IsGif = false;
             currentTab.Footer.Visibility = FooterVisibility;
 
-            DisplayImage();
+//            DisplayImage();
             SetupDirectoryWatcher();
         }
 
@@ -997,7 +997,7 @@ namespace Frame
                 }
             }
 
-            DisplayImage();
+//            DisplayImage();
 
             Keyboard.Focus(this);
 

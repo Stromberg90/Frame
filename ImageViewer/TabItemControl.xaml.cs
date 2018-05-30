@@ -4,9 +4,11 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
@@ -79,9 +81,7 @@ namespace Frame
         if (ImageSettings.IsGif)
         {
           var image = ImageSettings.ImageCollection[ImageSettings.CurrentFrame];
-          gifTimer.Interval = ImageSettings.ImageCollection[ImageSettings.CurrentFrame].AnimationDelay == 0
-            ? 1
-            : ImageSettings.ImageCollection[ImageSettings.CurrentFrame].AnimationDelay * 10;
+          gifTimer.Interval = image.AnimationDelay == 0 ? 1 : image.AnimationDelay * 10;
           return image.ToBitmapSource();
         }
 
@@ -278,8 +278,8 @@ namespace Frame
       ImagePresenter.ImageArea.KeyDown += (sender, args) => { ParentMainWindow.ImageAreaKeyDown(sender, args); };
       ImagePresenter.ImageArea.Loaded += (sender, args) =>
       {
-        ImagePresenter.Grid.Width  = Image.Width;
-        ImagePresenter.Grid.Height = Image.Height;
+        ImagePresenter.Grid.Width  = ImageSettings.Width;
+        ImagePresenter.Grid.Height = ImageSettings.Height;
         if (firstImageLoaded) return;
         ResetView();
         firstImageLoaded = true;
@@ -290,8 +290,11 @@ namespace Frame
     {
       if (args.PropertyName == nameof(Index))
       {
+//        if (firstImageLoaded)
+//        {
         Application.Current?.Dispatcher.Invoke(() => { ParentMainWindow.RefreshImage(); });
         ResetView();
+//        }
       }
 
       UpdateFooter();
@@ -620,7 +623,7 @@ namespace Frame
             ImageSettings.MipValue = 0;
             ImageSettings.ImageCollection = new MagickImageCollection
             {
-              new MagickImage(Path)
+              Path
             };
             break;
           }
