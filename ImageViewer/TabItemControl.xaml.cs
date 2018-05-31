@@ -585,6 +585,7 @@ namespace Frame
           {
             ImageSettings.ImageCollection = new MagickImageCollection(Path);
             ImageSettings.ImageCollection.Coalesce();
+
             if (!gifTimer.Enabled)
             {
               gifTimer.Start();
@@ -633,6 +634,10 @@ namespace Frame
       {
         ImageSettings.ImageCollection.Clear();
         ImageSettings.ImageCollection.Add(ErrorImage(Path));
+      }
+      finally
+      {
+        GC.Collect();
       }
     }
 

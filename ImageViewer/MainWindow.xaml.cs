@@ -19,6 +19,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -570,14 +571,14 @@ namespace Frame
 
         internal void RefreshImage()
         {
-            Current.Dispatcher.Invoke(() =>
+            Current.Dispatcher.BeginInvoke((Action)(() =>
             {
                 var currentTab = tabControlManager.CurrentTab;
                 if (currentTab == null) return;
                 if (!currentTab.IsValid) return;
 
                 currentTab.ImagePresenter.ImageArea.Source = currentTab.Image;
-            });
+            }));
         }
 
         void ReplaceImageInTab(string filename)
@@ -849,38 +850,6 @@ namespace Frame
             SortDate.IsChecked = false;
             SortSize.IsChecked = true;
         }
-
-//    void SwitchImage(SwitchDirection switchDirection)
-//    {
-//      tabControlManager.CurrentTab.ImageSettings.Reset();
-//      tabControlManager.CurrentTab.Tiled           = false;
-//      tabControlManager.CurrentTab.ChannelsMontage = false;
-//
-//      if (tabControlManager.CurrentTab.Mode == ApplicationMode.Slideshow)
-//        tabControlManager.CurrentTab.CurrentSlideshowTime = 1;
-//
-//      switch (switchDirection)
-//      {
-//        case SwitchDirection.Next:
-//          if (tabControlManager.CurrentTab.Index < tabControlManager.CurrentTab.Paths.Count - 1)
-//            SetCurrentImage(tabControlManager.CurrentTab.Index += 1);
-//          else
-//            SetCurrentImage(0);
-//
-//          break;
-//
-//        case SwitchDirection.Previous:
-//          if (tabControlManager.CurrentTab.Paths.Any())
-//            if (tabControlManager.CurrentTab.Index > 0)
-//              SetCurrentImage(tabControlManager.CurrentTab.Index -= 1);
-//            else
-//              SetCurrentImage(tabControlManager.CurrentTab.Index = tabControlManager.CurrentTab.Paths.Count - 1);
-//
-//          break;
-//      }
-//
-//      tabControlManager.CurrentTab.ResetView();
-//    }
 
         void ViewInExplorer(object sender, RoutedEventArgs e)
         {
