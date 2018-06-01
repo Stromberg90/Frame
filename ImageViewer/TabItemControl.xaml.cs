@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Frame.Annotations;
@@ -66,151 +67,6 @@ namespace Frame
 
     ApplicationMode mode = ApplicationMode.Normal;
     int             index;
-
-    //TODO Change this into a field(should be faster) and move this into the LoadImage function.
-    public BitmapSource Image
-    {
-      get
-      {
-        if (ImageSettings.IsGif)
-        {
-          var image = ImageSettings.ImageCollection[ImageSettings.CurrentFrame];
-          gifTimer.Interval = image.AnimationDelay == 0 ? 1 : image.AnimationDelay * 10;
-          return image.ToBitmapSource();
-        }
-
-        LoadImage();
-
-        var imageWidth    = ImageSettings.Width;
-        var imageHeight   = ImageSettings.Height;
-        var borderWidth   = (int) Math.Max(2.0, (imageWidth * imageHeight) / 200000.0);
-        var channelNum    = 0;
-        var settingsImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
-        if (ChannelsMontage)
-        {
-          using (var orginalImage = ImageSettings.ImageCollection[0])
-          {
-            using (var images = new MagickImageCollection())
-            {
-              foreach (var img in settingsImage.Separate())
-              {
-                if (Settings.Default.SplitChannelsBorder)
-                {
-                  switch (channelNum)
-                  {
-                    case 0:
-                    {
-                      img.BorderColor = MagickColor.FromRgb(255, 0, 0);
-                      break;
-                    }
-                    case 1:
-                    {
-                      img.BorderColor = MagickColor.FromRgb(0, 255, 0);
-                      break;
-                    }
-                    case 2:
-                    {
-                      img.BorderColor = MagickColor.FromRgb(0, 0, 255);
-                      break;
-                    }
-                  }
-
-                  img.Border(borderWidth);
-                  channelNum += 1;
-                }
-
-                if (ImageSettings.MipValue > 0)
-                {
-                  img.Resize(orginalImage.Width, orginalImage.Height);
-                }
-
-                images.Add(img);
-              }
-
-              var montageSettings =
-                new MontageSettings
-                {
-                  Geometry = new MagickGeometry(imageWidth, imageHeight)
-                };
-              var result = images.Montage(montageSettings);
-              ImageSettings.ImageCollection.Clear();
-              ImageSettings.ImageCollection.Add(result);
-            }
-          }
-
-          ImageSettings.HasMips = false;
-        }
-
-        if (Tiled)
-        {
-          var       images       = new MagickImageCollection();
-          const int tileCount    = 8;
-          var       orginalImage = ImageSettings.ImageCollection[0];
-
-          for (var i = 0; i <= tileCount; i++)
-          {
-            var image = settingsImage.Clone();
-            if (ImageSettings.MipValue > 0)
-            {
-              image.Resize(orginalImage.Width, orginalImage.Height);
-            }
-
-            if (ImageSettings.DisplayChannel != Channels.Alpha)
-            {
-              image.Alpha(AlphaOption.Opaque);
-            }
-
-            images.Add(image);
-          }
-
-          var montageSettings =
-            new MontageSettings
-            {
-              Geometry = new MagickGeometry(imageWidth, imageHeight),
-            };
-          ImageSettings.ImageCollection.Clear();
-          ImageSettings.ImageCollection.Add(images.Montage(montageSettings));
-          ImageSettings.HasMips =  false;
-          ImageSettings.Size    *= tileCount + 1;
-        }
-
-        OnPropertyChanged();
-        var magickImage = ResizeCurrentMip();
-        switch (ImageSettings.DisplayChannel)
-        {
-          case Channels.RGB:
-          {
-            magickImage.Alpha(AlphaOption.Opaque);
-            return magickImage.ToBitmapSource();
-          }
-          case Channels.Red:
-          {
-            return magickImage.Separate(Channels.Red)
-                              .ElementAt(0)?.ToBitmapSource();
-          }
-          case Channels.Green:
-          {
-            return magickImage.Separate(Channels.Green)
-                              .ElementAt(0)?.ToBitmapSource();
-          }
-          case Channels.Blue:
-          {
-            return magickImage.Separate(Channels.Blue)
-                              .ElementAt(0)?.ToBitmapSource();
-          }
-          case Channels.Alpha:
-          {
-            return magickImage.Separate(Channels.Alpha)
-                              .ElementAt(0)?.ToBitmapSource();
-          }
-          default:
-          {
-            magickImage.Alpha(AlphaOption.Opaque);
-            return magickImage.ToBitmapSource();
-          }
-        }
-      }
-    }
 
     IMagickImage ResizeCurrentMip()
     {
@@ -467,8 +323,16 @@ namespace Frame
       return image;
     }
 
-    void LoadImage()
+    internal void LoadImage()
     {
+      if (ImageSettings.IsGif)
+      {
+        var image = ImageSettings.ImageCollection[ImageSettings.CurrentFrame];
+        gifTimer.Interval               = image.AnimationDelay == 0 ? 1 : image.AnimationDelay * 10;
+        ImagePresenter.ImageArea.Source = image.ToBitmapSource();
+        return;
+      }
+
       try
       {
         switch (System.IO.Path.GetExtension(Path))
@@ -477,7 +341,6 @@ namespace Frame
           {
             ImageSettings.ImageCollection = new MagickImageCollection(Path);
             ImageSettings.ImageCollection.Coalesce();
-
             if (!gifTimer.Enabled)
             {
               gifTimer.Start();
@@ -526,6 +389,141 @@ namespace Frame
       {
         ImageSettings.ImageCollection.Clear();
         ImageSettings.ImageCollection.Add(ErrorImage(Path));
+      }
+
+      var imageWidth    = ImageSettings.Width;
+      var imageHeight   = ImageSettings.Height;
+      var borderWidth   = (int) Math.Max(2.0, (imageWidth * imageHeight) / 200000.0);
+      var channelNum    = 0;
+      var settingsImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
+      if (ChannelsMontage)
+      {
+        using (var orginalImage = ImageSettings.ImageCollection[0])
+        {
+          using (var images = new MagickImageCollection())
+          {
+            foreach (var img in settingsImage.Separate())
+            {
+              if (Settings.Default.SplitChannelsBorder)
+              {
+                switch (channelNum)
+                {
+                  case 0:
+                  {
+                    img.BorderColor = MagickColor.FromRgb(255, 0, 0);
+                    break;
+                  }
+                  case 1:
+                  {
+                    img.BorderColor = MagickColor.FromRgb(0, 255, 0);
+                    break;
+                  }
+                  case 2:
+                  {
+                    img.BorderColor = MagickColor.FromRgb(0, 0, 255);
+                    break;
+                  }
+                }
+
+                img.Border(borderWidth);
+                channelNum += 1;
+              }
+
+              if (ImageSettings.MipValue > 0)
+              {
+                img.Resize(orginalImage.Width, orginalImage.Height);
+              }
+
+              images.Add(img);
+            }
+
+            var montageSettings =
+              new MontageSettings
+              {
+                Geometry = new MagickGeometry(imageWidth, imageHeight)
+              };
+            var result = images.Montage(montageSettings);
+            ImageSettings.ImageCollection.Clear();
+            ImageSettings.ImageCollection.Add(result);
+          }
+        }
+
+        ImageSettings.HasMips = false;
+      }
+
+      if (Tiled)
+      {
+        var       images       = new MagickImageCollection();
+        const int tileCount    = 8;
+        var       orginalImage = ImageSettings.ImageCollection[0];
+
+        for (var i = 0; i <= tileCount; i++)
+        {
+          var image = settingsImage.Clone();
+          if (ImageSettings.MipValue > 0)
+          {
+            image.Resize(orginalImage.Width, orginalImage.Height);
+          }
+
+          if (ImageSettings.DisplayChannel != Channels.Alpha)
+          {
+            image.Alpha(AlphaOption.Opaque);
+          }
+
+          images.Add(image);
+        }
+
+        var montageSettings =
+          new MontageSettings
+          {
+            Geometry = new MagickGeometry(imageWidth, imageHeight),
+          };
+        ImageSettings.ImageCollection.Clear();
+        ImageSettings.ImageCollection.Add(images.Montage(montageSettings));
+        ImageSettings.HasMips =  false;
+        ImageSettings.Size    *= tileCount + 1;
+      }
+
+      OnPropertyChanged();
+      var magickImage = ResizeCurrentMip();
+      switch (ImageSettings.DisplayChannel)
+      {
+        case Channels.RGB:
+        {
+          magickImage.Alpha(AlphaOption.Opaque);
+          ImagePresenter.ImageArea.Source = magickImage.ToBitmapSource();
+          return;
+        }
+        case Channels.Red:
+        {
+          ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Red)
+                                                       .ElementAt(0)?.ToBitmapSource();
+          return;
+        }
+        case Channels.Green:
+        {
+          ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Green)
+                                                       .ElementAt(0)?.ToBitmapSource();
+          return;
+        }
+        case Channels.Blue:
+        {
+          ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Blue)
+                                                       .ElementAt(0)?.ToBitmapSource();
+          return;
+        }
+        case Channels.Alpha:
+        {
+          ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Alpha)
+                                                       .ElementAt(0)?.ToBitmapSource();
+          return;
+        }
+        default:
+        {
+          magickImage.Alpha(AlphaOption.Opaque);
+          ImagePresenter.ImageArea.Source = magickImage.ToBitmapSource();
+          return;
+        }
       }
     }
 
@@ -620,9 +618,6 @@ namespace Frame
           break;
         }
       }
-
-      GC.Collect();
-      GC.WaitForPendingFinalizers();
     }
 
     void Footer_OnSizeChanged(object sender, SizeChangedEventArgs e)

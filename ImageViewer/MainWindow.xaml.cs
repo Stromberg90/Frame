@@ -509,7 +509,7 @@ namespace Frame
 
         if (currentTab.ImagePresenter.ImageArea == null || !currentTab.Paths.Any()) return;
 
-        currentTab.ImagePresenter.ImageArea.Source = currentTab.Image;
+        currentTab.LoadImage();
       });
     }
 
@@ -578,7 +578,7 @@ namespace Frame
         if (currentTab == null) return;
         if (!currentTab.Paths.Any()) return;
 
-        currentTab.ImagePresenter.ImageArea.Source = currentTab.Image;
+        currentTab.LoadImage();
       });
     }
 
