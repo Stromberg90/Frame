@@ -23,7 +23,7 @@ namespace Frame
 
     int mipValue;
 
-    public MagickImageCollection ImageCollection { get; set; } = new MagickImageCollection();
+    public MagickImageCollection ImageCollection;
 
     public int Width
     {
@@ -76,11 +76,11 @@ namespace Frame
       set => size = value;
     }
 
-    public SortMode   SortMode   { get; set; }
-    public SortMethod SortMethod { get; set; }
+    public SortMode SortMode;
+    public SortMethod SortMethod;
 
-    public bool HasMips  { get; set; }
-    public int  MipCount { get; set; }
+    public bool HasMips;
+    public int MipCount;
 
     public int MipValue
     {
@@ -111,9 +111,9 @@ namespace Frame
       }
     }
 
-    public bool IsGif { get; set; }
-    public int CurrentFrame { get; set; } = 0;
-    public int EndFrame { get; set; }
+    public bool IsGif;
+    public int CurrentFrame;
+    public int EndFrame;
 
     public void Dispose()
     {

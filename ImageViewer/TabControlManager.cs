@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using Dragablz;
 using Dragablz.Dockablz;
@@ -173,7 +174,7 @@ namespace Frame
         return false;
       }
 
-      return ((TabItemControl) tabControl.SelectedItem).IsValid;
+      return ((TabItemControl) tabControl.SelectedItem).Paths.Any();
     }
 
     public TabItemControl AddTab(string filepath)

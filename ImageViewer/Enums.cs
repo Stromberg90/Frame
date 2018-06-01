@@ -1,27 +1,29 @@
 ﻿namespace Frame
 {
-    public enum SortMode
-    {
-        Ascending,
-        Descending
-    }
+  public enum SortMode
+  {
+    Ascending,
+    Descending
+  }
 
-    public enum SortMethod
-    {
-        Name,
-        Date,
-        Size
-    }
+  public enum SortMethod
+  {
+    Name,
+    Date,
+    Size
+  }
 
   public enum SwitchDirection
-    {
-        Next,
-        Previous
-    }
+  {
+    Next,
+    Previous
+  }
 
-    public enum ApplicationMode
-    {
-        Normal,
-        Slideshow
-    }
+  public enum ApplicationMode
+  {
+    Normal,
+    Slideshow,
+    Tiled,
+    ChannelsMontage
+  }
 }

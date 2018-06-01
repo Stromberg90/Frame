@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using Frame.Properties;
 
@@ -40,7 +41,7 @@ namespace Frame
           }
         }
 
-        if (tabItemControl.IsValid)
+        if (tabItemControl.Paths.Any())
         {
           Manager.Sort();
         }

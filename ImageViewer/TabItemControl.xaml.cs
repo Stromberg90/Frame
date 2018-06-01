@@ -4,24 +4,20 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using System.Windows.Threading;
 using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
 using Application = System.Windows.Application;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
-using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using TextAlignment = ImageMagick.TextAlignment;
 
 namespace Frame
 {
   public partial class TabItemControl : IDisposable, INotifyPropertyChanged
   {
-    public ImageSettings ImageSettings { get; } = new ImageSettings();
+    public readonly ImageSettings ImageSettings;
 
     public ApplicationMode Mode
     {
@@ -54,7 +50,7 @@ namespace Frame
       }
     }
 
-    public string InitialImagePath { get; set; }
+    public string InitialImagePath;
 
     public int Index
     {
@@ -66,9 +62,7 @@ namespace Frame
       }
     }
 
-    public List<string> Paths { get; set; } = new List<string>();
-
-    public bool IsValid => Paths.Any();
+    public List<string> Paths;
 
     ApplicationMode mode = ApplicationMode.Normal;
     int             index;
@@ -181,35 +175,36 @@ namespace Frame
         }
 
         OnPropertyChanged();
+        var magickImage = ResizeCurrentMip();
         switch (ImageSettings.DisplayChannel)
         {
+          case Channels.RGB:
+          {
+            magickImage.Alpha(AlphaOption.Opaque);
+            return magickImage.ToBitmapSource();
+          }
           case Channels.Red:
           {
-            var magickImage = ResizeCurrentMip();
             return magickImage.Separate(Channels.Red)
                               .ElementAt(0)?.ToBitmapSource();
           }
           case Channels.Green:
           {
-            var magickImage = ResizeCurrentMip();
             return magickImage.Separate(Channels.Green)
                               .ElementAt(0)?.ToBitmapSource();
           }
           case Channels.Blue:
           {
-            var magickImage = ResizeCurrentMip();
             return magickImage.Separate(Channels.Blue)
                               .ElementAt(0)?.ToBitmapSource();
           }
           case Channels.Alpha:
           {
-            var magickImage = ResizeCurrentMip();
             return magickImage.Separate(Channels.Alpha)
                               .ElementAt(0)?.ToBitmapSource();
           }
           default:
           {
-            var magickImage = ResizeCurrentMip();
             magickImage.Alpha(AlphaOption.Opaque);
             return magickImage.ToBitmapSource();
           }
@@ -230,18 +225,13 @@ namespace Frame
 
     public string Path => Index < Paths.Count ? Paths[Index] : Paths[0];
 
-    string Title
-    {
-      set => Header = value;
-    }
-
     string Filename => new FileInfo(Paths[Index]).Name;
 
-    uint                                currentSlideshowTime;
-    bool                                firstImageLoaded;
-    public readonly System.Timers.Timer gifTimer;
-    bool                                _collapseFooterText;
-    MainWindow                          ParentMainWindow => Window.GetWindow(this) as MainWindow;
+    uint                         currentSlideshowTime;
+    bool                         firstImageLoaded;
+    readonly System.Timers.Timer gifTimer;
+    bool                         collapseFooterText;
+    MainWindow                   ParentMainWindow => (MainWindow) Window.GetWindow(this);
 
     protected override void OnSelected(RoutedEventArgs e)
     {
@@ -263,6 +253,9 @@ namespace Frame
       Margin = new Thickness(0.5);
       InitializeComponent();
 
+      ImageSettings = new ImageSettings();
+      Paths         = new List<string>();
+
       ImagePresenter.PreviewKeyDown += ImagePresenterOnPreviewKeyDown;
 
       gifTimer         =  new System.Timers.Timer();
@@ -272,7 +265,7 @@ namespace Frame
       ImageSettings.PropertyChanged += (sender, args) =>
       {
         UpdateFooter();
-        UpdateTitle();
+        Header = Filename;
       };
       PropertyChanged                  += OnPropertyChanged;
       ImagePresenter.ImageArea.KeyDown += (sender, args) => { ParentMainWindow.ImageAreaKeyDown(sender, args); };
@@ -290,29 +283,21 @@ namespace Frame
     {
       if (args.PropertyName == nameof(Index))
       {
-//        if (firstImageLoaded)
-//        {
         Application.Current?.Dispatcher.Invoke(() => { ParentMainWindow.RefreshImage(); });
         ResetView();
-//        }
       }
 
       UpdateFooter();
-      UpdateTitle();
+      Header = Filename;
     }
 
     string FooterModeTextP
     {
       get
       {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "MODE: ";
-        }
-
         if (Mode == ApplicationMode.Slideshow)
         {
-          if (!_collapseFooterText)
+          if (!collapseFooterText)
           {
             return $"MODE: {Mode} " + CurrentSlideshowTime;
           }
@@ -320,42 +305,18 @@ namespace Frame
           return $"{Mode} " + CurrentSlideshowTime;
         }
 
-        if (!_collapseFooterText)
-        {
-          return $"MODE: {Mode}";
-        }
-
-        return $"{Mode}";
+        return !collapseFooterText ? $"MODE: {Mode}" : $"{Mode}";
       }
     }
 
-    string FooterSizeTextP
-    {
-      get
-      {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "SIZE: ";
-        }
-
-        if (!_collapseFooterText)
-        {
-          return $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}";
-        }
-
-        return $"{ImageSettings.Width}x{ImageSettings.Height}";
-      }
-    }
+    string FooterSizeTextP => !collapseFooterText
+      ? $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}"
+      : $"{ImageSettings.Width}x{ImageSettings.Height}";
 
     string FooterChannelsTextP
     {
       get
       {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "CHANNELS: ";
-        }
-
         var channel = string.Empty;
         switch (ImageSettings.DisplayChannel)
         {
@@ -386,12 +347,7 @@ namespace Frame
           }
         }
 
-        if (!_collapseFooterText)
-        {
-          return $"CHANNELS: {channel}";
-        }
-
-        return $"{channel}";
+        return !collapseFooterText ? $"CHANNELS: {channel}" : $"{channel}";
       }
     }
 
@@ -399,11 +355,6 @@ namespace Frame
     {
       get
       {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "FILESIZE: ";
-        }
-
         try
         {
           if (ImageSettings.Size == 0)
@@ -413,33 +364,18 @@ namespace Frame
 
           if (ImageSettings.Size < 1024)
           {
-            if (!_collapseFooterText)
-            {
-              return $"FILESIZE: {ImageSettings.Size}Bytes";
-            }
-
-            return $"{ImageSettings.Size}Bytes";
+            return !collapseFooterText ? $"FILESIZE: {ImageSettings.Size}Bytes" : $"{ImageSettings.Size}Bytes";
           }
 
           if (ImageSettings.Size < 1048576)
           {
             var filesize = (double) (ImageSettings.Size / 1024f);
-            if (!_collapseFooterText)
-            {
-              return $"FILESIZE: {filesize:N2}KB";
-            }
-
-            return $"{filesize:N2}KB";
+            return !collapseFooterText ? $"FILESIZE: {filesize:N2}KB" : $"{filesize:N2}KB";
           }
           else
           {
             var filesize = (double) (ImageSettings.Size / 1024f) / 1024f;
-            if (!_collapseFooterText)
-            {
-              return $"FILESIZE: {filesize:N2}MB";
-            }
-
-            return $"{filesize:N2}MB";
+            return !collapseFooterText ? $"FILESIZE: {filesize:N2}MB" : $"{filesize:N2}MB";
           }
         }
         catch (FileNotFoundException)
@@ -449,62 +385,23 @@ namespace Frame
       }
     }
 
-    string FooterZoomTextP
-    {
-      get
-      {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "ZOOM: ";
-        }
+    string FooterZoomTextP => !collapseFooterText ? $"ZOOM: {ImagePresenter.Zoom:N2}%" : $"{ImagePresenter.Zoom:N2}%";
 
-        if (!_collapseFooterText)
-        {
-          return $"ZOOM: {ImagePresenter.Zoom:N2}%";
-        }
-
-        return $"{ImagePresenter.Zoom:N2}%";
-      }
-    }
-
-    string FooterIndexTextP
-    {
-      get
-      {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "INDEX: ";
-        }
-
-        if (!_collapseFooterText)
-        {
-          return $"INDEX: {Index + 1}/{Paths.Count}";
-        }
-
-        return $"{Index + 1}/{Paths.Count}";
-      }
-    }
+    string FooterIndexTextP =>
+      !collapseFooterText ? $"INDEX: {Index + 1}/{Paths.Count}" : $"{Index + 1}/{Paths.Count}";
 
     string FooterMipIndexTextP
     {
       get
       {
-        if (!ImageSettings.ImageCollection.Any())
-        {
-          return "MIP: ";
-        }
-
         if (ImageSettings.HasMips)
         {
-          if (!_collapseFooterText)
-          {
-            return $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
-          }
-
-          return $"{ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
+          return !collapseFooterText
+            ? $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}"
+            : $"{ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
         }
 
-        return !_collapseFooterText ? "MIP: None" : "None";
+        return !collapseFooterText ? "MIP: None" : "None";
       }
     }
 
@@ -553,13 +450,8 @@ namespace Frame
       }
     }
 
-    public bool Tiled           { get; set; }
-    public bool ChannelsMontage { get; set; }
-
-    void UpdateTitle()
-    {
-      Title = Filename;
-    }
+    public bool Tiled;
+    public bool ChannelsMontage;
 
     static MagickImage ErrorImage(string filepath)
     {
@@ -635,10 +527,6 @@ namespace Frame
         ImageSettings.ImageCollection.Clear();
         ImageSettings.ImageCollection.Add(ErrorImage(Path));
       }
-      finally
-      {
-        GC.Collect();
-      }
     }
 
     void GifAnim(object sender, EventArgs e)
@@ -691,7 +579,13 @@ namespace Frame
       ChannelsMontage = false;
 
       if (Mode == ApplicationMode.Slideshow)
+      {
         CurrentSlideshowTime = 1;
+      }
+      else
+      {
+        Mode = ApplicationMode.Normal;
+      }
 
       switch (switchDirection)
       {
@@ -733,15 +627,7 @@ namespace Frame
 
     void Footer_OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-      if (Footer.RenderSize.Width < 620)
-      {
-        _collapseFooterText = true;
-      }
-      else
-      {
-        _collapseFooterText = false;
-      }
-
+      collapseFooterText = Footer.RenderSize.Width < 620;
       UpdateFooter();
     }
 
