@@ -4,9 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media.Imaging;
 using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
@@ -16,7 +14,7 @@ using TextAlignment = ImageMagick.TextAlignment;
 
 namespace Frame
 {
-  public partial class TabItemControl : IDisposable, INotifyPropertyChanged
+    public partial class TabItemControl : IDisposable, INotifyPropertyChanged
   {
     public readonly ImageSettings ImageSettings;
 
@@ -87,7 +85,9 @@ namespace Frame
     bool                         firstImageLoaded;
     readonly System.Timers.Timer gifTimer;
     bool                         collapseFooterText;
-    MainWindow                   ParentMainWindow => (MainWindow) Window.GetWindow(this);
+
+    MainWindow ParentMainWindow =>
+      Dispatcher.Invoke(() => (MainWindow) Window.GetWindow(this));
 
     protected override void OnSelected(RoutedEventArgs e)
     {
@@ -220,7 +220,9 @@ namespace Frame
 
           if (ImageSettings.Size < 1024)
           {
-            return !collapseFooterText ? $"FILESIZE: {ImageSettings.Size}Bytes" : $"{ImageSettings.Size}Bytes";
+            return !collapseFooterText
+              ? $"FILESIZE: {ImageSettings.Size}Bytes"
+              : $"{ImageSettings.Size}Bytes";
           }
 
           if (ImageSettings.Size < 1048576)
@@ -241,7 +243,8 @@ namespace Frame
       }
     }
 
-    string FooterZoomTextP => !collapseFooterText ? $"ZOOM: {ImagePresenter.Zoom:N2}%" : $"{ImagePresenter.Zoom:N2}%";
+    string FooterZoomTextP =>
+      !collapseFooterText ? $"ZOOM: {ImagePresenter.Zoom:N2}%" : $"{ImagePresenter.Zoom:N2}%";
 
     string FooterIndexTextP =>
       !collapseFooterText ? $"INDEX: {Index + 1}/{Paths.Count}" : $"{Index + 1}/{Paths.Count}";
@@ -344,15 +347,14 @@ namespace Frame
             if (!gifTimer.Enabled)
             {
               gifTimer.Start();
-              gifTimer.Interval =
-                ImageSettings.ImageCollection[ImageSettings.CurrentFrame].AnimationDelay;
+              gifTimer.Interval = ImageSettings.ImageCollection[ImageSettings.CurrentFrame].AnimationDelay;
             }
 
             ImageSettings.IsGif    = true;
             ImageSettings.HasMips  = false;
             ImageSettings.EndFrame = ImageSettings.ImageCollection.Count - 1;
             ImageSettings.MipValue = 0;
-            break;
+            return;
           }
           case ".dds":
           {
@@ -385,7 +387,7 @@ namespace Frame
           }
         }
       }
-      catch (Exception)
+      catch (Exception e)
       {
         ImageSettings.ImageCollection.Clear();
         ImageSettings.ImageCollection.Add(ErrorImage(Path));
@@ -492,37 +494,37 @@ namespace Frame
         {
           magickImage.Alpha(AlphaOption.Opaque);
           ImagePresenter.ImageArea.Source = magickImage.ToBitmapSource();
-          return;
+          break;
         }
         case Channels.Red:
         {
           ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Red)
                                                        .ElementAt(0)?.ToBitmapSource();
-          return;
+          break;
         }
         case Channels.Green:
         {
           ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Green)
                                                        .ElementAt(0)?.ToBitmapSource();
-          return;
+          break;
         }
         case Channels.Blue:
         {
           ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Blue)
                                                        .ElementAt(0)?.ToBitmapSource();
-          return;
+          break;
         }
         case Channels.Alpha:
         {
           ImagePresenter.ImageArea.Source = magickImage.Separate(Channels.Alpha)
                                                        .ElementAt(0)?.ToBitmapSource();
-          return;
+          break;
         }
         default:
         {
           magickImage.Alpha(AlphaOption.Opaque);
           ImagePresenter.ImageArea.Source = magickImage.ToBitmapSource();
-          return;
+          break;
         }
       }
     }
@@ -538,7 +540,7 @@ namespace Frame
         ImageSettings.CurrentFrame = 0;
       }
 
-      Application.Current?.Dispatcher.Invoke(() => { ParentMainWindow.RefreshImage(); });
+      Application.Current?.Dispatcher.Invoke(ParentMainWindow.RefreshImage);
     }
 
     void Dispose(bool disposing)

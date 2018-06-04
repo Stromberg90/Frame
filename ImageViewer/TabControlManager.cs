@@ -216,5 +216,16 @@ namespace Frame
       CurrentTab.Dispose();
       TabablzControl.CloseItem(CurrentTab);
     }
-  }
+
+    public void CloseTab(TabItemControl tab)
+    {
+      if (!CanExcectute())
+      {
+        return;
+      }
+
+      tab.Dispose();
+      TabablzControl.CloseItem(tab);
+    }
+    }
 }

@@ -18,7 +18,7 @@
             <Viewbox Grid.Column="0" Grid.Row="0">
                 <ContentPresenter>
                     <ContentPresenter.Content>
-                        <Image x:Name="ImageArea" />
+                        <Image x:Name="ImageArea"/>
                     </ContentPresenter.Content>
                 </ContentPresenter>
             </Viewbox>

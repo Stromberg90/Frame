@@ -1,16 +1,9 @@
-﻿//CHANGLOG 1.6
+﻿//CHANGLOG 1.6.5
 
 //Bugs fixed.
-//When dragging tab from maximized window, it now changes it to not tbe maximized.
-//New wpf image box, so docking helpers show up properly.
-//Sort settings now stick when duplicating tab.
-//When files changed in directory, it now keeps the opened image.
 
 //Features
-//UI Improvments, tabs color matches the rest.
-//Toggle Bars, hides window frame and footer.
-//Collapses footer at lower widths.
-//Double click to open image
+//Switched to OpenMP version of Magick.NET, image loading is now much faster.
 
 
 using System;
@@ -45,7 +38,7 @@ namespace Frame
 {
   public partial class MainWindow : IDisposable
   {
-    public Visibility      FooterVisibility = Visibility.Visible;
+      Visibility      footerVisibility = Visibility.Visible;
     static DispatcherTimer slideshowTimer;
 
     readonly FilesManager   filesManager;
@@ -55,7 +48,7 @@ namespace Frame
     FileSystemWatcher                 imageDirectoryWatcher;
     FileSystemWatcher                 parentDirectoryWatcher;
     bool                              changingSize = true;
-    Dictionary<CommandKeys, ICommand> commands;
+      readonly Dictionary<CommandKeys, ICommand> commands;
     string                            directoryName;
 
     public class ToggleDisplayChannelCommand : ICommand
@@ -90,7 +83,7 @@ namespace Frame
       public delegate void ValidateFunction();
 
 
-      public Command(CommandFunction func, ValidateFunction validateFunction = null, params object[] args)
+      public Command(CommandFunction func, ValidateFunction validateFunction = null)
       {
         this.func             = func;
         this.validateFunction = validateFunction;
@@ -106,26 +99,26 @@ namespace Frame
     struct CommandKeys
     {
       [UsedImplicitly] Key  key;
-      [UsedImplicitly] bool LeftShift;
-      [UsedImplicitly] bool LeftCtrl;
+      [UsedImplicitly] bool leftShift;
+      [UsedImplicitly] bool leftCtrl;
 
       public CommandKeys(Key key, params Key[] keys)
       {
         this.key  = key;
-        LeftShift = false;
-        LeftCtrl  = false;
+        leftShift = false;
+        leftCtrl  = false;
         foreach (var key1 in keys)
         {
           switch (key1)
           {
             case Key.LeftShift:
             {
-              LeftShift = true;
+              leftShift = true;
               break;
             }
             case Key.LeftCtrl:
             {
-              LeftCtrl = true;
+              leftCtrl = true;
               break;
             }
           }
@@ -135,8 +128,8 @@ namespace Frame
       public CommandKeys(Key key, bool leftShift, bool leftCtrl)
       {
         this.key  = key;
-        LeftShift = leftShift;
-        LeftCtrl  = leftCtrl;
+        this.leftShift = leftShift;
+        this.leftCtrl  = leftCtrl;
       }
     }
 
@@ -164,7 +157,7 @@ namespace Frame
         {new CommandKeys(Key.Space), new Command(NextImage)},
         {new CommandKeys(Key.Delete), new Command(DeleteImage)},
         {new CommandKeys(Key.D, Key.LeftCtrl), new Command(DuplicateTab)},
-        {new CommandKeys(Key.W, Key.LeftCtrl), new Command(CloseTab)},
+        {new CommandKeys(Key.W, Key.LeftCtrl), new Command(tabControlManager.CloseSelectedTab)},
         {new CommandKeys(Key.S, Key.LeftCtrl), new Command(ChannelsMontage)},
         {new CommandKeys(Key.S), new Command(ToggleSlideshow)},
         {new CommandKeys(Key.Right, Key.LeftCtrl), new Command(NextTab)},
@@ -274,7 +267,7 @@ namespace Frame
       currentTab                          = tabControlManager.CurrentTab;
       currentTab.InitialImagePath         = filepath;
       currentTab.ImageSettings.IsGif      = false;
-      currentTab.Footer.Visibility        = FooterVisibility;
+      currentTab.Footer.Visibility        = footerVisibility;
       currentTab.ImageSettings.SortMethod = oldTab.ImageSettings.SortMethod;
       currentTab.ImageSettings.SortMode   = oldTab.ImageSettings.SortMode;
 
@@ -435,7 +428,7 @@ namespace Frame
 
 //            currentTab.InitialImagePath = filepath;
 //            currentTab.ImageSettings.IsGif = false;
-      currentTab.Footer.Visibility = FooterVisibility;
+      currentTab.Footer.Visibility = footerVisibility;
 
 //            DisplayImage();
       SetupDirectoryWatcher();
@@ -456,11 +449,6 @@ namespace Frame
       currentTab.ImageSettings.SortMode = SortMode.Ascending;
       SortDecending.IsChecked           = false;
       SortAscending.IsChecked           = true;
-    }
-
-    void CloseTab()
-    {
-      tabControlManager.CloseSelectedTab();
     }
 
     void CopyPathToClipboard(object sender, RoutedEventArgs e)
@@ -741,39 +729,53 @@ namespace Frame
       Current.Dispatcher.Invoke(() =>
       {
         // Need to check all tabs
-        var currentTab = tabControlManager.CurrentTab;
-        switch (args.ChangeType)
+        var toBeClosed = new List<TabItemControl>();
+        foreach (var tabablzControl in tabControlManager.TabControls)
         {
-          case WatcherChangeTypes.Deleted:
+          foreach (TabItemControl tabItemControl in tabablzControl.Items)
           {
-            if (Path.GetDirectoryName(currentTab.InitialImagePath) == args.FullPath) CloseTab();
+            switch (args.ChangeType)
+            {
+              case WatcherChangeTypes.Deleted:
+              {
+                if (Path.GetDirectoryName(tabItemControl.InitialImagePath) == args.FullPath)
+                {
+                  toBeClosed.Add(tabItemControl);
+                }
 
-            break;
-          }
-          case WatcherChangeTypes.Changed:
-          {
-            break;
-          }
-          case WatcherChangeTypes.Renamed:
-          {
-            var renamedArgs = (RenamedEventArgs) args;
-            var newFile = Path.Combine(renamedArgs.FullPath,
-                                       Path.GetFileName(currentTab.Path) ??
-                                       throw new InvalidOperationException("It was the null"));
-            if (Path.GetDirectoryName(currentTab.InitialImagePath) ==
-                renamedArgs.OldFullPath)
-              ReplaceImageInTab(newFile);
+                break;
+              }
+              case WatcherChangeTypes.Changed:
+              {
+                break;
+              }
+              case WatcherChangeTypes.Renamed:
+              {
+                var renamedArgs = (RenamedEventArgs) args;
+                var newFile = Path.Combine(renamedArgs.FullPath,
+                                           Path.GetFileName(tabItemControl.Path) ??
+                                           throw new InvalidOperationException("It was the null"));
+                if (Path.GetDirectoryName(tabItemControl.InitialImagePath) ==
+                    renamedArgs.OldFullPath)
+                  ReplaceImageInTab(newFile);
 
-            break;
+                break;
+              }
+              case WatcherChangeTypes.All:
+              {
+                break;
+              }
+              case WatcherChangeTypes.Created:
+              {
+                break;
+              }
+            }
           }
-          case WatcherChangeTypes.All:
-          {
-            break;
-          }
-          case WatcherChangeTypes.Created:
-          {
-            break;
-          }
+        }
+
+        foreach (var tab in toBeClosed)
+        {
+          tabControlManager.CloseTab(tab);
         }
       });
     }
@@ -1117,23 +1119,23 @@ namespace Frame
     void ToggleBars()
     {
       if (!tabControlManager.CanExcectute()) return;
-      FooterVisibility = tabControlManager.CurrentTab.Footer.Visibility == Visibility.Visible
+      footerVisibility = tabControlManager.CurrentTab.Footer.Visibility == Visibility.Visible
         ? Visibility.Collapsed
         : Visibility.Visible;
-      WindowStyle = FooterVisibility != Visibility.Visible ? WindowStyle.None : WindowStyle.SingleBorderWindow;
+      WindowStyle = footerVisibility != Visibility.Visible ? WindowStyle.None : WindowStyle.SingleBorderWindow;
       foreach (var tabControl in tabControlManager.TabControls)
       {
-        tabControl.IsHeaderPanelVisible = FooterVisibility == Visibility.Visible;
+        tabControl.IsHeaderPanelVisible = footerVisibility == Visibility.Visible;
         foreach (TabItemControl tabItemControl in tabControl.Items)
         {
           var scrollViewer = tabItemControl.ImagePresenter.ScrollViewer;
-          scrollViewer.VerticalScrollBarVisibility = FooterVisibility != Visibility.Visible
+          scrollViewer.VerticalScrollBarVisibility = footerVisibility != Visibility.Visible
             ? ScrollBarVisibility.Hidden
             : ScrollBarVisibility.Auto;
-          scrollViewer.HorizontalScrollBarVisibility = FooterVisibility != Visibility.Visible
+          scrollViewer.HorizontalScrollBarVisibility = footerVisibility != Visibility.Visible
             ? ScrollBarVisibility.Hidden
             : ScrollBarVisibility.Auto;
-          tabItemControl.Footer.Visibility = FooterVisibility;
+          tabItemControl.Footer.Visibility = footerVisibility;
         }
       }
     }

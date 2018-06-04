@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Windows.Media.Imaging;
 using Frame.Annotations;
 using ImageMagick;
 
@@ -115,7 +116,7 @@ namespace Frame
     public int CurrentFrame;
     public int EndFrame;
 
-    public void Dispose()
+        public void Dispose()
     {
       ImageCollection?.Dispose();
     }
