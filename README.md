@@ -27,4 +27,4 @@ Hotkeys
 * "A"       - Toggles Alpha Channel
 * "-"       - Goes Down A Mip Level
 * "+"       - Goes Up A Mip Level
-"Ctrl-Space"-Turns of scrollbar, titlebar and footer
+* "Ctrl-Space"-Turns of scrollbar, titlebar and footer
