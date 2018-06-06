@@ -29,7 +29,7 @@ foreach (Document document in Project.Analysis.Documents)
                 }
                 text = text.Replace(string.Format("Autoupdater.NET.Official({0}) by RBSoft", oldVersionNumber), string.Format("Autoupdater.NET.Official({0}) by RBSoft", line.Split('=')[2].Split(',')[0]));
             }
-            else if (line.Contains("Magick.NET-Q16-AnyCPU, "))
+            else if (line.Contains("Magick.NET-Q16-x64, "))
             {
                 var oldVersionNumber = string.Empty;
                 foreach (var xamlLine in lines)

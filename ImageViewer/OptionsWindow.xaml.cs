@@ -40,12 +40,12 @@ namespace Frame
         {
             InitializeComponent();
             IsVisibleChanged += OnIsVisibleChanged;
-            OptionsProperyGrid.SelectedObject = options;
+//            OptionsProperyGrid.SelectedObject = options;
         }
 
         void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            OptionsProperyGrid.Update();
+//            OptionsProperyGrid.Update();
             if ((bool) e.NewValue)
             {
                 Settings.Default.Reload();
@@ -74,7 +74,7 @@ namespace Frame
             if (result == MessageBoxResult.OK)
             {
                 Settings.Default.Reset();
-                OptionsProperyGrid.Update();
+//                OptionsProperyGrid.Update();
             }
         }
     }
