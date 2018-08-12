@@ -4,6 +4,21 @@ using Microsoft.Build.Evaluation;
 using System;
 using System.Reflection;
 
+var installerScript = File.ReadAllText("../Setup.iss");
+var installerScriptLines = File.ReadAllLines("../Setup.iss");
+foreach(var line in installerScriptLines)
+{
+    if(line.Contains("AppVersion="))
+    {
+        var oldVersionNumber = line.Split('=')[1];
+        installerScript.Replace($"AppVersion={oldVersionNumber}", $"AppVersion={"1.6.5.0"}");
+    }
+    else if (line.Contains("AppVerName="))
+    {
+        installerScript.Replace(line, $"AppVerName=Frame {"1.6.5.0"}");
+    }
+}
+File.WriteAllText("../Setup.iss", installerScript);
 
 foreach (Document document in Project.Analysis.Documents)
 {

@@ -17,6 +17,7 @@ using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using AutoUpdaterDotNET;
 using Dragablz;
@@ -38,27 +39,31 @@ namespace Frame
 {
   public partial class MainWindow : IDisposable
   {
-      Visibility      footerVisibility = Visibility.Visible;
+    Visibility             footerVisibility = Visibility.Visible;
     static DispatcherTimer slideshowTimer;
 
     readonly FilesManager   filesManager;
     readonly SortingManager sortingManager;
 
-    readonly TabControlManager        tabControlManager;
-    FileSystemWatcher                 imageDirectoryWatcher;
-    FileSystemWatcher                 parentDirectoryWatcher;
-    bool                              changingSize = true;
-      readonly Dictionary<CommandKeys, ICommand> commands;
-    string                            directoryName;
+    readonly TabControlManager                 tabControlManager;
+    FileSystemWatcher                          imageDirectoryWatcher;
+    FileSystemWatcher                          parentDirectoryWatcher;
+    bool                                       changingSize = true;
+    readonly Dictionary<CommandKeys, ICommand> commands;
+    string                                     directoryName;
 
     public class ToggleDisplayChannelCommand : ICommand
     {
-      readonly CommandFunction func;
-      readonly Channels        channel;
+      readonly CommandFunction  func;
+      readonly ValidateFunction validateFunction;
+      readonly Channels         channel;
 
       public delegate void CommandFunction(Channels channel);
 
-      public ToggleDisplayChannelCommand(CommandFunction func, Channels channel)
+      public delegate bool ValidateFunction();
+
+      public ToggleDisplayChannelCommand(CommandFunction  func, Channels channel,
+                                         ValidateFunction validateFunction = null)
       {
         this.func    = func;
         this.channel = channel;
@@ -66,6 +71,14 @@ namespace Frame
 
       public void Execute()
       {
+        if (validateFunction != null)
+        {
+          if (!validateFunction.Invoke())
+          {
+            return;
+          }
+        }
+
         if (!ModifierKeyDown())
         {
           func(channel);
@@ -80,7 +93,7 @@ namespace Frame
 
       public delegate void CommandFunction();
 
-      public delegate void ValidateFunction();
+      public delegate bool ValidateFunction();
 
 
       public Command(CommandFunction func, ValidateFunction validateFunction = null)
@@ -91,7 +104,14 @@ namespace Frame
 
       public void Execute()
       {
-        validateFunction?.Invoke();
+        if (validateFunction != null)
+        {
+          if (!validateFunction.Invoke())
+          {
+            return;
+          }
+        }
+
         func();
       }
     }
@@ -127,7 +147,7 @@ namespace Frame
 
       public CommandKeys(Key key, bool leftShift, bool leftCtrl)
       {
-        this.key  = key;
+        this.key       = key;
         this.leftShift = leftShift;
         this.leftCtrl  = leftCtrl;
       }
@@ -148,26 +168,76 @@ namespace Frame
 
       commands = new Dictionary<CommandKeys, ICommand>
       {
-        {new CommandKeys(Key.A), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Alpha)},
-        {new CommandKeys(Key.R), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Red)},
-        {new CommandKeys(Key.G), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Green)},
-        {new CommandKeys(Key.B), new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Blue)},
-        {new CommandKeys(Key.F), new Command(ResetView)},
-        {new CommandKeys(Key.T), new Command(TileImage)},
-        {new CommandKeys(Key.Space), new Command(NextImage)},
-        {new CommandKeys(Key.Delete), new Command(DeleteImage)},
-        {new CommandKeys(Key.D, Key.LeftCtrl), new Command(DuplicateTab)},
-        {new CommandKeys(Key.W, Key.LeftCtrl), new Command(tabControlManager.CloseSelectedTab)},
-        {new CommandKeys(Key.S, Key.LeftCtrl), new Command(ChannelsMontage)},
-        {new CommandKeys(Key.S), new Command(ToggleSlideshow)},
-        {new CommandKeys(Key.Right, Key.LeftCtrl), new Command(NextTab)},
-        {new CommandKeys(Key.Left, Key.LeftCtrl), new Command(PreviousTab)},
-        {new CommandKeys(Key.Right), new Command(NextImage)},
-        {new CommandKeys(Key.Left), new Command(PreviousImage)},
-        {new CommandKeys(Key.Add), new Command(LowerMip)},
-        {new CommandKeys(Key.Subtract), new Command(HigherMip)},
-        {new CommandKeys(Key.Space, Key.LeftCtrl), new Command(ToggleBars)},
+        {
+          new CommandKeys(Key.A),
+          new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Alpha, tabControlManager.CanExcectute)
+        },
+        {
+          new CommandKeys(Key.R),
+          new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Red, tabControlManager.CanExcectute)
+        },
+        {
+          new CommandKeys(Key.G),
+          new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Green, tabControlManager.CanExcectute)
+        },
+        {
+          new CommandKeys(Key.B),
+          new ToggleDisplayChannelCommand(ToggleDisplayChannel, Channels.Blue, tabControlManager.CanExcectute)
+        },
+        {new CommandKeys(Key.F), new Command(ResetView, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.T), new Command(TileImage, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Space), new Command(NextImage, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Delete), new Command(DeleteImage, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.D, Key.LeftCtrl), new Command(DuplicateTab, tabControlManager.CanExcectute)},
+        {
+          new CommandKeys(Key.W, Key.LeftCtrl),
+          new Command(tabControlManager.CloseSelectedTab, tabControlManager.CanExcectute)
+        },
+        {new CommandKeys(Key.S, Key.LeftCtrl), new Command(ChannelsMontage, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.S), new Command(ToggleSlideshow, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Right, Key.LeftCtrl), new Command(NextTab, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Left, Key.LeftCtrl), new Command(PreviousTab, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Right), new Command(NextImage, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Left), new Command(PreviousImage, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Add), new Command(LowerMip, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Subtract), new Command(HigherMip, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Space, Key.LeftCtrl), new Command(ToggleBars, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.V, Key.LeftCtrl), new Command(Paste)},
+        {new CommandKeys(Key.C, Key.LeftCtrl), new Command(Copy, tabControlManager.CanExcectute)},
+        {new CommandKeys(Key.Escape), new Command(Close)},
+        {new CommandKeys(Key.N, Key.LeftCtrl), new Command(AddNewTab)},
       };
+    }
+
+    void Copy()
+    {
+      Clipboard.SetImage(tabControlManager.CurrentTab.ImagePresenter.ImageArea.Source as BitmapSource);
+    }
+
+    void Paste()
+    {
+      if (Clipboard.ContainsFileDropList())
+      {
+        var filenames = new List<string>();
+        foreach (var filepath in Clipboard.GetFileDropList())
+        {
+          filenames.Add(filepath);
+        }
+
+        var supportedFilenames = FilesManager.FilterSupportedFiles(filenames.ToArray());
+        if (!supportedFilenames.Any())
+        {
+          return;
+        }
+
+        if (supportedFilenames.Length > 1)
+        {
+          foreach (var filename in supportedFilenames)
+          {
+            AddNewTab(filename);
+          }
+        }
+      }
     }
 
     void NextImage()
@@ -183,15 +253,6 @@ namespace Frame
     void ResetView()
     {
       tabControlManager.CurrentTab.ResetView();
-    }
-
-    void ValidatedKeyHandling(System.Windows.Input.KeyEventArgs e)
-    {
-      if (!tabControlManager.CanExcectute()) return;
-      commands.TryGetValue(
-        new CommandKeys(e.Key, Keyboard.IsKeyDown(Key.LeftShift), Keyboard.IsKeyDown(Key.LeftCtrl)),
-        out var cmd);
-      cmd?.Execute();
     }
 
     void HigherMip()
@@ -372,20 +433,15 @@ namespace Frame
 
     void RawKeyHandling(System.Windows.Input.KeyEventArgs e)
     {
-      switch (e.Key)
-      {
-        case Key.Escape:
-        {
-          Close();
-          break;
-        }
-        case Key.N:
-        {
-          if (Keyboard.IsKeyDown(Key.LeftCtrl)) AddNewTab(string.Empty);
+      commands.TryGetValue(
+        new CommandKeys(e.Key, Keyboard.IsKeyDown(Key.LeftShift), Keyboard.IsKeyDown(Key.LeftCtrl)),
+        out var cmd);
+      cmd?.Execute();
+    }
 
-          break;
-        }
-      }
+    public void AddNewTab()
+    {
+      AddNewTab(string.Empty);
     }
 
     public void AddNewTab(string filepath)
@@ -924,8 +980,10 @@ namespace Frame
       App.AboutDialog.ShowDialog();
     }
 
-    void ImageAreaDragDrop(object sender, DragEventArgs e)
+    void DockLayoutDragDrop(object sender, DragEventArgs e)
     {
+      var bitmap    = e.Data.GetData(DataFormats.Bitmap);
+      var html      = e.Data.GetData(DataFormats.Html);
       var filenames = (string[]) e.Data.GetData(DataFormats.FileDrop, false);
       if (filenames == null)
       {
@@ -977,7 +1035,6 @@ namespace Frame
     public void ImageAreaKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
       RawKeyHandling(e);
-      ValidatedKeyHandling(e);
       Keyboard.Focus(this);
       e.Handled = true;
     }

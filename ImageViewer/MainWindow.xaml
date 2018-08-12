@@ -16,7 +16,7 @@
     <Window.Resources>
         <system:String x:Key="Partition">Frame</system:String>
     </Window.Resources>
-    <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="ImageAreaDragDrop"
+    <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="DockLayoutDragDrop"
                      IsTabStop="False">
         <dragablz:TabablzControl x:Name="ImageTabControl" Width="Auto" Background="#FF202020"
                                  Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" IsDraggingWindowChanged="ImageTabControl_OnIsDraggingWindowChanged" MouseDoubleClick="OpenFilesClick">
