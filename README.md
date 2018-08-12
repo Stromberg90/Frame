@@ -15,16 +15,16 @@ Features
 [![Download Frame](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/getframe/files/latest/download)
 
 Hotkeys
-* "Ctrl-N"  - Adds New Tab
-* "Ctrl-D"  - Duplicates Tab
-* "Ctrl-W"  - Closes Tab
-* "Ctrl-S"  - Splits Channels Into Single Image
-* "T"       - Tiles Image 3x3
-* "S"       - Starts Slideshow
-* "R"       - Toggles Red Channel
-* "G"       - Toggles Green Channel
-* "B"       - Toggles Blue Channel
-* "A"       - Toggles Alpha Channel
-* "-"       - Goes Down A Mip Level
-* "+"       - Goes Up A Mip Level
-"Ctrl-Space"-Turns of scrollbar, titlebar and footer
+* "Ctrl-N"      - Adds New Tab
+* "Ctrl-D"      - Duplicates Tab
+* "Ctrl-W"      - Closes Tab
+* "Ctrl-S"      - Splits Channels Into Single Image
+* "T"           - Tiles Image 3x3
+* "S"           - Starts Slideshow
+* "R"           - Toggles Red Channel
+* "G"           - Toggles Green Channel
+* "B"           - Toggles Blue Channel
+* "A"           - Toggles Alpha Channel
+* "-"           - Goes Down A Mip Level
+* "+"           - Goes Up A Mip Level
+* "Ctrl-Space"  - Turns of scrollbar, titlebar and footer
