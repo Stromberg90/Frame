@@ -118,9 +118,9 @@ namespace Frame
 
     struct CommandKeys
     {
-      [UsedImplicitly] Key  key;
-      [UsedImplicitly] bool leftShift;
-      [UsedImplicitly] bool leftCtrl;
+      [UsedImplicitly] readonly Key  key;
+      [UsedImplicitly] readonly bool leftShift;
+      [UsedImplicitly] readonly bool leftCtrl;
 
       public CommandKeys(Key key, params Key[] keys)
       {

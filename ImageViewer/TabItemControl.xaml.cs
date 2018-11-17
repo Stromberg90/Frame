@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
@@ -331,8 +333,8 @@ namespace Frame
       if (ImageSettings.IsGif)
       {
         var image = ImageSettings.ImageCollection[ImageSettings.CurrentFrame];
-        gifTimer.Interval               = image.AnimationDelay == 0 ? 1 : image.AnimationDelay * 10;
         ImagePresenter.ImageArea.Source = image.ToBitmapSource();
+        gifTimer.Interval               = image.AnimationDelay == 0 ? 0 : image.AnimationDelay * 10;
         return;
       }
 

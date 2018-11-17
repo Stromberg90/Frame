@@ -30,7 +30,6 @@ namespace Frame
   public class SingleAppMangager : WindowsFormsApplicationBase
   {
     SingleInstanceApp          app;
-    ReadOnlyCollection<string> args;
 
     public SingleAppMangager()
     {
@@ -39,9 +38,8 @@ namespace Frame
 
     protected override bool OnStartup(Microsoft.VisualBasic.ApplicationServices.StartupEventArgs eventArgs)
     {
-      args = eventArgs.CommandLine;
       app  = new SingleInstanceApp();
-      foreach (var arg in args)
+      foreach (var arg in eventArgs.CommandLine)
       {
         app.Args.Add(arg);
       }
@@ -53,10 +51,9 @@ namespace Frame
     protected override void OnStartupNextInstance(StartupNextInstanceEventArgs eventArgs)
     {
       base.OnStartupNextInstance(eventArgs);
-      args = eventArgs.CommandLine;
       var mainWindow = (MainWindow) app.MainWindow;
 
-      foreach (var arg in args)
+      foreach (var arg in eventArgs.CommandLine)
       {
         mainWindow?.AddNewTab(arg);
       }
