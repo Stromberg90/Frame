@@ -8,133 +8,140 @@ using ImageMagick;
 
 namespace Frame
 {
-  public class ImageSettings : IDisposable, INotifyPropertyChanged
-  {
-    Channels displayChannel = Channels.RGB;
-
-    public Channels DisplayChannel
+    public class ImageSettings : IDisposable, INotifyPropertyChanged
     {
-      get => displayChannel;
-      set
-      {
-        displayChannel = value;
-        OnPropertyChanged();
-      }
-    }
+        Channels displayChannel = Channels.RGB;
 
-    int mipValue;
-
-    public MagickImageCollection ImageCollection;
-
-    public int Width
-    {
-      get
-      {
-        if (ImageCollection == null ||
-            ImageCollection.Count == 0)
+        public Channels DisplayChannel
         {
-          return 0;
-        }
-
-        return MipValue > 0 ? ImageCollection[0].Width : ImageCollection[MipValue].Width;
-      }
-    }
-
-    public int Height
-    {
-      get
-      {
-        if (ImageCollection == null ||
-            ImageCollection.Count == 0)
-        {
-          return 0;
-        }
-
-        return MipValue > 0 ? ImageCollection[0].Height : ImageCollection[MipValue].Height;
-      }
-    }
-
-    long size;
-
-    public long Size
-    {
-      get
-      {
-        var newSize = size;
-        try
-        {
-          newSize = new FileInfo(ImageCollection[MipValue].FileName).Length;
-        }
-        catch (FileNotFoundException) { }
-        catch (ArgumentException) { }
-        finally
-        {
-          size = newSize;
-        }
-
-        return size;
-      }
-      set => size = value;
-    }
-
-    public SortMode SortMode;
-    public SortMethod SortMethod;
-
-    public bool HasMips;
-    public int MipCount;
-
-    public int MipValue
-    {
-      get => HasMips ? mipValue : 0;
-      set
-      {
-        {
-          if (!HasMips)
-          {
-            mipValue = 0;
-          }
-          else
-          {
-            if (value >= MipCount)
+            get => displayChannel;
+            set
             {
-              mipValue = MipCount - 1;
+                displayChannel = value;
+                OnPropertyChanged();
             }
-            else if (value < 0)
-            {
-              mipValue = 0;
-            }
-            else
-            {
-              mipValue = value;
-            }
-          }
         }
-      }
-    }
 
-    public bool IsGif;
-    public int CurrentFrame;
-    public int EndFrame;
+        public MagickImageCollection ImageCollection;
 
+        int width;
+
+        public int Width
+        {
+            get
+            {
+                if (ImageCollection == null
+                    || ImageCollection.Count == 0)
+                {
+                    return width;
+                }
+
+                return MipValue > 0 ? ImageCollection[0].Width : ImageCollection[MipValue].Width;
+            }
+            set
+            {
+                width = value;
+            }
+        }
+
+        int height;
+
+        public int Height
+        {
+            get
+            {
+                if (ImageCollection == null ||
+                    ImageCollection.Count == 0)
+                {
+                    return height;
+                }
+
+                return MipValue > 0 ? ImageCollection[0].Height : ImageCollection[MipValue].Height;
+            }
+            set
+            {
+                height = value;
+            }
+        }
+
+        long size;
+
+        public long Size
+        {
+            get
+            {
+                var newSize = size;
+                try
+                {
+                    if (ImageCollection != null)
+                    {
+                        newSize = new FileInfo(ImageCollection[MipValue].FileName).Length;
+                    }
+                }
+                catch (FileNotFoundException) { }
+                catch (ArgumentException) { }
+                finally
+                {
+                    size = newSize;
+                }
+
+                return size;
+            }
+            set => size = value;
+        }
+
+        public SortMode SortMode;
+        public SortMethod SortMethod;
+
+        public bool HasMips;
+        public int MipCount;
+
+        int mipValue;
+
+        public int MipValue
+        {
+            get => HasMips ? mipValue : 0;
+            set
+            {
+                {
+                    if (!HasMips)
+                    {
+                        mipValue = 0;
+                    }
+                    else
+                    {
+                        if (value >= MipCount)
+                        {
+                            mipValue = MipCount - 1;
+                        }
+                        else if (value < 0)
+                        {
+                            mipValue = 0;
+                        }
+                        else
+                        {
+                            mipValue = value;
+                        }
+                    }
+                }
+            }
+        }
         public void Dispose()
-    {
-      ImageCollection?.Dispose();
-    }
+        {
+            ImageCollection?.Dispose();
+        }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
-    [NotifyPropertyChangedInvocator]
-    void OnPropertyChanged([CallerMemberName] string propertyName = null)
-    {
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
+        [NotifyPropertyChangedInvocator]
+        void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
-    public void Reset()
-    {
-      MipValue     = 0;
-      IsGif        = false;
-      CurrentFrame = 0;
-      EndFrame     = 0;
+        public void Reset()
+        {
+            MipValue = 0;
+        }
     }
-  }
 }

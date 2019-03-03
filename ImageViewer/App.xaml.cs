@@ -11,7 +11,7 @@ namespace Frame
     protected override void OnStartup(StartupEventArgs e)
     {
       base.OnStartup(e);
-      var unused = new MainWindow();
+      MainWindow = new MainWindow();
     }
 
     public void Poke()

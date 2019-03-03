@@ -19,7 +19,7 @@ namespace Frame
       SortAcending();
       var currentTab = TabControlManager.CurrentTab;
       currentTab.Paths.Reverse();
-      currentTab.Index = currentTab.Paths.IndexOf(currentTab.Path);
+      currentTab.Index = (uint)currentTab.Paths.IndexOf(currentTab.Path);
     }
 
     void SortAcending()
@@ -81,8 +81,7 @@ namespace Frame
     {
       var currentTab = TabControlManager.CurrentTab;
       currentTab.Paths = sortedPaths;
-      currentTab.Index =
-        sortedPaths.FindIndex(x => Path.GetFileName(x) == Path.GetFileName(initialImage));
+      currentTab.Index = (uint)sortedPaths.FindIndex(x => Path.GetFileName(x) == Path.GetFileName(initialImage));
     }
 
     static List<string> TypeSort<T>(IEnumerable<FileId<T>> idList, Dictionary<T, int> dictionary)

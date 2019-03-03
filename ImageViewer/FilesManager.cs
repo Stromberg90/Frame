@@ -1,82 +1,85 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using Frame.Properties;
 
 namespace Frame
 {
-  public class FilesManager
-  {
-    SortingManager    Manager           { get; }
-    TabControlManager TabControlManager { get; }
-
-    public FilesManager(SortingManager sortingManager, TabControlManager tabControlManager)
+    public class FilesManager
     {
-      Manager           = sortingManager;
-      TabControlManager = tabControlManager;
-    }
+        readonly SortingManager Manager;
+        readonly TabControlManager TabControlManager;
 
-    public void SupportedFiles(string folderpath)
-    {
-      Application.Current.Dispatcher.Invoke(() =>
-      {
-        if (string.IsNullOrEmpty(folderpath))
+        public FilesManager(SortingManager sortingManager, TabControlManager tabControlManager)
         {
-          return;
+            Manager = sortingManager;
+            TabControlManager = tabControlManager;
         }
 
-        var tabItemControl = TabControlManager.CurrentTab;
-        tabItemControl.Paths.Clear();
-
-        foreach (var file in Directory.EnumerateFiles(folderpath, "*.*", SearchOption.TopDirectoryOnly))
+        public void SupportedFiles(string folderpath)
         {
-          var extension = Path.GetExtension(Path.GetFileName(file));
-          if (string.IsNullOrEmpty(extension)) continue;
-          var supportedExtensions = Settings.Default.SupportedExtensions;
-          if (supportedExtensions.Contains(extension.Remove(0, 1))
-              || supportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
-          {
-            tabItemControl.Paths.Add(file);
-          }
+            if (string.IsNullOrEmpty(folderpath))
+            {
+                return;
+            }
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var tabItemControl = TabControlManager.CurrentTab;
+                tabItemControl.Paths.Clear();
+
+                Parallel.ForEach(Directory.EnumerateFiles(folderpath, "*.*", SearchOption.TopDirectoryOnly), file =>
+                {
+                    var extension = Path.GetExtension(Path.GetFileName(file));
+                    if (string.IsNullOrEmpty(extension)) return;
+                    var supportedExtensions = Settings.Default.SupportedExtensions;
+                    if (supportedExtensions.Contains(extension.Remove(0, 1))
+                      || supportedExtensions.Contains(extension.ToLower().Remove(0, 1)))
+                    {
+                        tabItemControl.Paths.Add(file);
+                    }
+                });
+
+                if (tabItemControl.Paths.Any())
+                {
+                    Manager.Sort();
+                }
+            });
         }
 
-        if (tabItemControl.Paths.Any())
+        public static string[] FilterSupportedFiles(string[] files)
         {
-          Manager.Sort();
+            var supportedFiles = new List<string>();
+            if (files == null || files.Length <= 0)
+            {
+                return supportedFiles.ToArray();
+            }
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Parallel.ForEach(files, (file) =>
+                {
+                    var extension = Path.GetExtension(Path.GetFileName(file));
+                    if (string.IsNullOrEmpty(extension)) return;
+                    var supportedExtensions = Settings.Default.SupportedExtensions;
+                    if (supportedExtensions.Contains(extension.Remove(0, 1))
+                      || supportedExtensions.Contains(extension.ToLower().Remove(0, 1)) ||
+                      supportedExtensions.Contains(extension.ToUpper().Remove(0, 1)))
+                    {
+                        supportedFiles.Add(file);
+                    }
+                });
+            });
+            return supportedFiles.ToArray();
         }
-      });
-    }
 
-    public static string[] FilterSupportedFiles(string[] files)
-    {
-      var supportedFiles = new List<string>();
-      Application.Current.Dispatcher.Invoke(() =>
-      {
-        if (files == null || files.Length <= 0) return;
-        foreach (var file in files)
+        public static bool ValidFile(string filepath)
         {
-          var extension = Path.GetExtension(Path.GetFileName(file));
-          if (string.IsNullOrEmpty(extension)) continue;
-          var supportedExtensions = Settings.Default.SupportedExtensions;
-          if (supportedExtensions.Contains(extension.Remove(0, 1))
-              || supportedExtensions.Contains(extension.ToLower().Remove(0, 1)) ||
-              supportedExtensions.Contains(extension.ToUpper().Remove(0, 1)))
-          {
-            supportedFiles.Add(file);
-          }
+            if (string.IsNullOrEmpty(filepath)) return false;
+            var extension = Path.GetExtension(Path.GetFileName(filepath));
+            if (string.IsNullOrEmpty(extension)) return false;
+            return Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)) ||
+                   Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1));
         }
-      });
-      return supportedFiles.ToArray();
     }
-
-    public static bool ValidFile(string filepath)
-    {
-      if (string.IsNullOrEmpty(filepath)) return false;
-      var extension = Path.GetExtension(Path.GetFileName(filepath));
-      if (string.IsNullOrEmpty(extension)) return false;
-      return Settings.Default.SupportedExtensions.Contains(extension.Remove(0, 1)) ||
-             Settings.Default.SupportedExtensions.Contains(extension.ToLower().Remove(0, 1));
-    }
-  }
 }

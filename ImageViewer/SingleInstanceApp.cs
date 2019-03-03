@@ -9,6 +9,7 @@ namespace Frame
   public class SingleInstanceApp : Application
   {
     public readonly List<string> Args = new List<string>();
+
     protected override void OnStartup(StartupEventArgs e)
     {
       base.OnStartup(e);
@@ -19,6 +20,7 @@ namespace Frame
         ((MainWindow)MainWindow).AddNewTab(arg);
       }
       MainWindow.Show();
+      //Shutdown();
     }
 
     public void Poke()
@@ -29,7 +31,7 @@ namespace Frame
 
   public class SingleAppMangager : WindowsFormsApplicationBase
   {
-    SingleInstanceApp          app;
+    public SingleInstanceApp    app;
 
     public SingleAppMangager()
     {
