@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frame", "ImageViewer\Frame.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dragablz.net45", "Dragablz\Dragablz.net45.csproj", "{7B11011C-7FD7-4AB0-A1AD-04E940B026DE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmark", "Benchmark\Benchmark.csproj", "{62DC00B8-8331-4CF1-B536-4DECE48222A2}"
+EndProject
 Global
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
@@ -37,12 +39,26 @@ Global
 		{7B11011C-7FD7-4AB0-A1AD-04E940B026DE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7B11011C-7FD7-4AB0-A1AD-04E940B026DE}.Release|x64.ActiveCfg = Release|Any CPU
 		{7B11011C-7FD7-4AB0-A1AD-04E940B026DE}.Release|x64.Build.0 = Release|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Debug|x64.Build.0 = Debug|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Release|x64.ActiveCfg = Release|Any CPU
+		{62DC00B8-8331-4CF1-B536-4DECE48222A2}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11BD6402-ACB1-4F11-96C7-CB6670CDC11A}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
