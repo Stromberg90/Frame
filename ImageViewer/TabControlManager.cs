@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using Dragablz;
 using Dragablz.Dockablz;
@@ -56,8 +57,7 @@ namespace Frame
         {
           case Branch children:
           {
-            var controls = GetTabablzControls(children);
-            foreach (var control in controls)
+            foreach (var control in GetTabablzControls(children))
             {
               foreach (var controlItem in control.Items)
               {
@@ -106,8 +106,7 @@ namespace Frame
           return null;
         }
 
-        var tabItemControl = tabControl.SelectedItem as TabItemControl;
-        return tabItemControl;
+        return tabControl.SelectedItem as TabItemControl;
       }
     }
 
@@ -174,7 +173,7 @@ namespace Frame
         return false;
       }
 
-      return ((TabItemControl) tabControl.SelectedItem).Paths.Any();
+      return ((TabItemControl) tabControl.SelectedItem).Paths.Count > 0;
     }
 
     public TabItemControl AddTab(string filepath)

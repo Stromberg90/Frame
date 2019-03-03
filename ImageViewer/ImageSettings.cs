@@ -126,6 +126,7 @@ namespace Frame
                 }
             }
         }
+
         public void Dispose()
         {
             ImageCollection?.Dispose();

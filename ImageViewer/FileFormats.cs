@@ -38,6 +38,5 @@ namespace Frame
             }
             return newFilterString.ToString();
         }
-
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using Frame.Properties;
@@ -18,6 +19,7 @@ namespace Frame
             TabControlManager = tabControlManager;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SupportedFiles(string folderpath)
         {
             if (string.IsNullOrEmpty(folderpath))
@@ -41,20 +43,26 @@ namespace Frame
                     }
                 });
 
-                if (tabItemControl.Paths.Any())
+                if (tabItemControl.Paths.Count > 0)
                 {
                     Manager.Sort();
                 }
             });
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string[] FilterSupportedFiles(string[] files)
         {
-            var supportedFiles = new List<string>();
+            var supportedFiles = new List<string>
+            {
+                Capacity = files.Length
+            };
+
             if (files == null || files.Length <= 0)
             {
                 return supportedFiles.ToArray();
             }
+
             Application.Current.Dispatcher.Invoke(() =>
             {
                 Parallel.ForEach(files, (file) =>
@@ -70,6 +78,7 @@ namespace Frame
                     }
                 });
             });
+
             return supportedFiles.ToArray();
         }
 

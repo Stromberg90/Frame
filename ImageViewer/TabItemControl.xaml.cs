@@ -34,6 +34,7 @@ namespace Frame
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void UpdateFooter()
         {
             FooterModeText.Text = FooterModeTextP;
@@ -310,6 +311,7 @@ namespace Frame
             return image;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void LoadImage()
         {
             try
@@ -543,7 +545,7 @@ namespace Frame
                     {
                         if (Index < Paths.Count - 1)
                         {
-                            Index += 1;
+                            Index++;
                         }
                         else
                         {
@@ -555,11 +557,11 @@ namespace Frame
 
                 case SwitchDirection.Previous:
                     {
-                        if (Paths.Any())
+                        if (Paths.Count > 0)
                         {
                             if (Index > 0)
                             {
-                                Index -= 1;
+                                Index--;
                             }
                             else
                             {

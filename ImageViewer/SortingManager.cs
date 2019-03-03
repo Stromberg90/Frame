@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Frame
 {
@@ -48,7 +49,7 @@ namespace Frame
                                    .ToLookup(x => x.k, x => x.v);
 
           var idList = dateTimeLookup.SelectMany(pair => pair,
-                                                 (pair, value) => new FileId<DateTime>(value, pair.Key, id += 1))
+                                                 (pair, value) => new FileId<DateTime>(value, pair.Key, id++))
                                      .ToList();
 
           var dateIdDictionary = idList.ToDictionary(x => x.Item.AddMilliseconds(x.Id), x => x.Id);
@@ -62,7 +63,7 @@ namespace Frame
                                .ToLookup(x => x.k, x => x.v);
 
           var idList = sizeLookup.SelectMany(pair => pair,
-                                             (pair, value) => new FileId<long>(value, pair.Key, id += 1)).ToList();
+                                             (pair, value) => new FileId<long>(value, pair.Key, id++)).ToList();
 
           var dateIdDictionary = idList.ToDictionary(x => x.Item + x.Id, x => x.Id);
           sortedPaths = TypeSort(idList, dateIdDictionary);
@@ -77,6 +78,7 @@ namespace Frame
       FindImageAfterSort(sortedPaths, initialImage);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FindImageAfterSort(List<string> sortedPaths, string initialImage)
     {
       var currentTab = TabControlManager.CurrentTab;

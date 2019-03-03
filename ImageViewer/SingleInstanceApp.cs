@@ -20,7 +20,7 @@ namespace Frame
         ((MainWindow)MainWindow).AddNewTab(arg);
       }
       MainWindow.Show();
-      //Shutdown();
+      Shutdown();
     }
 
     public void Poke()

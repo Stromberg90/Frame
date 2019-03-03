@@ -32,7 +32,6 @@ namespace Frame
         private BitmapSource _bitmapSource;
         public delegate void FrameUpdatedEventHandler();
 
-
         /// <summary>
         /// Delete local bitmap resource
         /// Reference: http://msdn.microsoft.com/en-us/library/dd183539(VS.85).aspx

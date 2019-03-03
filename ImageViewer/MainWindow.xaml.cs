@@ -6,13 +6,14 @@
 //Features
 //Switched to OpenMP version of Magick.NET, image loading is now much faster.
 
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -92,7 +93,6 @@ namespace Frame
             public delegate void CommandFunction();
 
             public delegate bool ValidateFunction();
-
 
             public Command(CommandFunction func, ValidateFunction validateFunction = null)
             {
@@ -214,18 +214,16 @@ namespace Frame
             if (Clipboard.ContainsFileDropList())
             {
                 var filenames = new List<string>();
-                foreach (var filepath in Clipboard.GetFileDropList())
+
+                Parallel.ForEach(Clipboard.GetFileDropList().Cast<string>(), filepath =>
                 {
                     filenames.Add(filepath);
-                }
+                });
 
                 var supportedFilenames = FilesManager.FilterSupportedFiles(filenames.ToArray());
-                if (supportedFilenames.Any())
+                if (supportedFilenames.Length > 0)
                 {
-                    foreach (var filename in supportedFilenames)
-                    {
-                        AddNewTab(filename);
-                    }
+                    Parallel.ForEach(supportedFilenames, AddNewTab);
                 }
             }
         }
@@ -247,13 +245,13 @@ namespace Frame
 
         void HigherMip()
         {
-            tabControlManager.CurrentTab.ImageSettings.MipValue += 1;
+            tabControlManager.CurrentTab.ImageSettings.MipValue++;
             RefreshImage();
         }
 
         void LowerMip()
         {
-            tabControlManager.CurrentTab.ImageSettings.MipValue -= 1;
+            tabControlManager.CurrentTab.ImageSettings.MipValue--;
             RefreshImage();
         }
 
@@ -371,6 +369,7 @@ namespace Frame
             RefreshImage();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool ModifierKeyDown()
         {
             return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl) ||
@@ -425,11 +424,13 @@ namespace Frame
             cmd?.Execute();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddNewTab()
         {
             AddNewTab(string.Empty);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddNewTab(string filepath)
         {
             if (string.IsNullOrEmpty(filepath))
@@ -508,7 +509,6 @@ namespace Frame
         {
             if (!tabControlManager.CanExcectute()) return;
 
-
             var CurrentTab = tabControlManager.CurrentTab;
             if (CurrentTab.ImageSettings.SortMode == SortMode.Ascending) ReversePaths();
 
@@ -525,6 +525,7 @@ namespace Frame
             sortingManager.FindImageAfterSort(FilepathsList, InitalImage);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void DisplayImage()
         {
             Dispatcher.Invoke(() =>
@@ -534,7 +535,7 @@ namespace Frame
 
                 if (tabControlManager.CurrentTabIndex < 0) return;
 
-                if (CurrentTab.ImagePresenter.ImageArea == null || !CurrentTab.Paths.Any()) return;
+                if (CurrentTab.ImagePresenter.ImageArea == null || CurrentTab.Paths.Count == 0) return;
 
                 CurrentTab.LoadImage();
             });
@@ -549,10 +550,12 @@ namespace Frame
                 Filter = FileFormats.FilterString
             };
             FileDialog.ShowDialog();
-            if (!FileDialog.SafeFileNames.Any())
+            if (FileDialog.SafeFileNames.Length == 0)
                 return;
 
-            foreach (var Filename in FileDialog.FileNames) AddNewTab(Path.GetFullPath(Filename));
+            Parallel.ForEach(FileDialog.FileNames, filename => {
+                AddNewTab(Path.GetFullPath(filename));
+            });
         }
 
         void ImageEditorBrowse()
@@ -583,31 +586,35 @@ namespace Frame
                 }
 
                 if (MessageBox.Show("Image editor not found\nDo you want to browse for editor?",
-                                    Properties.Resources.FileMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                                    Properties.Resources.FileMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
                     ImageEditorBrowse();
+                }
             }
             else
             {
                 if (MessageBox.Show("No image editor specified in settings file\nDo you want to browse for editor?",
-                                    Properties.Resources.ImageEditorMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                                    Properties.Resources.ImageEditorMissing, MessageBoxButton.YesNo) == MessageBoxResult.Yes) {
                     ImageEditorBrowse();
+                }
             }
 
             Settings.Default.Save();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RefreshImage()
         {
             Current.Dispatcher.Invoke(() =>
             {
                 var CurrentTab = tabControlManager.CurrentTab;
                 if (CurrentTab == null) return;
-                if (!CurrentTab.Paths.Any()) return;
+                if (CurrentTab.Paths.Count == 0) return;
 
                 CurrentTab.LoadImage();
             });
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ReplaceImageInTab(string filename)
         {
             if (!FilesManager.ValidFile(filename)) return;
@@ -628,6 +635,7 @@ namespace Frame
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ToggleDisplayChannel(Channels channel)
         {
             if (!tabControlManager.CanExcectute()) return;
@@ -675,6 +683,7 @@ namespace Frame
             RefreshImage();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetupDirectoryWatcher()
         {
             DirectoryName = Path.GetDirectoryName(tabControlManager.CurrentTab.InitialImagePath);
@@ -794,7 +803,9 @@ namespace Frame
                                                          throw new InvalidOperationException("It was the null"));
                                     if (Path.GetDirectoryName(tabItemControl.InitialImagePath) ==
                                   renamedArgs.OldFullPath)
+                                    {
                                         ReplaceImageInTab(newFile);
+                                    }
 
                                     break;
                                 }
@@ -817,6 +828,7 @@ namespace Frame
             });
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetupSlideshow()
         {
             SlideshowTimer = new DispatcherTimer();
@@ -836,7 +848,7 @@ namespace Frame
 
             if (tabControlManager.CurrentTab.CurrentSlideshowTime < SlideshowInterval)
             {
-                tabControlManager.CurrentTab.CurrentSlideshowTime += 1;
+                tabControlManager.CurrentTab.CurrentSlideshowTime++;
             }
             else
             {
@@ -949,13 +961,13 @@ namespace Frame
             if (WindowState == WindowState.Maximized)
             {
                 var rect = Screen.GetWorkingArea(new Point((int)Left, (int)Top));
-                App.AboutDialog.Top = rect.Top + ActualHeight / 2.0 - App.AboutDialog.Height / 2.0;
-                App.AboutDialog.Left = rect.Left + ActualWidth / 2.0 - App.AboutDialog.Width / 2.0;
+                App.AboutDialog.Top = rect.Top + (ActualHeight / 2.0) - (App.AboutDialog.Height / 2.0);
+                App.AboutDialog.Left = rect.Left + (ActualWidth / 2.0) - (App.AboutDialog.Width / 2.0);
             }
             else
             {
-                App.AboutDialog.Top = Top + ActualHeight / 2.0 - App.AboutDialog.Height / 2.0;
-                App.AboutDialog.Left = Left + ActualWidth / 2.0 - App.AboutDialog.Width / 2.0;
+                App.AboutDialog.Top = Top + (ActualHeight / 2.0) - (App.AboutDialog.Height / 2.0);
+                App.AboutDialog.Left = Left + (ActualWidth / 2.0) - (App.AboutDialog.Width / 2.0);
             }
 
             App.AboutDialog.ShowDialog();
@@ -982,19 +994,15 @@ namespace Frame
                 (tabablzControl?.SelectedItem as TabItemControl)?.ImagePresenter.ScrollViewer.Focus();
             }
 
-
             var supportedFilenames = FilesManager.FilterSupportedFiles(filenames);
-            if (!supportedFilenames.Any())
+            if (supportedFilenames.Length == 0)
             {
                 return;
             }
 
             if (supportedFilenames.Length > 1)
             {
-                foreach (var filename in supportedFilenames)
-                {
-                    AddNewTab(filename);
-                }
+                Parallel.ForEach(supportedFilenames, AddNewTab);
             }
             else
             {
@@ -1048,13 +1056,13 @@ namespace Frame
             if (WindowState == WindowState.Maximized)
             {
                 var rect = Screen.GetWorkingArea(new Point((int)Left, (int)Top));
-                App.OptionsDialog.Top = rect.Top + ActualHeight / 2.0 - App.OptionsDialog.Height / 2.0;
-                App.OptionsDialog.Left = rect.Left + ActualWidth / 2.0 - App.OptionsDialog.Width / 2.0;
+                App.OptionsDialog.Top = rect.Top + (ActualHeight / 2.0) - (App.OptionsDialog.Height / 2.0);
+                App.OptionsDialog.Left = rect.Left + (ActualWidth / 2.0) - (App.OptionsDialog.Width / 2.0);
             }
             else
             {
-                App.OptionsDialog.Top = Top + ActualHeight / 2.0 - App.OptionsDialog.Height / 2.0;
-                App.OptionsDialog.Left = Left + ActualWidth / 2.0 - App.OptionsDialog.Width / 2.0;
+                App.OptionsDialog.Top = Top + (ActualHeight / 2.0) - (App.OptionsDialog.Height / 2.0);
+                App.OptionsDialog.Left = Left + (ActualWidth / 2.0) - (App.OptionsDialog.Width / 2.0);
             }
 
             App.OptionsDialog.ShowDialog();
