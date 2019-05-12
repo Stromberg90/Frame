@@ -1,588 +1,204 @@
-﻿using System;
+﻿using Dragablz;
+using ImageMagick;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Windows;
-using Frame.Annotations;
-using Frame.Properties;
-using ImageMagick;
-using Application = System.Windows.Application;
-using KeyEventArgs = System.Windows.Input.KeyEventArgs;
-using TextAlignment = ImageMagick.TextAlignment;
+using System.Threading;
+using System.Windows.Controls;
+using System.Windows.Forms;
+using System.Windows.Input;
+using System.Windows.Threading;
 
-namespace Frame
-{
-    public partial class TabItemControl : IDisposable, INotifyPropertyChanged
-    {
-        const int TileCount = 8;
-
-        public readonly ImageSettings ImageSettings;
-
-        FooterMode CurrentFooterMode;
-
-        ApplicationMode mode;
-
-        public ApplicationMode CurrentMode
-        {
-            get => mode;
-            set
-            {
-                mode = value;
-                OnPropertyChanged();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void UpdateFooter()
-        {
-            FooterModeText.Text = FooterModeTextP;
-            FooterSizeText.Text = FooterSizeTextP;
-            FooterChannelsText.Text = FooterChannelsTextP;
-            FooterFilesizeText.Text = FooterFilesizeTextP;
-            FooterZoomText.Text = FooterZoomTextP;
-            FooterIndexText.Text = FooterIndexTextP;
-            FooterMipIndexText.Text = FooterMipIndexTextP;
-        }
-
-        uint currentSlideshowTime;
-
-        public uint CurrentSlideshowTime
-        {
-            get => currentSlideshowTime;
-            set
-            {
-                currentSlideshowTime = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string InitialImagePath;
-
-        uint index;
-
-        public uint Index
-        {
-            get => index;
-            set
-            {
-                if(index != value || ImageSettings.Size == 0)
-                {
-                    index = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
+namespace Frame {
+    public partial class TabItemControl : IDisposable {
         public List<string> Paths;
+        internal int Index;
 
-        IMagickImage ResizeCurrentMip()
-        {
-            var MagickImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
-            if (ImageSettings.MipValue > 0)
-            {
-                MagickImage.Resize(ImageSettings.ImageCollection[0].Width, ImageSettings.ImageCollection[0].Height);
-            }
-
-            return MagickImage;
-        }
-
-        public string Path => Index < Paths.Count ? Paths[(int)Index] : Paths[0];
-
-        string Filename => new FileInfo(Paths[(int)Index]).Name;
-
-        bool HasFirstImageLoaded;
-
-        MainWindow ParentMainWindow =>
-          Dispatcher.Invoke(() => (MainWindow)Window.GetWindow(this));
-
-        public TabItemControl()
-        {
-            Margin = new Thickness(0.5);
+        public TabItemControl() {
             InitializeComponent();
-
-            ImageSettings = new ImageSettings();
+            
             Paths = new List<string>();
 
-            ImagePresenter.PreviewKeyDown += ImagePresenterOnPreviewKeyDown;
+            MouseDoubleClick += mouseDoubleClick;
+            PreviewKeyDown += previewKeyDown;
+        }
 
-            ImagePresenter.PropertyChanged += (sender, args) => { UpdateFooter(); };
-            ImageSettings.PropertyChanged += (sender, args) =>
-            {
-                UpdateFooter();
-                Header = Filename;
-            };
-            PropertyChanged += OnPropertyChanged;
-            ImagePresenter.ImageArea.KeyDown += (sender, args) => { ParentMainWindow.ImageAreaKeyDown(sender, args); };
-            ImagePresenter.ImageArea.Loaded += (sender, args) =>
-            {
-                ImagePresenter.Grid.Width = ImageSettings.Width;
-                ImagePresenter.Grid.Height = ImageSettings.Height;
-                if (HasFirstImageLoaded)
-                {
+        private void previewKeyDown(object sender, System.Windows.Input.KeyEventArgs e) {
+            Debug.WriteLine("KeyDown");
+            if(e.Key == Key.Right) {
+                if(Keyboard.IsKeyDown(Key.LeftCtrl)) {
+                    var parent = (TabablzControl)Parent;
+                    if(parent == null) {
+                        return;
+                    }
+
+                    var headers = parent.GetOrderedHeaders().ToList();
+                    int index = 0;
+                    foreach(var header in headers) {
+                        if(header.Content == this) {
+                            break;
+                        }
+                        index++;
+                    }
+                    if(index < headers.Count - 1) {
+                        parent.SelectedIndex = parent.Items.IndexOf(headers[++index].Content);
+                    }
+                }
+                else {
+                    Index = (Index + 1) % Paths.Count;
+                    switchImage(Index);
+                }
+            }
+            else if(e.Key == Key.Left) {
+                if(Keyboard.IsKeyDown(Key.LeftCtrl)) {
+                    var parent = (TabablzControl)Parent;
+                    if(parent == null) {
+                        return;
+                    }
+
+                    var headers = parent.GetOrderedHeaders().ToList();
+                    int index = 0;
+                    foreach(var header in headers) {
+                        if(header.Content == this) {
+                            break;
+                        }
+                        index++;
+                    }
+                    if(index > 0) {
+                        parent.SelectedIndex = parent.Items.IndexOf(headers[--index].Content);
+                    }
+                }
+                else {
+                    if(Index == 0) {
+                        Index = Paths.Count;
+                    }
+                    Index--;
+                    switchImage(Index);
+                }
+            }
+            else if(e.Key == Key.W) {
+                if(!Keyboard.IsKeyDown(Key.LeftCtrl)) {
                     return;
                 }
-                ResetView();
-                HasFirstImageLoaded = true;
-            };
-        }
-
-        void OnPropertyChanged(object o, PropertyChangedEventArgs args)
-        {
-            if (args.PropertyName == nameof(Index))
-            {
-                Application.Current?.Dispatcher.Invoke(() => { ParentMainWindow.RefreshImage(); });
-                ResetView();
-            }
-
-            UpdateFooter();
-            Header = Filename;
-        }
-
-        string FooterModeTextP
-        {
-            get
-            {
-                if (CurrentMode == ApplicationMode.Slideshow)
-                {
-                    if (CurrentFooterMode == FooterMode.Visible)
-                    {
-                        return $"MODE: {CurrentMode} " + CurrentSlideshowTime;
-                    }
-
-                    return $"{CurrentMode} " + CurrentSlideshowTime;
+                if(!(Parent is TabablzControl)) {
+                    return;
                 }
-
-                return CurrentFooterMode == FooterMode.Visible ? $"MODE: {CurrentMode}" : $"{CurrentMode}";
-            }
-        }
-
-        string FooterSizeTextP => CurrentFooterMode == FooterMode.Visible
-          ? $"SIZE: {ImageSettings.Width}x{ImageSettings.Height}"
-          : $"{ImageSettings.Width}x{ImageSettings.Height}";
-
-        string FooterChannelsTextP
-        {
-            get
-            {
-                var channel = string.Empty;
-                switch (ImageSettings.DisplayChannel)
-                {
-                    case (Channels.RGB):
-                    case (Channels.Green):
-                    case (Channels.Blue):
-                        {
-                            channel = ImageSettings.DisplayChannel.ToString();
-                            break;
-                        }
-                    case (Channels.Red):
-                        {
-                            channel = "Red";
-                            break;
-                        }
-                    case (Channels.Opacity):
-                        {
-                            channel = "Alpha";
-                            break;
-                        }
+                // Do the same as in add tab, where I send the parent and tab into a static functions, so I can unsubscribe from certain events.
+                if(Keyboard.IsKeyDown(Key.LeftAlt)) {
+                    var parent = (TabablzControl)Parent;
+                    foreach(TabItemControl item in parent.Items) {
+                        item.Dispose();
+                    }
+                    parent.Items.Clear();
                 }
-
-                return CurrentFooterMode == FooterMode.Visible ? $"CHANNELS: {channel}" : $"{channel}";
+                else {
+                    var parent = (TabablzControl)Parent;
+                    Dispose();
+                    parent.Items.Remove(this);
+                }
             }
-        }
+            else if(e.Key == Key.F) {
+                var image_height = ImagePresenter.ImageArea.ActualHeight;
+                var image_width = ImagePresenter.ImageArea.ActualWidth;
 
-        string FooterFilesizeTextP
-        {
-            get
-            {
-                try
-                {
-                    if (ImageSettings.Size == 0)
-                    {
-                        return "FILESIZE: ";
-                    }
+                var grid_height = ImagePresenter.ScrollViewer.ActualHeight;
+                var grid_width = ImagePresenter.ScrollViewer.ActualWidth;
 
-                    if (ImageSettings.Size < 1024)
-                    {
-                        return CurrentFooterMode == FooterMode.Visible
-                          ? $"FILESIZE: {ImageSettings.Size}Bytes"
-                          : $"{ImageSettings.Size}Bytes";
+                if(image_height > grid_height || image_width > grid_width) {
+                    var zoom_by_height = (grid_height / image_height) * 100;
+                    var zoom_by_width = (grid_width / image_width) * 100;
+                    if(zoom_by_height < zoom_by_width) {
+                        ImagePresenter.Zoom = zoom_by_height;
                     }
-
-                    if (ImageSettings.Size < 1048576)
-                    {
-                        var filesize = (double)(ImageSettings.Size / 1024f);
-                        return CurrentFooterMode == FooterMode.Visible ? $"FILESIZE: {filesize:N2}KB" : $"{filesize:N2}KB";
-                    }
-                    else
-                    {
-                        var filesize = (double)(ImageSettings.Size / 1024f) / 1024f;
-                        return CurrentFooterMode == FooterMode.Visible ? $"FILESIZE: {filesize:N2}MB" : $"{filesize:N2}MB";
+                    else {
+                        ImagePresenter.Zoom = zoom_by_width;
                     }
                 }
-                catch (FileNotFoundException)
-                {
-                    return "FILESIZE: ";
+                else {
+                    ImagePresenter.Zoom = 100;
                 }
             }
         }
 
-        string FooterZoomTextP =>
-          CurrentFooterMode == FooterMode.Visible ? $"ZOOM: {ImagePresenter.Zoom:N2}%" : $"{ImagePresenter.Zoom:N2}%";
-
-        string FooterIndexTextP =>
-          CurrentFooterMode == FooterMode.Visible ? $"INDEX: {Index + 1}/{Paths.Count}" : $"{Index + 1}/{Paths.Count}";
-
-        string FooterMipIndexTextP
-        {
-            get
-            {
-                if (ImageSettings.HasMips)
-                {
-                    return CurrentFooterMode == FooterMode.Visible
-                      ? $"MIP: {ImageSettings.MipValue + 1}/{ImageSettings.MipCount}"
-                      : $"{ImageSettings.MipValue + 1}/{ImageSettings.MipCount}";
+        internal void selectionChanged(object sender, SelectionChangedEventArgs e) {
+            if(e.AddedItems.Count > 0) {
+                if(((TabItemControl)e.AddedItems[0]) == this) {
+                    Debug.WriteLine("Setting Focus to " + Header);
+                    ImagePresenter.Focus();
+                    Keyboard.Focus(ImagePresenter);
                 }
-
-                return CurrentFooterMode == FooterMode.Visible ? "MIP: None" : "None";
             }
         }
 
-        public void ResetView()
-        {
-            ParentMainWindow.Focus();
+        private void switchImage(int index) {
+            var filepath = Paths[index];
+            var ext = Path.GetExtension(filepath);
+            if(ext == ".gif") {
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    ImagePresenter.ImageArea.loadAimatedGif(filepath);
+                    Header = Path.GetFileName(filepath);
+                }, DispatcherPriority.Normal);
+            }
+            else {
+                using(var image = new MagickImage(filepath)) {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                        ImagePresenter.ImageArea.loadStillImage(filepath);
+                        Header = Path.GetFileName(filepath);
+                    }, DispatcherPriority.Normal);
+                }
+            }
 
-            if (ImagePresenter.ImageArea == null)
-            {
+            var image_height = ImagePresenter.ImageArea.Height;
+            var grid_height = ImagePresenter.ScrollViewer.ActualHeight;
+            var image_width = ImagePresenter.ImageArea.Width;
+            var grid_width = ImagePresenter.ScrollViewer.ActualWidth;
+            if(image_height > grid_height || image_width > grid_width) {
+                var zoom_by_height = (grid_height / image_height) * 100;
+                var zoom_by_width = (grid_width / image_width) * 100;
+                if(zoom_by_height < zoom_by_width) {
+                    ImagePresenter.Zoom = zoom_by_height;
+                }
+                else {
+                    ImagePresenter.Zoom = zoom_by_width;
+                }
+            }
+            else {
+                ImagePresenter.Zoom = 100;
+            }
+        }
+
+        void mouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            if(!(Parent is TabablzControl)) {
                 return;
             }
+            var parent = (TabablzControl)Parent;
+            using(var file_dialog = new OpenFileDialog { Multiselect = true, AddExtension = true, Filter = MainWindow.FilterString }) {
+                file_dialog.ShowDialog();
 
-            ImagePresenter.Grid.Width = ImageSettings.Width;
-            ImagePresenter.Grid.Height = ImageSettings.Height;
-
-            ImagePresenter.Zoom = 100;
-
-            if (Settings.Default.ImageFullZoom)
-            {
-                return;
-            }
-
-            if (ImagePresenter.ActualWidth < ImageSettings.Width ||
-                ImagePresenter.ActualHeight < ImageSettings.Height)
-            {
-                ZoomToFit();
-            }
-        }
-
-        void ZoomToFit()
-        {
-            while (ImagePresenter.Grid.Width * ImagePresenter.ScaleTransform.ScaleX <
-                   ImagePresenter.ActualWidth ||
-                   ImagePresenter.Grid.Height * ImagePresenter.ScaleTransform.ScaleX <
-                   ImagePresenter.ActualHeight)
-            {
-                ImagePresenter.Zoom++;
-            }
-
-            while (ImagePresenter.Grid.Width * ImagePresenter.ScaleTransform.ScaleX >
-                   ImagePresenter.ActualWidth ||
-                   ImagePresenter.Grid.Height * ImagePresenter.ScaleTransform.ScaleX >
-                   ImagePresenter.ActualHeight)
-            {
-                ImagePresenter.Zoom--;
-            }
-        }
-
-        public bool IsTiled;
-        public bool UsesChannelsMontage;
-
-        static MagickImage ErrorImage(string filepath)
-        {
-            var image = new MagickImage(MagickColors.White, 512, 512);
-            new Drawables()
-              .FontPointSize(18)
-              .Font("Arial")
-              .FillColor(MagickColors.Red)
-              .TextAlignment(TextAlignment.Center)
-              .Text(256, 256, $"Could not load\n{System.IO.Path.GetFileName(filepath)}")
-              .Draw(image);
-
-            return image;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void LoadImage()
-        {
-            try
-            {
-                switch (System.IO.Path.GetExtension(Path))
-                {
-                    case ".gif":
-                        {
-                            ImagePresenter.ImageArea.LoadGif(Path, GifMode.Animated);
-                            ImagePresenter.ImageArea.StartAnimate();
-                            ImageSettings.Width = (int)ImagePresenter.ImageArea.Width;
-                            ImageSettings.Height = (int)ImagePresenter.ImageArea.Height;
-                            break;
+                if(file_dialog.FileNames.Length > 0) {
+                    ThreadStart add_tabs_thread = () => {
+                        foreach(var filepath in file_dialog.FileNames) {
+                            StaticMethods.addTab(parent, filepath);
                         }
-                    case ".dds":
-                        {
-                            var defines = new DdsReadDefines { SkipMipmaps = false };
-                            var readSettings = new MagickReadSettings(defines);
-                            ImageSettings.ImageCollection = new MagickImageCollection(Path, readSettings);
-                            ImageSettings.HasMips = ImageSettings.ImageCollection.Count > 1;
-                            if (ImageSettings.HasMips)
-                            {
-                                ImageSettings.MipCount = ImageSettings.ImageCollection.Count;
-                            }
-
-                            break;
-                        }
-                    default:
-                        {
-                            ImageSettings.HasMips = false;
-                            ImageSettings.MipValue = 0;
-                            ImageSettings.ImageCollection = new MagickImageCollection
-                            {
-                              Path
-                            };
-                            break;
-                        }
+                    };
+                    new Thread(add_tabs_thread).Start();
                 }
             }
-            catch (Exception)
-            {
-                ImageSettings.ImageCollection.Clear();
-                ImageSettings.ImageCollection.Add(ErrorImage(Path));
-            }
-
-            var ImageWidth = ImageSettings.Width;
-            var ImageHeight = ImageSettings.Height;
-            var BorderWidth = (int)Math.Max(2.0, (ImageWidth * ImageHeight) / 200000.0);
-
-            if (ImageSettings.ImageCollection == null) return;
-
-            var ChannelNum = 0;
-            var SettingsImage = ImageSettings.ImageCollection[ImageSettings.MipValue];
-            if (UsesChannelsMontage)
-            {
-                using (var OrginalImage = ImageSettings.ImageCollection[0])
-                {
-                    using (var Images = new MagickImageCollection())
-                    {
-                        foreach (var Channel in SettingsImage.Separate())
-                        {
-                            if (Settings.Default.SplitChannelsBorder)
-                            {
-                                switch (ChannelNum)
-                                {
-                                    case 0:
-                                        {
-                                            Channel.BorderColor = MagickColor.FromRgb(255, 0, 0);
-                                            break;
-                                        }
-                                    case 1:
-                                        {
-                                            Channel.BorderColor = MagickColor.FromRgb(0, 255, 0);
-                                            break;
-                                        }
-                                    case 2:
-                                        {
-                                            Channel.BorderColor = MagickColor.FromRgb(0, 0, 255);
-                                            break;
-                                        }
-                                }
-
-                                Channel.Border(BorderWidth);
-                                ChannelNum++;
-                            }
-
-                            if (ImageSettings.MipValue > 0)
-                            {
-                                Channel.Resize(OrginalImage.Width, OrginalImage.Height);
-                            }
-
-                            Images.Add(Channel);
-                        }
-
-                        var MontageSettings =
-                          new MontageSettings
-                          {
-                              Geometry = new MagickGeometry(ImageWidth, ImageHeight)
-                          };
-                        var Result = Images.Montage(MontageSettings);
-                        ImageSettings.ImageCollection.Clear();
-                        ImageSettings.ImageCollection.Add(Result);
-                    }
-                }
-
-                ImageSettings.HasMips = false;
-            }
-
-            if (IsTiled)
-            {
-                var Images = new MagickImageCollection();
-                var OrginalImage = ImageSettings.ImageCollection[0];
-
-                for (var i = 0; i <= TileCount; i++)
-                {
-                    var Image = SettingsImage.Clone();
-                    if (ImageSettings.MipValue > 0)
-                    {
-                        Image.Resize(OrginalImage.Width, OrginalImage.Height);
-                    }
-
-                    if (ImageSettings.DisplayChannel != Channels.Alpha)
-                    {
-                        Image.Alpha(AlphaOption.Opaque);
-                    }
-
-                    Images.Add(Image);
-                }
-
-                var MontageSettings =
-                  new MontageSettings
-                  {
-                      Geometry = new MagickGeometry(ImageWidth, ImageHeight),
-                  };
-                ImageSettings.ImageCollection.Clear();
-                ImageSettings.ImageCollection.Add(Images.Montage(MontageSettings));
-                ImageSettings.HasMips = false;
-                ImageSettings.Size *= TileCount + 1;
-            }
-
-            OnPropertyChanged();
-            var MagickImage = ResizeCurrentMip();
-            switch (ImageSettings.DisplayChannel)
-            {
-                case Channels.RGB:
-                    {
-                        MagickImage.Alpha(AlphaOption.Opaque);
-                        ImagePresenter.ImageArea.Source = MagickImage.ToBitmapSource();
-                        break;
-                    }
-                case Channels.Red:
-                    {
-                        ImagePresenter.ImageArea.Source = MagickImage.Separate(Channels.Red)
-                                                                     .ElementAt(0)?.ToBitmapSource();
-                        break;
-                    }
-                case Channels.Green:
-                    {
-                        ImagePresenter.ImageArea.Source = MagickImage.Separate(Channels.Green)
-                                                                     .ElementAt(0)?.ToBitmapSource();
-                        break;
-                    }
-                case Channels.Blue:
-                    {
-                        ImagePresenter.ImageArea.Source = MagickImage.Separate(Channels.Blue)
-                                                                     .ElementAt(0)?.ToBitmapSource();
-                        break;
-                    }
-                case Channels.Alpha:
-                    {
-                        ImagePresenter.ImageArea.Source = MagickImage.Separate(Channels.Alpha)
-                                                                     .ElementAt(0)?.ToBitmapSource();
-                        break;
-                    }
-                default:
-                    {
-                        MagickImage.Alpha(AlphaOption.Opaque);
-                        ImagePresenter.ImageArea.Source = MagickImage.ToBitmapSource();
-                        break;
-                    }
-            }
         }
 
-        void Dispose(bool disposing)
-        {
-            if (!disposing)
+        public void Dispose() {
+            if (Parent is TabablzControl)
             {
-                return;
+                ((TabablzControl)Parent).SelectionChanged -= selectionChanged;
             }
-
-            ImageSettings.Dispose();
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        ~TabItemControl()
-        {
-            Dispose(false);
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void SwitchImage(SwitchDirection switchDirection)
-        {
-            ImageSettings.Reset();
-            ImagePresenter.ImageArea.StopAnimate();
-            IsTiled = false;
-            UsesChannelsMontage = false;
-
-            if (CurrentMode == ApplicationMode.Slideshow)
-            {
-                CurrentSlideshowTime = 1;
+            PreviewMouseDoubleClick -= mouseDoubleClick;
+            PreviewKeyDown -= previewKeyDown;
+            if(ImagePresenter != null) {
+                ImagePresenter.Dispose();
+                ImagePresenter = null;
             }
-            else
-            {
-                CurrentMode = ApplicationMode.Normal;
-            }
-
-            switch (switchDirection)
-            {
-                case SwitchDirection.Next:
-                    {
-                        if (Index < Paths.Count - 1)
-                        {
-                            Index++;
-                        }
-                        else
-                        {
-                            Index = 0;
-                        }
-
-                        break;
-                    }
-
-                case SwitchDirection.Previous:
-                    {
-                        if (Paths.Count > 0)
-                        {
-                            if (Index > 0)
-                            {
-                                Index--;
-                            }
-                            else
-                            {
-                                Index = (uint)(Paths.Count - 1);
-                            }
-                        }
-
-                        break;
-                    }
-            }
-        }
-
-        void Footer_OnSizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            CurrentFooterMode = Footer.RenderSize.Width < 620 ? FooterMode.Collapsed : FooterMode.Visible;
-            UpdateFooter();
-        }
-
-        void ImagePresenterOnPreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            ParentMainWindow.ImageAreaKeyDown(sender, e);
         }
     }
 }

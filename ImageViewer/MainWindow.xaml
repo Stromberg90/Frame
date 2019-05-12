@@ -3,69 +3,59 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:system="clr-namespace:System;assembly=mscorlib"
     xmlns:dockablz="http://dragablz.net/winfx/xaml/dockablz"
     xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
     x:Class="Frame.MainWindow"
     mc:Ignorable="d"
     Title="Frame"
     Height="350" Width="525"
-    Background="#FF2E2E2E"
-    Loaded="WindowLoaded" Closing="WindowClosing" Closed="WindowClosed" KeyDown="WindowKeyDown"
-    SizeChanged="MainWindow_OnSizeChanged">
-    <Window.Resources>
-        <system:String x:Key="Partition">Frame</system:String>
-    </Window.Resources>
-    <dockablz:Layout Name="DockLayout" Partition="{StaticResource Partition}" Drop="DockLayoutDragDrop"
-                     IsTabStop="False">
-        <dragablz:TabablzControl x:Name="ImageTabControl" Width="Auto" Background="#FF202020"
-                                 Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" IsDraggingWindowChanged="ImageTabControl_OnIsDraggingWindowChanged" MouseDoubleClick="OpenFilesClick">
+    Background="#FF202020" IsTabStop="False">
+    <dockablz:Layout Name="DockLayout" IsTabStop="False">
+        <dragablz:TabablzControl x:Name="ImageTabControl" IsTabStop="False" Width="Auto" Background="#FF171717" Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" >
             <dragablz:TabablzControl.InterTabController>
-                <dragablz:InterTabController Partition="{StaticResource Partition}" />
+                <dragablz:InterTabController/>
             </dragablz:TabablzControl.InterTabController>
         </dragablz:TabablzControl>
         <dockablz:Layout.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="Open File(s)..." Click="OpenFilesClick" />
-                <MenuItem x:Name="AlwaysOnTopUi" Header="Always On Top" IsCheckable="True"
-                          Click="AlwaysOnTopClick" />
+                <MenuItem Header="Open File(s)..." />
+                <MenuItem x:Name="AlwaysOnTopUi" Header="Always On Top" IsCheckable="True" />
                 <Separator />
-                <MenuItem Header="Open In Image Editor" Click="OpenInImageEditor" />
+                <MenuItem Header="Open In Image Editor" />
                 <MenuItem Header="Copy">
-                    <MenuItem Header="Copy Path To Clipboard" Click="CopyPathToClipboard" />
-                    <MenuItem Header="Copy Filename To Clipboard" Click="CopyFilenameToClipboard" />
+                    <MenuItem Header="Copy Path To Clipboard" />
+                    <MenuItem Header="Copy Filename To Clipboard" />
                 </MenuItem>
-                <MenuItem Header="View In Explorer" Click="ViewInExplorer" />
+                <MenuItem Header="View In Explorer" />
                 <Separator />
-                <MenuItem Header="Reset View" Click="ResetViewClick" />
+                <MenuItem Header="Reset View" />
                 <Separator />
                 <MenuItem Header="Channels">
-                    <MenuItem Header="RGB" Click="DisplayAllChannels" />
-                    <MenuItem Header="Red" Click="DisplayRedChannel" />
-                    <MenuItem Header="Green" Click="DisplayGreenChannel" />
-                    <MenuItem Header="Blue" Click="DisplayBlueChannel" />
-                    <MenuItem Header="Alpha" Click="DisplayAlphaChannel" />
+                    <MenuItem Header="RGB" />
+                    <MenuItem Header="Red" />
+                    <MenuItem Header="Green" />
+                    <MenuItem Header="Blue" />
+                    <MenuItem Header="Alpha" />
                 </MenuItem>
                 <Separator />
-                <MenuItem Header="Toggle Tile Image" Click="TileImageOnClick" />
-                <MenuItem Header="Toggle Channels Montage" Click="ChannelsMontageOnClick" />
+                <MenuItem Header="Toggle Tile Image" />
+                <MenuItem Header="Toggle Channels Montage" />
                 <Separator />
-                <MenuItem Header="Toggle Bars" Click="OnClickToggleBars"></MenuItem>
+                <MenuItem Header="Toggle Bars" />
                 <Separator/>
                 <MenuItem Header="Sort">
-                    <MenuItem x:Name="SortAscending" Header="Ascending" Click="AscendingSort" IsCheckable="True"
-                              IsChecked="True" />
-                    <MenuItem x:Name="SortDecending" Header="Decending" Click="DecendingSort" IsCheckable="True" />
+                    <MenuItem x:Name="SortAscending" Header="Ascending" IsCheckable="True" IsChecked="True" />
+                    <MenuItem x:Name="SortDecending" Header="Decending" IsCheckable="True" />
                     <Separator />
-                    <MenuItem x:Name="SortName" Header="Name" Click="SortByName" IsChecked="True" />
-                    <MenuItem x:Name="SortDate" Header="Date Modified" Click="SortByDateModified" />
-                    <MenuItem x:Name="SortSize" Header="Size" Click="SortBySize" />
+                    <MenuItem x:Name="SortName" Header="Name" IsChecked="True" />
+                    <MenuItem x:Name="SortDate" Header="Date Modified" />
+                    <MenuItem x:Name="SortSize" Header="Size" />
                 </MenuItem>
                 <Separator />
-                <MenuItem Header="About" Click="AboutClick" />
-                <MenuItem Header="Options" Click="OptionsOnClick" />
+                <MenuItem Header="About" />
+                <MenuItem Header="Options" />
                 <Separator />
-                <MenuItem Header="Check For Updates" Click="CheckForUpdateOnClick" />
+                <MenuItem Header="Check For Updates" />
             </ContextMenu>
         </dockablz:Layout.ContextMenu>
     </dockablz:Layout>

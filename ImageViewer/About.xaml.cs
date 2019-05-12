@@ -12,7 +12,6 @@ namespace Frame
             InitializeComponent();
             VersionText.Text = VersionText.Text.Replace("0.0.0", Assembly.GetEntryAssembly().GetName().Version.ToString());
             CopyrightText.Text = CopyrightText.Text.Replace("{}", System.DateTime.Now.Year.ToString());
-            UpdateManager.CheckForUpdate();
         }
 
         void Grid_MouseDown(object sender, MouseButtonEventArgs e)

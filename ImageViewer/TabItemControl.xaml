@@ -5,9 +5,9 @@
          xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
          xmlns:frame="clr-namespace:Frame"
          mc:Ignorable="d"
-         d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False">
+         d:DesignHeight="450" d:DesignWidth="800" IsTabStop="False" Focusable="True">
     <DockPanel LastChildFill="True">
-        <StatusBar Name="Footer" DockPanel.Dock="Bottom" Background="#FF555555" SizeChanged="Footer_OnSizeChanged">
+        <StatusBar Name="Footer" DockPanel.Dock="Bottom" Background="#FF555555" >
             <StatusBar.Resources>
                 <Brush x:Key="Foreground">#FFF0F0F0</Brush>
             </StatusBar.Resources>
@@ -25,6 +25,6 @@
             <Separator />
             <TextBlock x:Name="FooterMipIndexText" VerticalAlignment="Top" Foreground="{StaticResource Foreground}" />
         </StatusBar>
-        <frame:ImageBox x:Name="ImagePresenter" />
+        <frame:ImageBox x:Name="ImagePresenter" IsTabStop="False" Focusable="True"/>
     </DockPanel>
 </TabItem>
