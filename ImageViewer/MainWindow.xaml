@@ -9,9 +9,9 @@
     mc:Ignorable="d"
     Title="Frame"
     Height="350" Width="525"
-    Background="#FF202020" IsTabStop="False">
-    <dockablz:Layout Name="DockLayout" IsTabStop="False">
-        <dragablz:TabablzControl x:Name="ImageTabControl" IsTabStop="False" Width="Auto" Background="#FF171717" Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" >
+    Background="#FF202020" IsTabStop="False" FocusVisualStyle="{x:Null}">
+    <dockablz:Layout Name="DockLayout" IsTabStop="False" FocusVisualStyle="{x:Null}">
+        <dragablz:TabablzControl x:Name="ImageTabControl" IsTabStop="False" Width="Auto" Background="#FF171717" Foreground="#FFF0F0F0" AllowDrop="True" BorderThickness="0" FocusVisualStyle="{x:Null}">
             <dragablz:TabablzControl.InterTabController>
                 <dragablz:InterTabController/>
             </dragablz:TabablzControl.InterTabController>

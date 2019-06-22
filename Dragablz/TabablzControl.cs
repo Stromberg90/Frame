@@ -19,6 +19,8 @@ using Dragablz.Referenceless;
 
 namespace Dragablz
 {
+    public delegate void AfterSelectionChangedEventHandler(object source, SelectionChangedEventArgs e);
+
     //original code specific to keeping visual tree "alive" sourced from http://stackoverflow.com/questions/12432062/binding-to-itemssource-of-tabcontrol-in-wpf    
 
     /// <summary>
@@ -29,6 +31,7 @@ namespace Dragablz
     [TemplatePart(Name = ItemsHolderPartName, Type = typeof(Panel))]
     public class TabablzControl : TabControl
     {
+        public event AfterSelectionChangedEventHandler AfterSelectionChanged;
         /// <summary>
         /// Template part.
         /// </summary>
@@ -742,6 +745,9 @@ namespace Dragablz
             foreach (var tabItem in e.RemovedItems.OfType<TabItem>().Select(t => _dragablzItemsControl.ItemContainerGenerator.ContainerFromItem(t)).OfType<DragablzItem>())
             {
                 tabItem.IsSelected = false;
+            }
+            if(AfterSelectionChanged != null) {
+                AfterSelectionChanged(this, e);
             }
         }
 

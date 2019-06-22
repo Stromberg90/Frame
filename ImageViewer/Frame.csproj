@@ -71,7 +71,6 @@
     <NoWarn>
     </NoWarn>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <LangVersion>8.0</LangVersion>
     <NullableReferenceTypes>true</NullableReferenceTypes>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
@@ -193,11 +192,11 @@
     <Resource Include="Resources\favicon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="AutoUpdater.NET, Version=1.5.1.0, Culture=neutral, PublicKeyToken=501435c91b35f4bc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Autoupdater.NET.Official.1.5.1\lib\net40\AutoUpdater.NET.dll</HintPath>
+    <Reference Include="AutoUpdater.NET, Version=1.5.3.0, Culture=neutral, PublicKeyToken=501435c91b35f4bc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autoupdater.NET.Official.1.5.3\lib\net40\AutoUpdater.NET.dll</HintPath>
     </Reference>
-    <Reference Include="Magick.NET-Q8-x64, Version=7.12.0.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=AMD64">
-      <HintPath>..\packages\Magick.NET-Q8-x64-OpenMP.7.12.0\lib\net40\Magick.NET-Q8-x64.dll</HintPath>
+    <Reference Include="Magick.NET-Q8-x64, Version=7.13.1.0, Culture=neutral, PublicKeyToken=2004825badfa91ec, processorArchitecture=AMD64">
+      <HintPath>..\packages\Magick.NET-Q8-x64-OpenMP.7.13.1\lib\net40\Magick.NET-Q8-x64.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="PresentationCore" />
@@ -230,9 +229,9 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Scripty.MsBuild.0.7.4\build\Scripty.MsBuild.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Scripty.MsBuild.0.7.4\build\Scripty.MsBuild.targets'))" />
-    <Error Condition="!Exists('..\packages\Magick.NET-Q8-x64-OpenMP.7.12.0\build\net40\Magick.NET-Q8-x64-OpenMP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Magick.NET-Q8-x64-OpenMP.7.12.0\build\net40\Magick.NET-Q8-x64-OpenMP.targets'))" />
+    <Error Condition="!Exists('..\packages\Magick.NET-Q8-x64-OpenMP.7.13.1\build\net40\Magick.NET-Q8-x64-OpenMP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Magick.NET-Q8-x64-OpenMP.7.13.1\build\net40\Magick.NET-Q8-x64-OpenMP.targets'))" />
   </Target>
-  <Import Project="..\packages\Magick.NET-Q8-x64-OpenMP.7.12.0\build\net40\Magick.NET-Q8-x64-OpenMP.targets" Condition="Exists('..\packages\Magick.NET-Q8-x64-OpenMP.7.12.0\build\net40\Magick.NET-Q8-x64-OpenMP.targets')" />
+  <Import Project="..\packages\Magick.NET-Q8-x64-OpenMP.7.13.1\build\net40\Magick.NET-Q8-x64-OpenMP.targets" Condition="Exists('..\packages\Magick.NET-Q8-x64-OpenMP.7.13.1\build\net40\Magick.NET-Q8-x64-OpenMP.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

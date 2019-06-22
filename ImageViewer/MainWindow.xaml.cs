@@ -16,23 +16,138 @@ using AutoUpdaterDotNET;
 using Dragablz;
 using Frame.Properties;
 using ImageMagick;
+using Dragablz.Dockablz;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 
 namespace Frame {
     public static class StaticMethods {
+        static public List<TabablzControl> TabControls {
+            get {
+                var tabablzControls = new List<TabablzControl>();
+                var currentMainWindow = StaticMethods.currentMainWindow();
+                if(currentMainWindow == null) {
+                    tabablzControls.Add(CurrentTabControl);
+                    return tabablzControls;
+                }
+
+                switch(currentMainWindow.DockLayout.Content) {
+                    case Branch children: {
+                        tabablzControls.AddRange(getTabablzControls(children));
+                        break;
+                    }
+                    case TabablzControl tabablzControl: {
+                        tabablzControls.Add(tabablzControl);
+                        break;
+                    }
+                }
+
+                return tabablzControls;
+            }
+        }
+
+        static public TabablzControl CurrentTabControl {
+            get {
+                var currentMainWindow = StaticMethods.currentMainWindow();
+
+                var tabItemControl = currentMainWindow.ImageTabControl;
+
+                switch(currentMainWindow.DockLayout.Content) {
+                    case Branch children: {
+                        foreach(var control in getTabablzControls(children)) {
+                            foreach(var controlItem in control.Items) {
+                                if(!(controlItem is TabItemControl itemTabItemControl)) {
+                                    continue;
+                                }
+
+                                if(itemTabItemControl.ImagePresenter.ScrollViewer.IsFocused) {
+                                    tabItemControl = control;
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                    case TabablzControl tabablzControl: {
+                        tabItemControl = tabablzControl;
+                        break;
+                    }
+                }
+
+                currentMainWindow.ImageTabControl = tabItemControl;
+                return tabItemControl;
+            }
+        }
+
+        static public int CurrentTabIndex => CurrentTabControl.SelectedIndex;
+
+        // Optional<TabItemControl> maybe?
+        static public TabItemControl CurrentTab {
+            get {
+                var currentMainWindow = StaticMethods.currentMainWindow();
+                var tabControl = CurrentTabControl;
+                if(currentMainWindow == null || tabControl.Items.IsEmpty) {
+                    return null;
+                }
+
+                return tabControl.SelectedItem as TabItemControl;
+            }
+        }
+
+        static MainWindow currentMainWindow() {
+            var result = System.Windows.Application.Current.MainWindow as MainWindow;
+            foreach(var window in System.Windows.Application.Current.Windows) {
+                if(window.GetType() != typeof(MainWindow)) {
+                    continue;
+                }
+
+                if(((MainWindow)window).IsActive) {
+                    result = window as MainWindow;
+                }
+            }
+            return result;
+        }
+
+        static List<TabablzControl> getTabablzControls(Branch branch) {
+            var controls = new List<TabablzControl>();
+
+            switch(branch.FirstItem) {
+                case TabablzControl _: {
+                    controls.Add((TabablzControl)branch.FirstItem);
+                    break;
+                }
+                case Branch _: {
+                    controls.AddRange(getTabablzControls((Branch)branch.FirstItem));
+                    break;
+                }
+            }
+
+            switch(branch.SecondItem) {
+                case TabablzControl secondItem: {
+                    controls.Add(secondItem);
+                    break;
+                }
+                case Branch _: {
+                    controls.AddRange(getTabablzControls((Branch)branch.SecondItem));
+                    break;
+                }
+            }
+
+            return controls;
+        }
+
         public static void addTab(TabablzControl tabablzControl, string filepath) {
             var folderpath = Path.GetDirectoryName(filepath);
             var ext = Path.GetExtension(filepath);
 
             TabItemControl new_tab = null;
             if(ext == ".gif") {
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                        new_tab = new TabItemControl {
-                            Header = Path.GetFileName(filepath),
-                        };
-                        new_tab.ImagePresenter.ImageArea.loadAimatedGif(filepath);
-                    }, DispatcherPriority.Normal);
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    new_tab = new TabItemControl {
+                        Header = Path.GetFileName(filepath),
+                    };
+                    new_tab.ImagePresenter.ImageArea.loadAimatedGif(filepath);
+                }, DispatcherPriority.Normal);
             }
             else {
                 using(var image = new MagickImage(filepath)) {
@@ -71,7 +186,8 @@ namespace Frame {
                             image_presenter.Zoom = zoom_by_width;
                         }
                     }
-                    tabablzControl.SelectionChanged += new_tab.selectionChanged;
+
+                    //tabablzControl.AfterSelectionChanged += new_tab.selectionChanged;
                 }
             }, DispatcherPriority.Normal);
 
@@ -127,6 +243,20 @@ namespace Frame {
 
             KeyDown += keyDown;
             PreviewMouseDoubleClick += previewMouseDoubleClick;
+
+            //ImageTabControl.AfterSelectionChanged += imageTabControlAfterSelectionChanged;
+        }
+
+        private void imageTabControlAfterSelectionChanged(object source, System.Windows.Controls.SelectionChangedEventArgs e) {
+            Debug.WriteLine("Selection changed");
+            if(e.AddedItems.Count > 0) {
+                var tab_item = (TabItemControl)e.AddedItems[0];
+                if(tab_item != null) {
+                    tab_item.ImagePresenter.Focus();
+                    Keyboard.Focus(tab_item.ImagePresenter);
+                    e.Handled = true;
+                }
+            }
         }
 
         void previewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
@@ -148,6 +278,8 @@ namespace Frame {
         }
 
         void keyDown(object sender, System.Windows.Input.KeyEventArgs e) {
+            Console.WriteLine(StaticMethods.CurrentTab.Header);
+            //StaticMethods.CurrentTab.Focus();
             if(e.Key == Key.Tab) {
                 e.Handled = true;
                 return;
@@ -162,9 +294,12 @@ namespace Frame {
                 e.Handled = true;
                 return;
             }
-            if(ImageTabControl.HasItems) {
-                ((TabItemControl)ImageTabControl.SelectedItem).ImagePresenter.ScrollViewer.Focus();
-            }
+
+            //var tab_item = StaticMethods.CurrentTab;
+            //if(tab_item != null) {
+            //    tab_item.ImagePresenter.Focus();
+            //   Keyboard.Focus(tab_item.ImagePresenter);
+            //}
             e.Handled = false;
         }
 
@@ -185,6 +320,7 @@ namespace Frame {
             Closing -= windowClosing;
             KeyDown -= keyDown;
             PreviewMouseDoubleClick -= previewMouseDoubleClick;
+            //ImageTabControl.AfterSelectionChanged -= imageTabControlAfterSelectionChanged;
 
             Settings.Default.WindowLocation = new Point((int)Left, (int)Top);
             Settings.Default.WindowState = (int)WindowState;

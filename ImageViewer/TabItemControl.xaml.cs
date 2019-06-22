@@ -191,7 +191,7 @@ namespace Frame {
         public void Dispose() {
             if (Parent is TabablzControl)
             {
-                ((TabablzControl)Parent).SelectionChanged -= selectionChanged;
+                //((TabablzControl)Parent).AfterSelectionChanged -= selectionChanged;
             }
             PreviewMouseDoubleClick -= mouseDoubleClick;
             PreviewKeyDown -= previewKeyDown;
