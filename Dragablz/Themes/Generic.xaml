@@ -215,7 +215,7 @@
     <SolidColorBrush x:Key="TabItem.Selected.Border" Color="#ACACAC" />
     <SolidColorBrush x:Key="Button.Static.Background" Color="#FFDDDDDD" />
     <SolidColorBrush x:Key="Button.Static.Border" Color="#FF707070" />
-    <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#FFFDBEBE" />
+    <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#FFBEE6FD" />
     <SolidColorBrush x:Key="Button.MouseOver.Border" Color="#FF3C7FB1" />
     <SolidColorBrush x:Key="Button.Pressed.Background" Color="#FFC4E5F6" />
     <SolidColorBrush x:Key="Button.Pressed.Border" Color="#FF2C628B" />
@@ -223,9 +223,15 @@
     <SolidColorBrush x:Key="Button.Disabled.Border" Color="#FFADB2B5" />
     <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383" />
 
-    <SolidColorBrush x:Key="TabItem.Static.Background" Color="#4e4e4e" />
+    <LinearGradientBrush x:Key="TabItem.Static.Background" EndPoint="0,1" StartPoint="0,0">
+        <GradientStop Color="#F0F0F0" Offset="0.0" />
+        <GradientStop Color="#E5E5E5" Offset="1.0" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="TabItem.Static.Border" Color="#ACACAC" />
-    <SolidColorBrush x:Key="TabItem.MouseOver.Background" Color="#4e4e4e" />
+    <LinearGradientBrush x:Key="TabItem.MouseOver.Background" EndPoint="0,1" StartPoint="0,0">
+        <GradientStop Color="#ECF4FC" Offset="0.0" />
+        <GradientStop Color="#DCECFC" Offset="1.0" />
+    </LinearGradientBrush>
     <SolidColorBrush x:Key="TabItem.MouseOver.Border" Color="#7EB4EA" />
     <SolidColorBrush x:Key="TabItem.Disabled.Background" Color="#F0F0F0" />
     <SolidColorBrush x:Key="TabItem.Disabled.Border" Color="#D9D9D9" />
@@ -571,21 +577,57 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type dockablz:DropZone}">
                     <Grid>
-                        <Rectangle Fill="{TemplateBinding Foreground}" 
-                                   Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Top}}" 
-                                   Width="160" Height="45" />
-                        <Rectangle Fill="{TemplateBinding Foreground}" 
-                                   Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Bottom}}" 
-                                   Width="160" Height="45" />
-                        <Rectangle Fill="{TemplateBinding Foreground}" 
-                                   Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Right}}" 
-                                   Width="45" Height="160" />
-                        <Rectangle Fill="{TemplateBinding Foreground}" 
-                                   Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Left}}" 
-                                   Width="45" Height="160" />
-                        <Rectangle Fill="{TemplateBinding Foreground}" 
-                                   Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Floating}}" 
-                                   Width="160" Height="45" />
+                        <Path Fill="{TemplateBinding Foreground}"
+                              Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Top}}">
+                            <Path.Data>
+                                <PathGeometry>
+                                    <PathFigure x:Name="PathFigure" StartPoint="160, 0">
+                                        <ArcSegment SweepDirection="Clockwise"
+                                                    Size="60,60"
+                                                    Point="0, 0" />
+                                    </PathFigure>
+                                </PathGeometry>
+                            </Path.Data>
+                        </Path>
+                        <Path Fill="{TemplateBinding Foreground}"
+                              Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Right}}">
+                            <Path.Data>
+                                <PathGeometry>
+                                    <PathFigure StartPoint="60, 160">
+                                        <ArcSegment SweepDirection="Clockwise"
+                                                    Size="60,60"
+                                                    Point="60, 0" />
+                                    </PathFigure>
+                                </PathGeometry>
+                            </Path.Data>
+                        </Path>
+                        <Path Fill="{TemplateBinding Foreground}"
+                              Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Bottom}}">
+                            <Path.Data>
+                                <PathGeometry>
+                                    <PathFigure StartPoint="0, 60">
+                                        <ArcSegment SweepDirection="Clockwise"
+                                                    Size="60,60"
+                                                    Point="160, 60" />
+                                    </PathFigure>
+                                </PathGeometry>
+                            </Path.Data>
+                        </Path>
+                        <Path Fill="{TemplateBinding Foreground}"
+                              Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Left}}">
+                            <Path.Data>
+                                <PathGeometry>
+                                    <PathFigure StartPoint="0, 0">
+                                        <ArcSegment SweepDirection="Clockwise"
+                                                    Size="60,60"
+                                                    Point="0, 160" />
+                                    </PathFigure>
+                                </PathGeometry>
+                            </Path.Data>
+                        </Path>
+                        <Ellipse Fill="{TemplateBinding Foreground}"
+                                 Visibility="{TemplateBinding Location, Converter={StaticResource EqualityToVisibilityConverter}, ConverterParameter={x:Static dockablz:DropZoneLocation.Floating}}"
+                                 Width="120" Height="120" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -631,7 +673,7 @@
     </Style>
 
     <ControlTemplate x:Key="TabablzScrollViewerControlTemplate" TargetType="{x:Type ScrollViewer}">
-        <Grid x:Name="Grid" Background="Transparent">
+        <Grid x:Name="Grid" Background="{TemplateBinding Background}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -2082,7 +2124,7 @@
                             </Grid.ColumnDefinitions>
                             <ContentPresenter x:Name="PART_FirstContentPresenter" Content="{TemplateBinding FirstItem}" />
                             <GridSplitter Grid.Column="1" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"
-                                          Width="2" BorderThickness="0" Background="#FF646464"/>
+                                          Width="5" BorderThickness="0" Background="#FF646464"/>
                             <ContentPresenter x:Name="PART_SecondContentPresenter" Grid.Column="2"
                                               Content="{TemplateBinding SecondItem}" />
                         </Grid>
@@ -2108,7 +2150,7 @@
                                     <ContentPresenter x:Name="PART_FirstContentPresenter"
                                                       Content="{TemplateBinding FirstItem}" />
                                     <GridSplitter Grid.Row="1" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"
-                                                  Height="2" BorderThickness="0" HorizontalAlignment="Stretch" Background="#FF646464"/>
+                                                  Height="5" BorderThickness="0" HorizontalAlignment="Stretch" Background="#FF646464"/>
                                     <ContentPresenter x:Name="PART_SecondContentPresenter" Grid.Row="2"
                                                       Content="{TemplateBinding SecondItem}" />
                                 </Grid>

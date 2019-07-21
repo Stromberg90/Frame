@@ -289,5 +289,3 @@ __pycache__/
 *.odx.cs
 *.xsd.cs
 Update.xml
-.vs/
-Benchmark/

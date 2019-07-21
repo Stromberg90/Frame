@@ -16,70 +16,95 @@ WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
 \***************************************************************************/
 
 using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using System.Drawing;
 
 namespace Frame {
-    // Nearest neighbour filtering
     public class AnimatedGIFControl : System.Windows.Controls.Image, IDisposable {
-        public Bitmap _bitmap; // Local bitmap member to cache image resource
-        BitmapSource _bitmapSource;
-        delegate void FrameUpdatedEventHandler();
+        bool IsAnimating;
+        private Bitmap _bitmap; // Local bitmap member to cache image resource
+        private BitmapSource _bitmapSource;
+        public delegate void FrameUpdatedEventHandler();
 
+        /// <summary>
+        /// Delete local bitmap resource
+        /// Reference: http://msdn.microsoft.com/en-us/library/dd183539(VS.85).aspx
+        /// </summary>
         [DllImport("gdi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool DeleteObject(IntPtr hObject);
 
-        internal void loadStillImage(string filepath) {
-            stopAnimate();
+        /// <summary>
+        /// Override the OnInitialized method
+        /// </summary>
+        protected override void OnInitialized(EventArgs e) {
+            base.OnInitialized(e);
+            this.Unloaded += AnimatedGIFControl_Unloaded;
+        }
 
-            if(_bitmap != null) {
-                _bitmap.Dispose();
-                _bitmap = null;
-            }
-            _bitmapSource = null;
-
-            _bitmap = new Bitmap(filepath);
+        /// <summary>
+        /// Load the embedded image for the Image.Source
+        /// </summary>
+        public void LoadGif(string path, GifMode gifMode) {
+            IsAnimating = gifMode == GifMode.Animated;
+            _bitmap = new System.Drawing.Bitmap(path);
             Width = _bitmap.Width;
             Height = _bitmap.Height;
 
-            updateSource();
+            _bitmapSource = GetBitmapSource();
+            Source = _bitmapSource;
         }
 
-        public void startAnimate() {
-            ImageAnimator.Animate(_bitmap, onFrameChanged);
+        /// <summary>
+        /// Close the FileStream to unlock the GIF file
+        /// </summary>
+        private void AnimatedGIFControl_Unloaded(object sender, RoutedEventArgs e) {
+            StopAnimate();
         }
 
-        public void stopAnimate() {
-            ImageAnimator.StopAnimate(_bitmap, onFrameChanged);
+        /// <summary>
+        /// Start animation
+        /// </summary>
+        public void StartAnimate() {
+            IsAnimating = true;
+            ImageAnimator.Animate(_bitmap, OnFrameChanged);
         }
 
-        void onFrameChanged(object sender, EventArgs e) {
-            Dispatcher.BeginInvoke(DispatcherPriority.Render,
-                                   new FrameUpdatedEventHandler(frameUpdatedCallback));
+        /// <summary>
+        /// Stop animation
+        /// </summary>
+        public void StopAnimate() {
+            IsAnimating = false;
+            ImageAnimator.StopAnimate(_bitmap, OnFrameChanged);
         }
 
-        void frameUpdatedCallback() {
+        /// <summary>
+        /// Event handler for the frame changed
+        /// </summary>
+        private void OnFrameChanged(object sender, EventArgs e) {
+            if (IsAnimating) {
+                Dispatcher.BeginInvoke(DispatcherPriority.Render,
+                                       new FrameUpdatedEventHandler(FrameUpdatedCallback));
+            }
+        }
+
+        private void FrameUpdatedCallback() {
             ImageAnimator.UpdateFrames();
 
-            if(_bitmapSource != null) {
+            if (_bitmapSource != null) {
                 _bitmapSource.Freeze();
             }
 
-            if(_bitmap == null) {
-                Dispose();
-            }
-            else {
-                _bitmapSource = GetBitmapSource();
-                Source = _bitmapSource;
-                InvalidateVisual();
-            }
+            // Convert the bitmap to BitmapSource that can be display in WPF Visual Tree
+            _bitmapSource = GetBitmapSource();
+            Source = _bitmapSource;
+            InvalidateVisual();
         }
 
-        public BitmapSource GetBitmapSource() {
+        private BitmapSource GetBitmapSource() {
             IntPtr handle = IntPtr.Zero;
 
             try {
@@ -88,7 +113,7 @@ namespace Frame {
                     handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             }
             finally {
-                if(handle != IntPtr.Zero) {
+                if (handle != IntPtr.Zero) {
                     DeleteObject(handle);
                 }
             }
@@ -96,42 +121,8 @@ namespace Frame {
             return _bitmapSource;
         }
 
-        public void loadAimatedGif(string filepath) {
-            stopAnimate();
-
-            if(_bitmap != null) {
-                _bitmap.Dispose();
-                _bitmap = null;
-            }
-            _bitmapSource = null;
-
-            _bitmap = new Bitmap(filepath);
-            Width = _bitmap.Width;
-            Height = _bitmap.Height;
-
-            _bitmapSource = GetBitmapSource();
-            Source = _bitmapSource;
-            startAnimate();
-        }
-
         public void Dispose() {
-            stopAnimate();
-            if(_bitmap != null) {
-                _bitmap.Dispose();
-                _bitmap = null;
-            }
-            _bitmapSource = null;
-            Source = null;
-        }
-
-        public void updateSource() {
-            if(_bitmapSource != null) {
-                _bitmapSource.Freeze();
-            }
-
-            _bitmapSource = GetBitmapSource();
-            Source = _bitmapSource;
-            InvalidateVisual();
+            _bitmap.Dispose();
         }
     }
 }
