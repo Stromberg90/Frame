@@ -8,12 +8,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -36,6 +35,8 @@ using MessageBox = System.Windows.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
+
+#nullable enable
 
 namespace Frame {
     public interface ICommand {
@@ -84,7 +85,7 @@ namespace Frame {
 
         public class Command : ICommand {
             readonly CommandFunction func;
-            readonly ValidateFunction validateFunction;
+            readonly ValidateFunction? validateFunction;
 
             public delegate void CommandFunction();
 
@@ -132,6 +133,14 @@ namespace Frame {
                 this.leftShift = leftShift;
                 this.leftCtrl = leftCtrl;
             }
+        }
+
+        internal void LoadImage() {
+            var CurrentTab = tabControlManager.CurrentTab;
+            if (CurrentTab == null) return;
+            if (CurrentTab.Paths.Count == 0) return;
+
+            CurrentTab.LoadImage();
         }
 
         public MainWindow() {
@@ -221,11 +230,13 @@ namespace Frame {
 
         void HigherMip() {
             tabControlManager.CurrentTab.ImageSettings.MipValue++;
+            //tabControlManager.CurrentTab.HigherMip();
             RefreshImage();
         }
 
         void LowerMip() {
             tabControlManager.CurrentTab.ImageSettings.MipValue--;
+            //tabControlManager.CurrentTab.LowerMip();
             RefreshImage();
         }
 
@@ -274,7 +285,6 @@ namespace Frame {
             }
             else {
                 var addedTab = tabControlManager.AddTab(Filepath);
-                addedTab.ImageSettings.PropertyChanged += ImageSettings_PropertyChanged;
             }
 
             duplicate_tab = tabControlManager.CurrentTab;
@@ -399,7 +409,6 @@ namespace Frame {
             }
             else {
                 var AddedTab = tabControlManager.AddTab(filepath);
-                AddedTab.ImageSettings.PropertyChanged += ImageSettings_PropertyChanged;
             }
 
             CurrentTab = tabControlManager.CurrentTab;
@@ -412,10 +421,6 @@ namespace Frame {
             CurrentTab.Index = FilenameIndex == -1 ? 0 : (uint)FilenameIndex;
 
             CurrentTab.Footer.Visibility = footerVisibility;
-        }
-
-        void ImageSettings_PropertyChanged(object sender, PropertyChangedEventArgs e) {
-            RefreshImage();
         }
 
         void AscendingSort(object sender, RoutedEventArgs e) {
@@ -523,13 +528,11 @@ namespace Frame {
         }
 
         internal void RefreshImage() {
-            Current.Dispatcher.Invoke(() => {
-                var CurrentTab = tabControlManager.CurrentTab;
-                if (CurrentTab == null) return;
-                if (CurrentTab.Paths.Count == 0) return;
+            var CurrentTab = tabControlManager.CurrentTab;
+            if (CurrentTab == null) return;
+            if (CurrentTab.Paths.Count == 0) return;
 
-                CurrentTab.LoadImage();
-            });
+            CurrentTab.RefreshImage();
         }
 
         void ReplaceImageInTab(string filename) {
@@ -550,42 +553,7 @@ namespace Frame {
 
         void ToggleDisplayChannel(Channels channel) {
             if (!tabControlManager.CanExcectute()) return;
-            switch (channel) {
-                case Channels.RGB: {
-                    tabControlManager.CurrentTab.ImageSettings.DisplayChannel = Channels.RGB;
-                    break;
-                }
-                case Channels.Red: {
-                    tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
-                      tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Red
-                        ? Channels.RGB
-                        : Channels.Red;
-                    break;
-                }
-                case Channels.Green: {
-                    tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
-                      tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Green
-                        ? Channels.RGB
-                        : Channels.Green;
-                    break;
-                }
-                case Channels.Blue: {
-                    tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
-                      tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Blue
-                        ? Channels.RGB
-                        : Channels.Blue;
-                    break;
-                }
-                case Channels.Alpha: {
-                    tabControlManager.CurrentTab.ImageSettings.DisplayChannel =
-                      tabControlManager.CurrentTab.ImageSettings.DisplayChannel == Channels.Alpha
-                        ? Channels.RGB
-                        : Channels.Alpha;
-                    break;
-                }
-            }
-
-            RefreshImage();
+            tabControlManager.CurrentTab.SetDisplayChannel(channel);
         }
 
         void OnDeleted(object sender, FileSystemEventArgs args) {

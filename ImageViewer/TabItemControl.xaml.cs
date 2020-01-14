@@ -130,7 +130,7 @@ namespace Frame {
 
         void onPropertyChanged(object o, PropertyChangedEventArgs args) {
             if (args.PropertyName == nameof(Index)) {
-                Application.Current?.Dispatcher.Invoke(() => { ParentMainWindow.RefreshImage(); });
+                Application.Current?.Dispatcher.Invoke(() => { ParentMainWindow.LoadImage(); });
                 ResetView();
             }
 
@@ -345,118 +345,9 @@ namespace Frame {
                 return;
             };
 
-            var width = ImageSettings.Width;
-            var height = ImageSettings.Height;
-            var border_width = (int)Math.Max(2.0, (width * height) / 200000.0);
-
-            var channel_num = 0;
-            var settings_image = ImageSettings.ImageCollection[ImageSettings.MipValue];
-            if (UsesChannelsMontage) {
-                using (var orginal_image = ImageSettings.ImageCollection[0]) {
-                    using (var images = new MagickImageCollection()) {
-                        foreach (var channel in settings_image.Separate()) {
-                            if (Settings.Default.SplitChannelsBorder) {
-                                switch (channel_num) {
-                                    case 0: {
-                                        channel.BorderColor = MagickColor.FromRgb(255, 0, 0);
-                                        break;
-                                    }
-                                    case 1: {
-                                        channel.BorderColor = MagickColor.FromRgb(0, 255, 0);
-                                        break;
-                                    }
-                                    case 2: {
-                                        channel.BorderColor = MagickColor.FromRgb(0, 0, 255);
-                                        break;
-                                    }
-                                }
-
-                                channel.Border(border_width);
-                                channel_num++;
-                            }
-
-                            if (ImageSettings.MipValue > 0) {
-                                channel.Resize(orginal_image.Width, orginal_image.Height);
-                            }
-
-                            images.Add(channel);
-                        }
-
-                        var MontageSettings =
-                          new MontageSettings {
-                              Geometry = new MagickGeometry(width, height)
-                          };
-                        var Result = images.Montage(MontageSettings);
-                        ImageSettings.ImageCollection.Clear();
-                        ImageSettings.ImageCollection.Add(Result);
-                    }
-                }
-
-                ImageSettings.HasMips = false;
-            }
-
-            if (IsTiled) {
-                using (var Images = new MagickImageCollection()) {
-                    var OrginalImage = ImageSettings.ImageCollection[0];
-
-                    for (var i = 0; i <= TileCount; i++) {
-                        var Image = settings_image.Clone();
-                        if (ImageSettings.MipValue > 0) {
-                            Image.Resize(OrginalImage.Width, OrginalImage.Height);
-                        }
-
-                        if (ImageSettings.DisplayChannel != Channels.Alpha) {
-                            Image.Alpha(AlphaOption.Opaque);
-                        }
-
-                        Images.Add(Image);
-                    }
-
-                    var MontageSettings =
-                      new MontageSettings {
-                          Geometry = new MagickGeometry(width, height),
-                      };
-                    ImageSettings.ImageCollection.Clear();
-                    ImageSettings.ImageCollection.Add(Images.Montage(MontageSettings));
-                }
-                ImageSettings.HasMips = false;
-                ImageSettings.Size *= TileCount + 1;
-            }
-
-            OnPropertyChanged();
-            var magick_image = ResizeCurrentMip();
-            switch (ImageSettings.DisplayChannel) {
-                case Channels.RGB: {
-                    magick_image.Alpha(AlphaOption.Opaque);
-                    ImagePresenter.ImageArea.Source = magick_image.ToBitmapSource();
-                    break;
-                }
-                case Channels.Red: {
-                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Red)
-                                                                 .ElementAt(0)?.ToBitmapSource();
-                    break;
-                }
-                case Channels.Green: {
-                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Green)
-                                                                 .ElementAt(0)?.ToBitmapSource();
-                    break;
-                }
-                case Channels.Blue: {
-                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Blue)
-                                                                 .ElementAt(0)?.ToBitmapSource();
-                    break;
-                }
-                case Channels.Alpha: {
-                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Alpha)
-                                                                 .ElementAt(0)?.ToBitmapSource();
-                    break;
-                }
-                default: {
-                    magick_image.Alpha(AlphaOption.Opaque);
-                    ImagePresenter.ImageArea.Source = magick_image.ToBitmapSource();
-                    break;
-                }
-            }
+            var magick_image = ImageSettings.ImageCollection[0];
+            magick_image.Alpha(AlphaOption.Opaque);
+            ImagePresenter.ImageArea.Source = magick_image.ToBitmapSource();
         }
 
         void Dispose(bool disposing) {
@@ -548,6 +439,147 @@ namespace Frame {
 
         void imagePresenterOnPreviewKeyDown(object sender, KeyEventArgs e) {
             ParentMainWindow.ImageAreaKeyDown(sender, e);
+        }
+
+        internal void RefreshImage() {
+            var width = ImageSettings.Width;
+            var height = ImageSettings.Height;
+            var border_width = (int)Math.Max(2.0, (width * height) / 200000.0);
+
+            var channel_num = 0;
+            var settings_image = ImageSettings.ImageCollection[ImageSettings.MipValue];
+            if (UsesChannelsMontage) {
+                using (var orginal_image = ImageSettings.ImageCollection[0]) {
+                    using var images = new MagickImageCollection();
+                    foreach (var channel in settings_image.Separate())
+                    {
+                        if (Settings.Default.SplitChannelsBorder)
+                        {
+                            switch (channel_num)
+                            {
+                                case 0:
+                                {
+                                    channel.BorderColor = MagickColor.FromRgb(255, 0, 0);
+                                    break;
+                                }
+                                case 1:
+                                {
+                                    channel.BorderColor = MagickColor.FromRgb(0, 255, 0);
+                                    break;
+                                }
+                                case 2:
+                                {
+                                    channel.BorderColor = MagickColor.FromRgb(0, 0, 255);
+                                    break;
+                                }
+                            }
+
+                            channel.Border(border_width);
+                            channel_num++;
+                        }
+
+                        if (ImageSettings.MipValue > 0)
+                        {
+                            channel.Resize(orginal_image.Width, orginal_image.Height);
+                        }
+
+                        images.Add(channel);
+                    }
+
+                    var MontageSettings =
+                      new MontageSettings
+                      {
+                          Geometry = new MagickGeometry(width, height)
+                      };
+                    var Result = images.Montage(MontageSettings);
+                    ImageSettings.ImageCollection.Clear();
+                    ImageSettings.ImageCollection.Add(Result);
+                }
+
+                ImageSettings.HasMips = false;
+            }
+
+            if (IsTiled) {
+                using (var Images = new MagickImageCollection()) {
+                    var OrginalImage = ImageSettings.ImageCollection[0];
+
+                    for (var i = 0; i <= TileCount; i++) {
+                        var Image = settings_image.Clone();
+                        if (ImageSettings.MipValue > 0) {
+                            Image.Resize(OrginalImage.Width, OrginalImage.Height);
+                        }
+
+                        if (ImageSettings.DisplayChannel != Channels.Alpha) {
+                            Image.Alpha(AlphaOption.Opaque);
+                        }
+
+                        Images.Add(Image);
+                    }
+
+                    var MontageSettings =
+                      new MontageSettings {
+                          Geometry = new MagickGeometry(width, height),
+                      };
+                    ImageSettings.ImageCollection.Clear();
+                    ImageSettings.ImageCollection.Add(Images.Montage(MontageSettings));
+                }
+                ImageSettings.HasMips = false;
+                ImageSettings.Size *= TileCount + 1;
+            }
+            else {
+                LoadImage();
+            }
+        }
+
+        internal void SetDisplayChannel(Channels channel) {
+            var magick_image = ResizeCurrentMip();
+
+            switch (channel) {
+                case Channels.RGB: {
+                    ImageSettings.DisplayChannel = Channels.RGB;
+                    break;
+                }
+                case Channels.Red: {
+                    ImageSettings.DisplayChannel = ImageSettings.DisplayChannel == Channels.Red ? Channels.RGB : Channels.Red;
+                    break;
+                }
+                case Channels.Green: {
+                    ImageSettings.DisplayChannel = ImageSettings.DisplayChannel == Channels.Green ? Channels.RGB : Channels.Green;
+                    break;
+                }
+                case Channels.Blue: {
+                    ImageSettings.DisplayChannel = ImageSettings.DisplayChannel == Channels.Blue ? Channels.RGB : Channels.Blue;
+                    break;
+                }
+                case Channels.Alpha: {
+                    ImageSettings.DisplayChannel = ImageSettings.DisplayChannel == Channels.Alpha ? Channels.RGB : Channels.Alpha;
+                    break;
+                }
+            }
+
+            switch (ImageSettings.DisplayChannel) {
+                case Channels.Red: {
+                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Red).ElementAt(0)?.ToBitmapSource();
+                    break;
+                }
+                case Channels.Green: {
+                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Green).ElementAt(0)?.ToBitmapSource();
+                    break;
+                }
+                case Channels.Blue: {
+                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Blue).ElementAt(0)?.ToBitmapSource();
+                    break;
+                }
+                case Channels.Alpha: {
+                    ImagePresenter.ImageArea.Source = magick_image.Separate(Channels.Alpha).ElementAt(0)?.ToBitmapSource();
+                    break;
+                }
+                default: {
+                    magick_image.Alpha(AlphaOption.Opaque);
+                    ImagePresenter.ImageArea.Source = magick_image.ToBitmapSource();
+                    break;
+                }
+            }
         }
     }
 }
