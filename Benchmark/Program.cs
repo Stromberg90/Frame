@@ -17,7 +17,6 @@ namespace Benchmark {
 
             var stopWatch = new Stopwatch();
 
-            var timings = new List<double>();
             stopWatch.Start();
             var manager = new SingleAppMangager();
             manager.Run(arguments);

@@ -8,6 +8,7 @@ using System.Windows;
 using Frame.Annotations;
 using Frame.Properties;
 using ImageMagick;
+using ImageMagick.Formats.Dds;
 using Application = System.Windows.Application;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using TextAlignment = ImageMagick.TextAlignment;
